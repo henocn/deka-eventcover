@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Event, Album, Media } = require('../models');
+const { Event, Album, Media, MediaStat } = require('../models');
 const httpError = require('../utils/httpError');
 const makeSlug = require('../utils/slug');
 
@@ -59,6 +59,7 @@ function serializeMedia(media) {
     width: media.width,
     height: media.height,
     sortOrder: media.sortOrder,
+    downloadUrl: `/api/public/media/${media.id}/download`,
   };
 }
 
@@ -249,6 +250,31 @@ async function updateAlbum(albumId, payload) {
   return album.reload();
 }
 
+async function getEventStats(eventId) {
+  await getEventById(eventId);
+
+  const [albumsCount, mediaCount, viewsCount, downloadsCount, latestMedia] = await Promise.all([
+    Album.count({ where: { eventId } }),
+    Media.count({ where: { eventId } }),
+    MediaStat.count({ where: { eventId, action: 'view' } }),
+    MediaStat.count({ where: { eventId, action: 'download' } }),
+    Media.findAll({
+      where: { eventId },
+      attributes: ['id', 'type', 'originalName', 'publicUrl', 'createdAt'],
+      order: [['createdAt', 'DESC']],
+      limit: 5,
+    }),
+  ]);
+
+  return {
+    albumsCount,
+    mediaCount,
+    viewsCount,
+    downloadsCount,
+    latestMedia,
+  };
+}
+
 async function getPublicEvent(slug, accessCode) {
   const event = await Event.findOne({
     where: { slug, isPublished: true },
@@ -347,6 +373,7 @@ module.exports = {
   getEventById,
   createEvent,
   updateEvent,
+  getEventStats,
   createAlbum,
   updateAlbum,
   getPublicEvent,

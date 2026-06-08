@@ -60,6 +60,11 @@ async function getEventQrCode(req, res) {
   });
 }
 
+async function getEventStats(req, res) {
+  const stats = await eventService.getEventStats(req.validated.params.eventId);
+  res.json({ data: stats });
+}
+
 module.exports = {
   listEvents,
   getEvent,
@@ -68,4 +73,5 @@ module.exports = {
   createAlbum,
   updateAlbum,
   getEventQrCode,
+  getEventStats,
 };

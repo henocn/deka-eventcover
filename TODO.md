@@ -35,9 +35,9 @@ Objectif : construire une plateforme interne simple, elegante et maintenable pou
 - [x] Ajouter la validation des donnees entrantes
 - [x] Ajouter les routes publiques participant
 - [x] Ajouter les routes internes back-office
-- [ ] Ajouter l'upload de fichiers images et documents
+- [x] Ajouter l'upload de fichiers images et documents
 - [x] Servir les medias stockes sur le VPS
-- [ ] Ajouter les statistiques basiques
+- [x] Ajouter les statistiques basiques
 - [x] Ajouter une base pour les notifications temps reel
 
 ## 4. Modele de donnees
@@ -118,20 +118,20 @@ Priorite design : interface simple, premium, mobile-first, rapide a comprendre e
 
 ## 9. Upload et stockage des medias
 
-- [ ] Accepter les images courantes
-- [ ] Accepter les documents PDF, PPTX et DOCX
-- [ ] Refuser les types de fichiers non supportes
-- [ ] Organiser les fichiers par evenement et album
-- [ ] Generer des noms de fichiers robustes
-- [ ] Stocker les metadonnees en base
+- [x] Accepter les images courantes
+- [x] Accepter les documents PDF, PPTX et DOCX
+- [x] Refuser les types de fichiers non supportes
+- [x] Organiser les fichiers par evenement et album
+- [x] Generer des noms de fichiers robustes
+- [x] Stocker les metadonnees en base
 - [ ] Prevoir les miniatures ou apercus images
-- [ ] Prevoir les limites de taille de fichier
+- [x] Prevoir les limites de taille de fichier
 - [ ] Ajouter une strategie de sauvegarde simple pour VPS
 
 ## 10. Temps reel
 
 - [x] Choisir l'approche temps reel adaptee au projet
-- [ ] Notifier l'ajout de nouveaux medias
+- [x] Notifier l'ajout de nouveaux medias
 - [x] Notifier la mise a jour d'un album
 - [ ] Garder une degradation propre si le temps reel est indisponible
 

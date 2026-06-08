@@ -2,8 +2,10 @@ const express = require('express');
 const asyncHandler = require('../utils/asyncHandler');
 const validate = require('../middlewares/validate');
 const { requireAdmin } = require('../middlewares/auth');
+const { upload } = require('../middlewares/upload');
 const authController = require('../controllers/authController');
 const adminEventController = require('../controllers/adminEventController');
+const adminMediaController = require('../controllers/adminMediaController');
 const { loginSchema } = require('../validators/authValidators');
 const {
   createEventSchema,
@@ -12,6 +14,7 @@ const {
   createAlbumSchema,
   updateAlbumSchema,
 } = require('../validators/eventValidators');
+const { albumIdParamSchema } = require('../validators/mediaValidators');
 
 const router = express.Router();
 
@@ -40,6 +43,11 @@ router.get(
   validate(eventIdParamSchema),
   asyncHandler(adminEventController.getEventQrCode)
 );
+router.get(
+  '/events/:eventId/stats',
+  validate(eventIdParamSchema),
+  asyncHandler(adminEventController.getEventStats)
+);
 router.post(
   '/events/:eventId/albums',
   validate(createAlbumSchema),
@@ -49,6 +57,12 @@ router.patch(
   '/albums/:albumId',
   validate(updateAlbumSchema),
   asyncHandler(adminEventController.updateAlbum)
+);
+router.post(
+  '/albums/:albumId/media',
+  validate(albumIdParamSchema),
+  upload.array('files', 50),
+  asyncHandler(adminMediaController.uploadAlbumMedia)
 );
 
 module.exports = router;

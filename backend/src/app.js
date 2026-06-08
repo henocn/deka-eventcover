@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const path = require('path');
 const env = require('./config/env');
 const healthRoutes = require('./routes/healthRoutes');
 const publicRoutes = require('./routes/publicRoutes');
@@ -21,7 +20,6 @@ if (env.nodeEnv !== 'test') {
   app.use(morgan('dev'));
 }
 
-app.use('/uploads', express.static(path.resolve(env.mediaRoot)));
 app.use('/health', healthRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/admin', adminRoutes);

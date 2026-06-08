@@ -2,11 +2,13 @@ const express = require('express');
 const asyncHandler = require('../utils/asyncHandler');
 const validate = require('../middlewares/validate');
 const publicEventController = require('../controllers/publicEventController');
+const publicMediaController = require('../controllers/publicMediaController');
 const {
   publicEventSchema,
   publicAlbumSchema,
   eventAccessSchema,
 } = require('../validators/publicValidators');
+const { mediaFileSchema } = require('../validators/mediaValidators');
 
 const router = express.Router();
 
@@ -20,6 +22,16 @@ router.get(
   '/events/:slug/albums/:albumSlug',
   validate(publicAlbumSchema),
   asyncHandler(publicEventController.getAlbum)
+);
+router.get(
+  '/media/:mediaId/file',
+  validate(mediaFileSchema),
+  asyncHandler(publicMediaController.sendMediaFile)
+);
+router.get(
+  '/media/:mediaId/download',
+  validate(mediaFileSchema),
+  asyncHandler(publicMediaController.downloadMediaFile)
 );
 
 module.exports = router;

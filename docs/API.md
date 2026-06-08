@@ -19,8 +19,13 @@ Base locale prevue : `http://localhost:4000`
 - `GET /api/public/events/:slug/albums/:albumSlug`
   - Recupere un album avec ses medias publies.
 
+- `GET /api/public/media/:mediaId/file`
+  - Sert un media pour affichage dans la galerie.
+  - Ajouter `?accessCode=CODE` si l'evenement est ferme.
+
 - `GET /api/public/media/:mediaId/download`
   - Telecharge un media et enregistre une statistique de telechargement.
+  - Ajouter `?accessCode=CODE` si l'evenement est ferme.
 
 ## Back-office interne
 
@@ -57,6 +62,9 @@ Base locale prevue : `http://localhost:4000`
 
 - `POST /api/admin/albums/:albumId/media`
   - Upload des images ou documents dans un album.
+  - Requiert un token admin.
+  - Form-data : champ `files`, un ou plusieurs fichiers.
+  - Types acceptes : JPG, PNG, WebP, GIF, PDF, DOCX, PPTX.
 
 - `GET /api/admin/events/:eventId/qrcode`
   - Genere le QR code du lien public.
@@ -64,6 +72,7 @@ Base locale prevue : `http://localhost:4000`
 
 - `GET /api/admin/events/:eventId/stats`
   - Retourne les statistiques basiques.
+  - Requiert un token admin.
 
 ## Temps reel
 
