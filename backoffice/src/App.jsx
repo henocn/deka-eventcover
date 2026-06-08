@@ -270,22 +270,20 @@ function App() {
     return (
       <main className="admin-login-shell">
         <section className="login-panel">
-          <div className="brand-mark">
-            <Shield size={24} />
-          </div>
-          <p className="eyebrow">Back-office interne</p>
-          <h1>Deka EventCover</h1>
-          <p className="login-copy">
-            Console de gestion des evenements, albums, medias et liens QR.
+          <h1 className='text-center'>Deka EventCover</h1>
+          <p className="login-copy text-center pb-5 text-sm">
+            Console de gestion des evenements.
           </p>
+          {error ? <p className="form-error text-red-500 text-sm text-center">{error}</p> : null}
           <form className="login-form" onSubmit={handleLogin}>
             <label>
               Email
               <input
                 type="email"
+                className='mb-2'
                 value={loginForm.email}
                 onChange={(event) => setLoginForm((current) => ({ ...current, email: event.target.value }))}
-                placeholder="admin@example.com"
+                placeholder="test-admin@gmail.com"
                 required
               />
             </label>
@@ -293,6 +291,7 @@ function App() {
               Mot de passe
               <input
                 type="password"
+                className='mb-2'
                 value={loginForm.password}
                 onChange={(event) =>
                   setLoginForm((current) => ({ ...current, password: event.target.value }))
@@ -306,7 +305,6 @@ function App() {
               Se connecter
             </button>
           </form>
-          {error ? <p className="form-error">{error}</p> : null}
         </section>
       </main>
     );
