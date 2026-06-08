@@ -2,7 +2,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const app = require('./src/app');
 const env = require('./src/config/env');
-const { sequelize } = require('./src/config/database');
+const { sequelize } = require('./src/models');
 
 const server = http.createServer(app);
 const io = new Server(server, {

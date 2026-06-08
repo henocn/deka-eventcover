@@ -1,0 +1,74 @@
+const { z } = require('zod');
+
+const booleanField = z.union([z.boolean(), z.string()]).optional().transform((value) => {
+  if (value === undefined) return undefined;
+  if (typeof value === 'boolean') return value;
+  return value === 'true';
+});
+
+const nullableText = z.string().trim().optional().transform((value) => value || null);
+
+const dateField = z.string().datetime().optional().nullable();
+
+const eventBody = z.object({
+  title: z.string().trim().min(2).max(180),
+  slug: z.string().trim().max(180).optional(),
+  description: nullableText,
+  location: nullableText,
+  startsAt: dateField,
+  endsAt: dateField,
+  accessCode: nullableText,
+  isPublished: booleanField,
+});
+
+const createEventSchema = z.object({
+  body: eventBody,
+});
+
+const updateEventSchema = z.object({
+  params: z.object({
+    eventId: z.coerce.number().int().positive(),
+  }),
+  body: eventBody.partial().refine((value) => Object.keys(value).length > 0, {
+    message: 'At least one field is required',
+  }),
+});
+
+const eventIdParamSchema = z.object({
+  params: z.object({
+    eventId: z.coerce.number().int().positive(),
+  }),
+});
+
+const albumBody = z.object({
+  title: z.string().trim().min(2).max(180),
+  slug: z.string().trim().max(180).optional(),
+  description: nullableText,
+  coverMediaId: z.coerce.number().int().positive().optional().nullable(),
+  sortOrder: z.coerce.number().int().optional(),
+  isPublished: booleanField,
+});
+
+const createAlbumSchema = z.object({
+  params: z.object({
+    eventId: z.coerce.number().int().positive(),
+  }),
+  body: albumBody,
+});
+
+const updateAlbumSchema = z.object({
+  params: z.object({
+    albumId: z.coerce.number().int().positive(),
+  }),
+  body: albumBody.partial().refine((value) => Object.keys(value).length > 0, {
+    message: 'At least one field is required',
+  }),
+});
+
+module.exports = {
+  createEventSchema,
+  updateEventSchema,
+  eventIdParamSchema,
+  createAlbumSchema,
+  updateAlbumSchema,
+};

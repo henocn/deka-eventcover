@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env'), quiet: true });
 
 const toNumber = (value, fallback) => {
   const parsed = Number(value);
@@ -17,4 +17,6 @@ module.exports = {
   corsOrigins,
   mediaRoot: process.env.MEDIA_ROOT || 'uploads',
   maxUploadMb: toNumber(process.env.MAX_UPLOAD_MB, 25),
+  jwtSecret: process.env.JWT_SECRET || 'change-this-secret-in-production',
+  publicAppUrl: process.env.PUBLIC_APP_URL || 'http://localhost:5173',
 };

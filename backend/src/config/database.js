@@ -9,6 +9,9 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
   port: config.port,
   dialect: config.dialect,
   logging: config.logging,
+  define: {
+    underscored: true,
+  },
 });
 
 module.exports = {

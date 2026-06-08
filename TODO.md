@@ -32,7 +32,7 @@ Objectif : construire une plateforme interne simple, elegante et maintenable pou
 - [x] Configurer Nodemon pour le developpement
 - [x] Ajouter la connexion PostgreSQL
 - [x] Ajouter la gestion centralisee des erreurs
-- [ ] Ajouter la validation des donnees entrantes
+- [x] Ajouter la validation des donnees entrantes
 - [x] Ajouter les routes publiques participant
 - [x] Ajouter les routes internes back-office
 - [ ] Ajouter l'upload de fichiers images et documents
@@ -132,7 +132,7 @@ Priorite design : interface simple, premium, mobile-first, rapide a comprendre e
 
 - [x] Choisir l'approche temps reel adaptee au projet
 - [ ] Notifier l'ajout de nouveaux medias
-- [ ] Notifier la mise a jour d'un album
+- [x] Notifier la mise a jour d'un album
 - [ ] Garder une degradation propre si le temps reel est indisponible
 
 ## 11. Reconnaissance faciale optionnelle
