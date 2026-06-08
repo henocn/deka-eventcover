@@ -38,6 +38,11 @@ router.get('/events', asyncHandler(adminEventController.listEvents));
 router.post('/events', validate(createEventSchema), asyncHandler(adminEventController.createEvent));
 router.get('/events/:eventId', validate(eventIdParamSchema), asyncHandler(adminEventController.getEvent));
 router.patch('/events/:eventId', validate(updateEventSchema), asyncHandler(adminEventController.updateEvent));
+router.delete(
+  '/events/:eventId',
+  validate(eventIdParamSchema),
+  asyncHandler(adminEventController.deleteEvent)
+);
 router.get(
   '/events/:eventId/qrcode',
   validate(eventIdParamSchema),

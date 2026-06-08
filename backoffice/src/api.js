@@ -81,6 +81,12 @@ async function updateEvent(eventId, payload) {
   });
 }
 
+async function deleteEvent(eventId) {
+  return apiRequest(`/api/admin/events/${eventId}`, {
+    method: 'DELETE',
+  });
+}
+
 async function fetchQrCode(eventId) {
   return apiRequest(`/api/admin/events/${eventId}/qrcode`);
 }
@@ -93,6 +99,7 @@ export {
   API_URL,
   clearSession,
   createEvent,
+  deleteEvent,
   fetchEvents,
   fetchQrCode,
   fetchStats,

@@ -52,6 +52,10 @@ Base locale prevue : `http://localhost:4000`
   - Met a jour un evenement.
   - Requiert un token admin.
 
+- `DELETE /api/admin/events/:eventId`
+  - Supprime un evenement et ses contenus lies en base.
+  - Requiert un token admin.
+
 - `POST /api/admin/events/:eventId/albums`
   - Cree un album dans un evenement.
   - Requiert un token admin.

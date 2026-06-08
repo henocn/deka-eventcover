@@ -74,10 +74,40 @@ async function run() {
         role: 'super_admin',
       })
     );
+    const demoEvents = [
+      {
+        id: 1,
+        title: 'Conference institutionnelle',
+        slug: 'conference-institutionnelle',
+        description: 'Selection officielle des photos et documents partages avec les participants.',
+        location: 'Auditorium principal',
+        startsAt: new Date().toISOString(),
+        accessCode: null,
+        isPublished: true,
+        albums: [{ id: 1 }],
+      },
+    ];
+    window.fetch = async (url) => {
+      const value = String(url);
+      if (value.includes('/api/admin/events/1/stats')) {
+        return new Response(JSON.stringify({ data: { albumsCount: 1, mediaCount: 12, viewsCount: 87, downloadsCount: 24 } }), { status: 200 });
+      }
+      if (value.includes('/api/admin/events/1/qrcode')) {
+        return new Response(JSON.stringify({ data: { publicUrl: 'http://localhost:5173/events/conference-institutionnelle', qrCodeDataUrl: 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E' } }), { status: 200 });
+      }
+      if (value.includes('/api/admin/events')) {
+        return new Response(JSON.stringify({ data: demoEvents }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ data: {} }), { status: 200 });
+    };
   });
   await dashboard.goto(url, { waitUntil: 'networkidle' });
   await dashboard.screenshot({ path: path.join(outDir, 'backoffice-dashboard.png'), fullPage: true });
   const dashboardText = await dashboard.locator('body').innerText();
+  await dashboard.locator('.project-link').first().click();
+  await dashboard.waitForSelector('.details-page');
+  await dashboard.screenshot({ path: path.join(outDir, 'backoffice-details.png'), fullPage: true });
+  const detailsText = await dashboard.locator('body').innerText();
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
   await mobile.addInitScript(() => {
@@ -91,6 +121,13 @@ async function run() {
         role: 'super_admin',
       })
     );
+    window.fetch = async (url) => {
+      const value = String(url);
+      if (value.includes('/api/admin/events')) {
+        return new Response(JSON.stringify({ data: [] }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ data: {} }), { status: 200 });
+    };
   });
   await mobile.goto(url, { waitUntil: 'networkidle' });
   await mobile.screenshot({ path: path.join(outDir, 'backoffice-mobile.png'), fullPage: true });
@@ -102,12 +139,14 @@ async function run() {
   console.log(
     JSON.stringify(
       {
-        loginHasBrand: loginText.includes('Deka EventCover'),
-        dashboardHasTitle: dashboardText.includes('Gestion des evenements'),
-        dashboardHasEditor: dashboardText.includes('Nouvel evenement'),
-        mobileHasTitle: mobileText.includes('Gestion des evenements'),
+        loginHasBrand: loginText.includes('Deka.') && loginText.includes('EventCover Admin'),
+        dashboardHasTitle: dashboardText.includes('Evenements'),
+        dashboardHasTable: dashboardText.includes('Mes evenements'),
+        detailsHasTitle: detailsText.includes('PROJECT DETAILS'),
+        mobileHasTitle: mobileText.includes('Evenements'),
         loginScreenshot: path.join(outDir, 'backoffice-login.png'),
         dashboardScreenshot: path.join(outDir, 'backoffice-dashboard.png'),
+        detailsScreenshot: path.join(outDir, 'backoffice-details.png'),
         mobileScreenshot: path.join(outDir, 'backoffice-mobile.png'),
       },
       null,

@@ -11,10 +11,10 @@ module.exports = {
 
     const users = [
       {
-        full_name: 'Super Administrateur',
-        email: (process.env.SEED_SUPER_ADMIN_EMAIL || 'superadmin@example.com').toLowerCase(),
+        full_name: 'Super ADMIN',
+        email: (process.env.SEED_SUPER_ADMIN_EMAIL || 'super@gmail.com').toLowerCase(),
         password_hash: await bcrypt.hash(
-          process.env.SEED_SUPER_ADMIN_PASSWORD || 'SuperAdmin123!',
+          process.env.SEED_SUPER_ADMIN_PASSWORD || 'Super@123!',
           12
         ),
         role: 'super_admin',
@@ -23,8 +23,8 @@ module.exports = {
         updated_at: updatedAt,
       },
       {
-        full_name: 'Administrateur',
-        email: (process.env.SEED_ADMIN_EMAIL || 'admin@example.com').toLowerCase(),
+        full_name: 'User ADMIN',
+        email: (process.env.SEED_ADMIN_EMAIL || 'admin@gmail.com').toLowerCase(),
         password_hash: await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD || 'Admin123!', 12),
         role: 'admin',
         is_active: true,

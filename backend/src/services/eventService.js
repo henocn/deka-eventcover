@@ -223,6 +223,16 @@ async function updateEvent(eventId, payload) {
   return getEventById(event.id);
 }
 
+async function deleteEvent(eventId) {
+  const event = await getEventById(eventId);
+  await event.destroy();
+
+  return {
+    id: event.id,
+    deleted: true,
+  };
+}
+
 async function createAlbum(eventId, payload) {
   await getEventById(eventId);
 
@@ -373,6 +383,7 @@ module.exports = {
   getEventById,
   createEvent,
   updateEvent,
+  deleteEvent,
   getEventStats,
   createAlbum,
   updateAlbum,

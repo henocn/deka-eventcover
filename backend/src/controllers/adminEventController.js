@@ -22,6 +22,11 @@ async function updateEvent(req, res) {
   res.json({ data: event });
 }
 
+async function deleteEvent(req, res) {
+  const result = await eventService.deleteEvent(req.validated.params.eventId);
+  res.json({ data: result });
+}
+
 async function createAlbum(req, res) {
   const album = await eventService.createAlbum(req.validated.params.eventId, req.validated.body);
   const io = req.app.get('io');
@@ -70,6 +75,7 @@ module.exports = {
   getEvent,
   createEvent,
   updateEvent,
+  deleteEvent,
   createAlbum,
   updateAlbum,
   getEventQrCode,
