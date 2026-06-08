@@ -104,16 +104,16 @@ Priorite design : interface simple, premium, mobile-first, rapide a comprendre e
 
 ## 8. Back-office interne
 
-- [ ] Mettre en place une application admin separee
-- [ ] Ajouter une authentification admin / super admin
-- [ ] Creer la liste des evenements
-- [ ] Creer le formulaire de creation/modification d'evenement
+- [x] Mettre en place une application admin separee
+- [x] Ajouter une authentification admin / super admin
+- [x] Creer la liste des evenements
+- [x] Creer le formulaire de creation/modification d'evenement
 - [ ] Creer la gestion des albums
 - [ ] Creer l'upload de medias
 - [ ] Ajouter l'edition des titres, descriptions et couvertures
-- [ ] Ajouter la generation de QR code par evenement
-- [ ] Ajouter la copie du lien public
-- [ ] Ajouter les statistiques basiques
+- [x] Ajouter la generation de QR code par evenement
+- [x] Ajouter la copie du lien public
+- [x] Ajouter les statistiques basiques
 - [ ] Ajouter la gestion simple des utilisateurs internes
 
 ## 9. Upload et stockage des medias
