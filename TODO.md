@@ -56,51 +56,51 @@ Objectif : construire une plateforme interne simple, elegante et maintenable pou
 
 Priorite design : interface simple, premium, mobile-first, rapide a comprendre en moins de 5 secondes.
 
-- [ ] Definir une direction visuelle sobre et institutionnelle
-- [ ] Construire une page evenement claire apres scan QR code
-- [ ] Afficher le titre, la date et une courte description de l'evenement
-- [ ] Presenter les albums avec couvertures elegantes
-- [ ] Eviter les gros blocs marketing inutiles
-- [ ] Garder une navigation directe vers les medias
-- [ ] Construire une galerie photo fluide en scroll
-- [ ] Optimiser l'affichage mobile des grilles d'images
-- [ ] Ajouter un mode plein ecran pour les photos
-- [ ] Ajouter la navigation swipe gauche/droite
-- [ ] Ajouter les boutons de telechargement
-- [ ] Differencier clairement images et documents
-- [ ] Ajouter les etats vides avec un ton simple et professionnel
-- [ ] Ajouter les etats de chargement sans bloquer l'experience
-- [ ] Ajouter une protection par code d'acces si l'evenement est ferme
-- [ ] Verifier le rendu sur mobile, tablette et desktop
+- [x] Definir une direction visuelle sobre et institutionnelle
+- [x] Construire une page evenement claire apres scan QR code
+- [x] Afficher le titre, la date et une courte description de l'evenement
+- [x] Presenter les albums avec couvertures elegantes
+- [x] Eviter les gros blocs marketing inutiles
+- [x] Garder une navigation directe vers les medias
+- [x] Construire une galerie photo fluide en scroll
+- [x] Optimiser l'affichage mobile des grilles d'images
+- [x] Ajouter un mode plein ecran pour les photos
+- [x] Ajouter la navigation swipe gauche/droite
+- [x] Ajouter les boutons de telechargement
+- [x] Differencier clairement images et documents
+- [x] Ajouter les etats vides avec un ton simple et professionnel
+- [x] Ajouter les etats de chargement sans bloquer l'experience
+- [x] Ajouter une protection par code d'acces si l'evenement est ferme
+- [x] Verifier le rendu sur mobile, tablette et desktop
 
 ## 6. Design participant - niveau de finition attendu
 
-- [ ] Utiliser une mise en page aeree mais dense en information utile
-- [ ] Limiter la palette a des couleurs sobres, lisibles et professionnelles
-- [ ] Utiliser une typographie nette avec une bonne hierarchie
-- [ ] Garder les cartes d'album compactes et elegantes
-- [ ] Eviter les effets decoratifs lourds
-- [ ] Garantir un contraste suffisant
-- [ ] Eviter tout chevauchement de texte sur mobile
-- [ ] Rendre les boutons et icones faciles a toucher
-- [ ] Ajouter des micro-interactions discretes
-- [ ] Optimiser les images avec tailles stables et chargement progressif
+- [x] Utiliser une mise en page aeree mais dense en information utile
+- [x] Limiter la palette a des couleurs sobres, lisibles et professionnelles
+- [x] Utiliser une typographie nette avec une bonne hierarchie
+- [x] Garder les cartes d'album compactes et elegantes
+- [x] Eviter les effets decoratifs lourds
+- [x] Garantir un contraste suffisant
+- [x] Eviter tout chevauchement de texte sur mobile
+- [x] Rendre les boutons et icones faciles a toucher
+- [x] Ajouter des micro-interactions discretes
+- [x] Optimiser les images avec tailles stables et chargement progressif
 - [ ] Tester que le design reste elegant avec peu ou beaucoup d'albums
 - [ ] Tester que le design reste propre avec des titres longs
 
 ## 7. Frontend participant React
 
-- [ ] Nettoyer l'application Vite/React initiale
-- [ ] Mettre en place le routing public
-- [ ] Creer la page publique d'evenement
-- [ ] Creer la vue albums
-- [ ] Creer la vue galerie
-- [ ] Creer le viewer plein ecran
-- [ ] Creer le composant document telechargeable
-- [ ] Ajouter la logique de fetch API
-- [ ] Ajouter la gestion des erreurs reseau
-- [ ] Ajouter le support du code d'acces optionnel
-- [ ] Preparer la reception des notifications temps reel
+- [x] Nettoyer l'application Vite/React initiale
+- [x] Mettre en place le routing public
+- [x] Creer la page publique d'evenement
+- [x] Creer la vue albums
+- [x] Creer la vue galerie
+- [x] Creer le viewer plein ecran
+- [x] Creer le composant document telechargeable
+- [x] Ajouter la logique de fetch API
+- [x] Ajouter la gestion des erreurs reseau
+- [x] Ajouter le support du code d'acces optionnel
+- [x] Preparer la reception des notifications temps reel
 
 ## 8. Back-office interne
 
@@ -150,7 +150,7 @@ Priorite design : interface simple, premium, mobile-first, rapide a comprendre e
 - [ ] Tester le parcours participant complet
 - [ ] Tester l'upload de chaque type de fichier supporte
 - [ ] Tester les evenements publics et proteges par code
-- [ ] Tester le rendu responsive
+- [x] Tester le rendu responsive
 - [ ] Tester la generation de QR code
 - [ ] Verifier les performances de chargement galerie
 - [ ] Documenter les commandes de lancement
