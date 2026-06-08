@@ -7,50 +7,50 @@ Objectif : construire une plateforme interne simple, elegante et maintenable pou
 - [x] Lire et analyser `PROMPT.md`
 - [x] Identifier les priorites produit : participant mobile-first, back-office interne, media par evenement/album
 - [x] Definir une feuille de route progressive et cochable
-- [ ] Valider les choix techniques exacts apres audit du code existant
+- [x] Valider les choix techniques exacts apres audit du code existant
 
 ## 1. Audit du projet existant
 
-- [ ] Verifier la structure reelle des dossiers `backend`, `frontend` et `backoffice`
-- [ ] Identifier les dependances deja installees
-- [ ] Verifier les scripts disponibles (`dev`, `start`, `build`, `lint`)
-- [ ] Reperer les fichiers manquants ou incoherents par rapport au prompt
-- [ ] Noter les conventions existantes pour eviter une reorganisation inutile
+- [x] Verifier la structure reelle des dossiers `backend`, `frontend` et `backoffice`
+- [x] Identifier les dependances deja installees
+- [x] Verifier les scripts disponibles (`dev`, `start`, `build`, `lint`)
+- [x] Reperer les fichiers manquants ou incoherents par rapport au prompt
+- [x] Noter les conventions existantes pour eviter une reorganisation inutile
 
 ## 2. Architecture cible
 
-- [ ] Definir une architecture backend simple et maintenable
-- [ ] Choisir une organisation claire : routes, controllers, services, models, middlewares
-- [ ] Definir la structure PostgreSQL : users, events, albums, media, stats
-- [ ] Prevoir l'organisation des fichiers uploades par evenement et album
-- [ ] Definir les variables d'environnement necessaires
-- [ ] Documenter les endpoints API principaux
+- [x] Definir une architecture backend simple et maintenable
+- [x] Choisir une organisation claire : routes, controllers, services, models, middlewares
+- [x] Definir la structure PostgreSQL : users, events, albums, media, stats
+- [x] Prevoir l'organisation des fichiers uploades par evenement et album
+- [x] Definir les variables d'environnement necessaires
+- [x] Documenter les endpoints API principaux
 
 ## 3. Backend Node.js / Express
 
-- [ ] Configurer Express proprement
-- [ ] Configurer Nodemon pour le developpement
-- [ ] Ajouter la connexion PostgreSQL
-- [ ] Ajouter la gestion centralisee des erreurs
+- [x] Configurer Express proprement
+- [x] Configurer Nodemon pour le developpement
+- [x] Ajouter la connexion PostgreSQL
+- [x] Ajouter la gestion centralisee des erreurs
 - [ ] Ajouter la validation des donnees entrantes
-- [ ] Ajouter les routes publiques participant
-- [ ] Ajouter les routes internes back-office
+- [x] Ajouter les routes publiques participant
+- [x] Ajouter les routes internes back-office
 - [ ] Ajouter l'upload de fichiers images et documents
-- [ ] Servir les medias stockes sur le VPS
+- [x] Servir les medias stockes sur le VPS
 - [ ] Ajouter les statistiques basiques
-- [ ] Ajouter une base pour les notifications temps reel
+- [x] Ajouter une base pour les notifications temps reel
 
 ## 4. Modele de donnees
 
-- [ ] Creer la table des utilisateurs internes
-- [ ] Creer la table des evenements
-- [ ] Creer la table des albums
-- [ ] Creer la table des medias
-- [ ] Creer la table des consultations ou telechargements
-- [ ] Ajouter les relations evenement -> albums -> medias
-- [ ] Ajouter les champs de publication et visibilite
-- [ ] Ajouter un champ optionnel de code d'acces evenement
-- [ ] Prevoir les migrations ou scripts SQL initiaux
+- [x] Creer la table des utilisateurs internes
+- [x] Creer la table des evenements
+- [x] Creer la table des albums
+- [x] Creer la table des medias
+- [x] Creer la table des consultations ou telechargements
+- [x] Ajouter les relations evenement -> albums -> medias
+- [x] Ajouter les champs de publication et visibilite
+- [x] Ajouter un champ optionnel de code d'acces evenement
+- [x] Prevoir les migrations ou scripts SQL initiaux
 
 ## 5. Experience participant
 
@@ -130,7 +130,7 @@ Priorite design : interface simple, premium, mobile-first, rapide a comprendre e
 
 ## 10. Temps reel
 
-- [ ] Choisir l'approche temps reel adaptee au projet
+- [x] Choisir l'approche temps reel adaptee au projet
 - [ ] Notifier l'ajout de nouveaux medias
 - [ ] Notifier la mise a jour d'un album
 - [ ] Garder une degradation propre si le temps reel est indisponible
