@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   clearSession,
+  createAccessRole,
   createEvent,
+  deleteAccessRole,
   deleteEvent,
+  fetchAccessRoleQrCode,
+  fetchAccessRoles,
   fetchEvents,
-  fetchQrCode,
   fetchStats,
   getStoredUser,
   getToken,
@@ -34,8 +37,11 @@ function App() {
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
-  const [qrCode, setQrCode] = useState(null);
+  const [accessRoles, setAccessRoles] = useState([]);
+  const [accessRoleForm, setAccessRoleForm] = useState({ name: '' });
   const [stats, setStats] = useState(null);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
+  const [isCreatingRole, setIsCreatingRole] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(Boolean(getToken()));
   const [isSaving, setIsSaving] = useState(false);
@@ -144,7 +150,7 @@ function App() {
     selectedEventIdRef.current = null;
     setSelectedEventId(null);
     setEventForm(emptyEventForm);
-    setQrCode(null);
+    setAccessRoles([]);
     setStats(null);
     setDrawerNotice('');
     setDrawerError('');
@@ -206,45 +212,86 @@ function App() {
     setSelectedEventId(event.id);
     setView('details');
     setStats(null);
-    setQrCode(null);
+    setAccessRoles([]);
+    setAccessRoleForm({ name: '' });
+    setError('');
+    setIsDetailsLoading(true);
 
     try {
-      const data = await fetchStats(event.id);
-      setStats(data);
-    } catch {
-      setStats(null);
+      const [statsResult, rolesResult] = await Promise.allSettled([
+        fetchStats(event.id),
+        fetchAccessRoles(event.id),
+      ]);
+
+      if (statsResult.status === 'fulfilled') {
+        setStats(statsResult.value);
+      }
+
+      if (rolesResult.status === 'fulfilled') {
+        const rolesWithQr = await Promise.all(
+          rolesResult.value.map(async (role) => {
+            try {
+              return await fetchAccessRoleQrCode(event.id, role.id);
+            } catch {
+              return role;
+            }
+          }),
+        );
+        setAccessRoles(rolesWithQr);
+      }
+
+      const failed = [statsResult, rolesResult].find((result) => result.status === 'rejected');
+      if (failed) {
+        setError(failed.reason.message);
+      }
+    } finally {
+      setIsDetailsLoading(false);
     }
   }
 
-  async function loadQrCode(event = selectedEvent) {
-    if (!event) return;
+  function updateAccessRoleForm(field, value) {
+    setAccessRoleForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  async function saveAccessRole(event) {
+    event.preventDefault();
+    if (!selectedEvent) return;
+
+    setIsCreatingRole(true);
+    setError('');
 
     try {
-      selectedEventIdRef.current = event.id;
-      setSelectedEventId(event.id);
-      const data = await fetchQrCode(event.id);
-      setQrCode(data);
-      setView('details');
-      setNotice('QR code genere');
-    } catch (qrError) {
-      setError(qrError.message);
+      const created = await createAccessRole(selectedEvent.id, accessRoleForm);
+      const createdWithQr = await fetchAccessRoleQrCode(selectedEvent.id, created.id);
+      setAccessRoles((current) => [createdWithQr, ...current]);
+      setAccessRoleForm({ name: '' });
+      setNotice('Badge cree');
+    } catch (roleError) {
+      setError(roleError.message);
+    } finally {
+      setIsCreatingRole(false);
     }
   }
 
-  async function loadStats(event = selectedEvent) {
-    if (!event) return;
+  async function removeAccessRole(role) {
+    if (!window.confirm(`Supprimer le badge "${role.name}" ?`)) return;
 
     try {
-      const data = await fetchStats(event.id);
-      setStats(data);
-    } catch (statsError) {
-      setError(statsError.message);
+      await deleteAccessRole(role.id);
+      setAccessRoles((current) => current.filter((item) => item.id !== role.id));
+      setNotice('Badge supprime');
+    } catch (roleError) {
+      setError(roleError.message);
     }
   }
 
-  async function copyPublicUrl() {
-    if (!qrCode?.publicUrl) return;
-    await navigator.clipboard.writeText(qrCode.publicUrl);
+  async function copyPublicUrl(role) {
+    const publicUrl = role?.publicUrl;
+    if (!publicUrl) return;
+    await navigator.clipboard.writeText(publicUrl);
     setNotice('Lien public copie');
   }
 
@@ -274,12 +321,16 @@ function App() {
           <EventDetailsPage
             event={selectedEvent}
             stats={stats}
-            qrCode={qrCode}
+            accessRoles={accessRoles}
+            roleForm={accessRoleForm}
+            isLoading={isDetailsLoading}
+            isCreatingRole={isCreatingRole}
             onBack={() => setView('events')}
             onEdit={() => selectedEvent && openEditDrawer(selectedEvent)}
-            onLoadStats={() => loadStats()}
-            onLoadQr={() => loadQrCode()}
             onCopyUrl={copyPublicUrl}
+            onRoleFormChange={updateAccessRoleForm}
+            onCreateRole={saveAccessRole}
+            onDeleteRole={removeAccessRole}
           />
         ) : (
           <EventsPage
@@ -297,7 +348,6 @@ function App() {
             onOpenDetails={openDetails}
             onEdit={openEditDrawer}
             onDelete={removeEvent}
-            onQr={loadQrCode}
           />
         )}
       </section>

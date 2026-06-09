@@ -5,6 +5,7 @@ async function sendMediaFile(req, res) {
   const result = await mediaService.getMediaFileResponse(
     req.validated.params.mediaId,
     req.validated.query.accessCode,
+    req.validated.query.role,
     req,
     'view'
   );
@@ -17,6 +18,7 @@ async function downloadMediaFile(req, res) {
   const result = await mediaService.getMediaFileResponse(
     req.validated.params.mediaId,
     req.validated.query.accessCode,
+    req.validated.query.role,
     req,
     'download'
   );

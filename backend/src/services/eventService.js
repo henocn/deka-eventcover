@@ -1,5 +1,7 @@
+const crypto = require('crypto');
 const { Op } = require('sequelize');
-const { Event, Album, Media, MediaStat } = require('../models');
+const { Event, Album, Media, MediaStat, AccessRole } = require('../models');
+const env = require('../config/env');
 const httpError = require('../utils/httpError');
 const makeSlug = require('../utils/slug');
 
@@ -44,6 +46,16 @@ function isProtected(event) {
 
 function hasAccess(event, accessCode) {
   return !isProtected(event) || event.accessCode === accessCode;
+}
+
+function buildParticipantUrl(event, role) {
+  const publicUrl = new URL(`/events/${event.slug}`, env.participantAppUrl.replace(/\/$/, ''));
+
+  if (role?.publicToken) {
+    publicUrl.searchParams.set('role', role.publicToken);
+  }
+
+  return publicUrl.toString();
 }
 
 function serializeMedia(media) {
@@ -94,6 +106,21 @@ function serializePublicEvent(event) {
   };
 }
 
+function serializeAccessRole(role, event) {
+  return {
+    id: role.id,
+    eventId: role.eventId,
+    name: role.name,
+    publicToken: role.publicToken,
+    description: role.description,
+    isActive: role.isActive,
+    albums: role.albums ? role.albums.map((album) => serializeAlbum(album)) : [],
+    publicUrl: event ? buildParticipantUrl(event, role) : undefined,
+    createdAt: role.createdAt,
+    updatedAt: role.updatedAt,
+  };
+}
+
 function normalizeEventPayload(payload, fallbackSlug) {
   const nextPayload = { ...payload };
 
@@ -116,6 +143,17 @@ function normalizeAlbumPayload(payload, fallbackSlug) {
   }
 
   return nextPayload;
+}
+
+function extractAccessRoleIds(payload) {
+  const nextPayload = { ...payload };
+  const accessRoleIds = nextPayload.accessRoleIds;
+  delete nextPayload.accessRoleIds;
+
+  return {
+    nextPayload,
+    accessRoleIds,
+  };
 }
 
 async function buildUniqueEventSlug(baseSlug, ignoreId) {
@@ -162,6 +200,21 @@ async function buildUniqueAlbumSlug(eventId, baseSlug, ignoreId) {
     candidate = `${normalizedBase}-${suffix}`;
     suffix += 1;
   }
+}
+
+async function syncAlbumAccessRoles(album, accessRoleIds) {
+  const roles = await AccessRole.findAll({
+    where: {
+      eventId: album.eventId,
+      id: accessRoleIds,
+    },
+  });
+
+  if (roles.length !== accessRoleIds.length) {
+    throw httpError(400, 'Un ou plusieurs badges ne sont pas rattaches a cet evenement.');
+  }
+
+  await album.setAccessRoles(roles);
 }
 
 async function listEvents() {
@@ -236,11 +289,18 @@ async function deleteEvent(eventId) {
 async function createAlbum(eventId, payload) {
   await getEventById(eventId);
 
-  const nextPayload = normalizeAlbumPayload(payload);
+  const { nextPayload: albumPayload, accessRoleIds } = extractAccessRoleIds(payload);
+  const nextPayload = normalizeAlbumPayload(albumPayload);
   nextPayload.eventId = eventId;
   nextPayload.slug = await buildUniqueAlbumSlug(eventId, nextPayload.slug);
 
-  return Album.create(nextPayload);
+  const album = await Album.create(nextPayload);
+
+  if (accessRoleIds) {
+    await syncAlbumAccessRoles(album, accessRoleIds);
+  }
+
+  return album.reload();
 }
 
 async function updateAlbum(albumId, payload) {
@@ -250,13 +310,19 @@ async function updateAlbum(albumId, payload) {
     throw httpError(404, 'Album not found');
   }
 
-  const nextPayload = normalizeAlbumPayload(payload, album.slug);
+  const { nextPayload: albumPayload, accessRoleIds } = extractAccessRoleIds(payload);
+  const nextPayload = normalizeAlbumPayload(albumPayload, album.slug);
 
   if (nextPayload.slug) {
     nextPayload.slug = await buildUniqueAlbumSlug(album.eventId, nextPayload.slug, album.id);
   }
 
   await album.update(nextPayload);
+
+  if (accessRoleIds) {
+    await syncAlbumAccessRoles(album, accessRoleIds);
+  }
+
   return album.reload();
 }
 
@@ -285,7 +351,123 @@ async function getEventStats(eventId) {
   };
 }
 
-async function getPublicEvent(slug, accessCode) {
+async function buildUniqueAccessToken() {
+  while (true) {
+    const candidate = `badge_${crypto.randomBytes(10).toString('hex')}`;
+    const existing = await AccessRole.findOne({ where: { publicToken: candidate } });
+
+    if (!existing) {
+      return candidate;
+    }
+  }
+}
+
+async function listAccessRoles(eventId) {
+  const event = await getEventById(eventId);
+  const roles = await AccessRole.findAll({
+    where: { eventId },
+    include: [
+      {
+        model: Album,
+        as: 'albums',
+        required: false,
+        attributes: albumPublicAttributes,
+        through: { attributes: [] },
+      },
+    ],
+    order: [['createdAt', 'DESC']],
+  });
+
+  return roles.map((role) => serializeAccessRole(role, event));
+}
+
+async function createAccessRole(eventId, payload) {
+  const event = await getEventById(eventId);
+  const albumIds = payload.albumIds || [];
+  const albums = albumIds.length > 0
+    ? await Album.findAll({
+      where: {
+        eventId,
+        id: albumIds,
+      },
+    })
+    : [];
+
+  if (albums.length !== albumIds.length) {
+    throw httpError(400, 'Un ou plusieurs albums ne sont pas rattaches a cet evenement.');
+  }
+
+  const role = await AccessRole.create({
+    eventId,
+    name: payload.name,
+    description: payload.description,
+    publicToken: await buildUniqueAccessToken(),
+    isActive: true,
+  });
+
+  await role.setAlbums(albums);
+  await role.reload({
+    include: [
+      {
+        model: Album,
+        as: 'albums',
+        required: false,
+        attributes: albumPublicAttributes,
+        through: { attributes: [] },
+      },
+    ],
+  });
+
+  return serializeAccessRole(role, event);
+}
+
+async function deleteAccessRole(roleId) {
+  const role = await AccessRole.findByPk(roleId);
+
+  if (!role) {
+    throw httpError(404, 'Badge not found');
+  }
+
+  await role.destroy();
+
+  return {
+    id: role.id,
+    deleted: true,
+  };
+}
+
+async function resolveAccessRole(eventId, publicToken) {
+  if (!publicToken) return null;
+
+  const role = await AccessRole.findOne({
+    where: {
+      eventId,
+      publicToken,
+      isActive: true,
+    },
+    include: [
+      {
+        model: Album,
+        as: 'albums',
+        required: false,
+        attributes: ['id'],
+        through: { attributes: [] },
+      },
+    ],
+  });
+
+  if (!role) {
+    throw httpError(403, 'Badge invalide ou desactive');
+  }
+
+  return role;
+}
+
+function getRoleAlbumIds(role) {
+  return new Set((role?.albums || []).map((album) => album.id));
+}
+
+async function getPublicEvent(slug, accessCode, roleToken) {
   const event = await Event.findOne({
     where: { slug, isPublished: true },
     attributes: [...eventPublicAttributes, 'accessCode'],
@@ -305,13 +487,22 @@ async function getPublicEvent(slug, accessCode) {
     throw httpError(404, 'Event not found');
   }
 
-  if (!hasAccess(event, accessCode)) {
+  const accessRole = await resolveAccessRole(event.id, roleToken);
+
+  if (!accessRole && !hasAccess(event, accessCode)) {
     const error = httpError(403, 'Access code required');
     error.requiresAccessCode = true;
     throw error;
   }
 
-  return serializePublicEvent(event);
+  const publicEvent = serializePublicEvent(event);
+
+  if (accessRole) {
+    const allowedAlbumIds = getRoleAlbumIds(accessRole);
+    publicEvent.albums = publicEvent.albums.filter((album) => allowedAlbumIds.has(album.id));
+  }
+
+  return publicEvent;
 }
 
 async function validateEventAccess(slug, accessCode) {
@@ -334,7 +525,7 @@ async function validateEventAccess(slug, accessCode) {
   };
 }
 
-async function getPublicAlbum(eventSlug, albumSlug, accessCode) {
+async function getPublicAlbum(eventSlug, albumSlug, accessCode, roleToken) {
   const event = await Event.findOne({
     where: { slug: eventSlug, isPublished: true },
     attributes: [...eventPublicAttributes, 'accessCode'],
@@ -344,7 +535,9 @@ async function getPublicAlbum(eventSlug, albumSlug, accessCode) {
     throw httpError(404, 'Event not found');
   }
 
-  if (!hasAccess(event, accessCode)) {
+  const accessRole = await resolveAccessRole(event.id, roleToken);
+
+  if (!accessRole && !hasAccess(event, accessCode)) {
     const error = httpError(403, 'Access code required');
     error.requiresAccessCode = true;
     throw error;
@@ -372,6 +565,10 @@ async function getPublicAlbum(eventSlug, albumSlug, accessCode) {
     throw httpError(404, 'Album not found');
   }
 
+  if (accessRole && !getRoleAlbumIds(accessRole).has(album.id)) {
+    throw httpError(404, 'Album not found');
+  }
+
   return {
     event: serializePublicEvent(event),
     album: serializeAlbum(album, true),
@@ -387,6 +584,12 @@ module.exports = {
   getEventStats,
   createAlbum,
   updateAlbum,
+  listAccessRoles,
+  createAccessRole,
+  deleteAccessRole,
+  buildParticipantUrl,
+  resolveAccessRole,
+  getRoleAlbumIds,
   getPublicEvent,
   validateEventAccess,
   getPublicAlbum,

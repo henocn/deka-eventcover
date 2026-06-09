@@ -12,20 +12,22 @@ Base locale prevue : `http://localhost:4000`
 - `GET /api/public/events/:slug`
   - Recupere un evenement public avec ses albums publies.
   - Si l'evenement est protege, le backend demandera un code d'acces.
+  - Ajouter `?role=PUBLIC_TOKEN` pour limiter les albums au badge QR scanne.
 
 - `POST /api/public/events/:slug/access`
   - Valide le code d'acces d'un evenement ferme.
 
 - `GET /api/public/events/:slug/albums/:albumSlug`
   - Recupere un album avec ses medias publies.
+  - Avec `?role=PUBLIC_TOKEN`, l'album doit appartenir au badge.
 
 - `GET /api/public/media/:mediaId/file`
   - Sert un media pour affichage dans la galerie.
-  - Ajouter `?accessCode=CODE` si l'evenement est ferme.
+  - Ajouter `?accessCode=CODE` si l'evenement est ferme, ou `?role=PUBLIC_TOKEN` pour un badge.
 
 - `GET /api/public/media/:mediaId/download`
   - Telecharge un media et enregistre une statistique de telechargement.
-  - Ajouter `?accessCode=CODE` si l'evenement est ferme.
+  - Ajouter `?accessCode=CODE` si l'evenement est ferme, ou `?role=PUBLIC_TOKEN` pour un badge.
 
 ## Back-office interne
 
@@ -59,10 +61,12 @@ Base locale prevue : `http://localhost:4000`
 - `POST /api/admin/events/:eventId/albums`
   - Cree un album dans un evenement.
   - Requiert un token admin.
+  - Body peut inclure `accessRoleIds` pour choisir les badges qui verront cet album.
 
 - `PATCH /api/admin/albums/:albumId`
   - Met a jour un album.
   - Requiert un token admin.
+  - Body peut inclure `accessRoleIds` pour remplacer les badges autorises sur cet album.
 
 - `POST /api/admin/albums/:albumId/media`
   - Upload des images ou documents dans un album.
@@ -74,6 +78,25 @@ Base locale prevue : `http://localhost:4000`
   - Genere le QR code du lien public.
   - Requiert un token admin.
   - Encode l'URL participant basee sur `PARTICIPANT_APP_URL` ou `FRONTEND_APP_URL`, jamais l'URL back-office.
+
+- `GET /api/admin/events/:eventId/access-roles`
+  - Liste les badges QR d'un evenement avec leurs albums autorises.
+  - Requiert un token admin.
+
+- `POST /api/admin/events/:eventId/access-roles`
+  - Cree un badge QR lie a un evenement.
+  - Body minimal : `name`.
+  - L'API accepte aussi `description` et `albumIds` optionnels si necessaire.
+  - Un badge peut etre cree sans album, puis rattache aux albums plus tard.
+  - Requiert un token admin.
+
+- `GET /api/admin/events/:eventId/access-roles/:roleId/qrcode`
+  - Genere le QR code d'un badge avec `?role=PUBLIC_TOKEN` dans l'URL participant.
+  - Requiert un token admin.
+
+- `DELETE /api/admin/access-roles/:roleId`
+  - Supprime un badge QR.
+  - Requiert un token admin.
 
 - `GET /api/admin/events/:eventId/stats`
   - Retourne les statistiques basiques.

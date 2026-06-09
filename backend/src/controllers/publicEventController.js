@@ -2,8 +2,8 @@ const eventService = require('../services/eventService');
 
 async function getEvent(req, res) {
   const { slug } = req.validated.params;
-  const { accessCode } = req.validated.query;
-  const event = await eventService.getPublicEvent(slug, accessCode);
+  const { accessCode, role } = req.validated.query;
+  const event = await eventService.getPublicEvent(slug, accessCode, role);
 
   res.json({ data: event });
 }
@@ -18,8 +18,8 @@ async function validateAccess(req, res) {
 
 async function getAlbum(req, res) {
   const { slug, albumSlug } = req.validated.params;
-  const { accessCode } = req.validated.query;
-  const result = await eventService.getPublicAlbum(slug, albumSlug, accessCode);
+  const { accessCode, role } = req.validated.query;
+  const result = await eventService.getPublicAlbum(slug, albumSlug, accessCode, role);
 
   res.json({ data: result });
 }

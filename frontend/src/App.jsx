@@ -31,6 +31,10 @@ function getInitialSlug() {
   return parts[eventIndex + 1] || demoEvent.slug;
 }
 
+function getInitialRole() {
+  return new URLSearchParams(window.location.search).get('role') || '';
+}
+
 function formatDate(value) {
   if (!value) return 'Date a confirmer';
 
@@ -55,6 +59,7 @@ function isDemoMedia(media) {
 
 function App() {
   const [eventSlug] = useState(getInitialSlug);
+  const [accessRole] = useState(getInitialRole);
   const [eventData, setEventData] = useState(null);
   const [selectedAlbumSlug, setSelectedAlbumSlug] = useState(null);
   const [albumData, setAlbumData] = useState(null);
@@ -80,7 +85,7 @@ function App() {
       setError('');
 
       try {
-        const data = await fetchPublicEvent(eventSlug, nextAccessCode);
+        const data = await fetchPublicEvent(eventSlug, nextAccessCode, accessRole);
         setEventData(data);
         setUsingDemo(false);
         setRequiresAccessCode(false);
@@ -99,7 +104,7 @@ function App() {
         setIsLoadingEvent(false);
       }
     },
-    [accessCode, eventSlug],
+    [accessCode, accessRole, eventSlug],
   );
 
   const loadAlbum = useCallback(
@@ -115,7 +120,7 @@ function App() {
           return;
         }
 
-        const result = await fetchPublicAlbum(eventSlug, albumSlug, nextAccessCode);
+        const result = await fetchPublicAlbum(eventSlug, albumSlug, nextAccessCode, accessRole);
         setAlbumData(result.album);
       } catch (loadError) {
         if (loadError.requiresAccessCode) {
@@ -127,7 +132,7 @@ function App() {
         setIsLoadingAlbum(false);
       }
     },
-    [accessCode, eventSlug, usingDemo],
+    [accessCode, accessRole, eventSlug, usingDemo],
   );
 
   useEffect(() => {
@@ -320,7 +325,7 @@ function App() {
                 onClick={() => openImage(item)}
               >
                 <img
-                  src={isDemoMedia(item) ? item.publicUrl : getMediaUrl(item, accessCode)}
+                  src={isDemoMedia(item) ? item.publicUrl : getMediaUrl(item, accessCode, accessRole)}
                   alt={item.originalName}
                   loading="lazy"
                 />
@@ -343,7 +348,7 @@ function App() {
             </div>
             {documents.map((item) => (
               <a
-                href={isDemoMedia(item) ? item.downloadUrl : getMediaUrl(item, accessCode, 'download')}
+                href={isDemoMedia(item) ? item.downloadUrl : getMediaUrl(item, accessCode, accessRole, 'download')}
                 className="document-row"
                 key={item.id}
               >
@@ -380,7 +385,7 @@ function App() {
             <ChevronLeft size={28} />
           </button>
           <img
-            src={isDemoMedia(activeImage) ? activeImage.publicUrl : getMediaUrl(activeImage, accessCode)}
+            src={isDemoMedia(activeImage) ? activeImage.publicUrl : getMediaUrl(activeImage, accessCode, accessRole)}
             alt={activeImage.originalName}
           />
           <button type="button" className="viewer-nav right" onClick={() => goToImage(1)} title="Suivant">
@@ -392,7 +397,7 @@ function App() {
             </span>
             <strong>{activeImage.originalName}</strong>
             <a
-              href={isDemoMedia(activeImage) ? activeImage.publicUrl : getMediaUrl(activeImage, accessCode, 'download')}
+              href={isDemoMedia(activeImage) ? activeImage.publicUrl : getMediaUrl(activeImage, accessCode, accessRole, 'download')}
               title="Telecharger"
             >
               <Download size={18} />

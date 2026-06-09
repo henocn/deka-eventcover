@@ -1,7 +1,20 @@
-import { ArrowLeft, BarChart3, Copy, Edit3, MapPin, QrCode } from 'lucide-react';
+import { ArrowLeft, Copy, Download, Edit3, Loader2, MapPin, Plus, Trash2 } from 'lucide-react';
 import { formatDate, getEventStatus, getStatusLabel } from '../utils/eventUtils';
 
-function EventDetailsPage({ event, stats, qrCode, onBack, onEdit, onLoadStats, onLoadQr, onCopyUrl }) {
+function EventDetailsPage({
+  event,
+  stats,
+  accessRoles,
+  roleForm,
+  isLoading,
+  isCreatingRole,
+  onBack,
+  onEdit,
+  onCopyUrl,
+  onRoleFormChange,
+  onCreateRole,
+  onDeleteRole,
+}) {
   if (!event) return null;
   const status = getEventStatus(event);
 
@@ -13,14 +26,6 @@ function EventDetailsPage({ event, stats, qrCode, onBack, onEdit, onLoadStats, o
           Retour
         </button>
         <div className="details-actions">
-          <button type="button" className="soft-button" onClick={onLoadStats}>
-            <BarChart3 size={16} />
-            Stats
-          </button>
-          <button type="button" className="soft-button" onClick={onLoadQr}>
-            <QrCode size={16} />
-            QR
-          </button>
           <button type="button" className="primary-button" onClick={onEdit}>
             <Edit3 size={16} />
             Edit
@@ -55,23 +60,105 @@ function EventDetailsPage({ event, stats, qrCode, onBack, onEdit, onLoadStats, o
           </div>
         </div>
 
-        <div className="detail-panel">
-          <h3>QR code</h3>
-          {qrCode ? (
-            <div className="qr-inline">
-              <img src={qrCode.qrCodeDataUrl} alt="QR code evenement" />
-              <div>
-                <p>{qrCode.publicUrl}</p>
-                <button type="button" className="soft-button" onClick={onCopyUrl}>
+        <div className="detail-panel access-panel-card">
+          <div className="panel-heading-row">
+            <div>
+              <h3>Badges QR</h3>
+              <p>Chaque badge donne acces uniquement aux albums selectionnes.</p>
+            </div>
+            <span>{accessRoles.length}</span>
+          </div>
+
+          <form className="role-form" onSubmit={onCreateRole}>
+            <label>
+              Nom du badge
+              <input
+                value={roleForm.name}
+                onChange={(inputEvent) => onRoleFormChange('name', inputEvent.target.value)}
+                placeholder="Presse, VIP, Staff..."
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="primary-button"
+              disabled={isCreatingRole}
+            >
+              {isCreatingRole ? <Loader2 className="spin" size={16} /> : <Plus size={16} />}
+              Creer badge
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div className="access-role-list">
+        {isLoading ? (
+          <div className="detail-panel inline-loading">
+            <Loader2 className="spin" size={16} />
+            Chargement des badges...
+          </div>
+        ) : null}
+
+        {!isLoading && accessRoles.length === 0 ? (
+          <div className="detail-panel empty-role-state">
+            <p>Aucun badge QR pour cet evenement.</p>
+          </div>
+        ) : null}
+
+        {accessRoles.map((role) => (
+          <article className="role-card" key={role.id}>
+            <div className="role-main">
+              <div className="role-title-block">
+                <p className="section-kicker">Role</p>
+                <h3>{role.name}</h3>
+                {role.description ? <p>{role.description}</p> : null}
+              </div>
+              <div className="role-access-block">
+                <p className="section-kicker">Dossiers d'acces</p>
+              {(role.albums || []).length > 0 ? (
+                <div className="role-albums">
+                  {(role.albums || []).map((album) => (
+                    <span key={album.id}>{album.title}</span>
+                  ))}
+                </div>
+              ) : (
+                <p className="role-empty-access">Aucun album rattache pour le moment.</p>
+              )}
+              </div>
+              <p className="role-url">{role.publicUrl}</p>
+            </div>
+            <div className="role-qr-box">
+              {role.qrCodeDataUrl ? (
+                <img src={role.qrCodeDataUrl} alt={`QR ${role.name}`} />
+              ) : (
+                <div className="qr-placeholder">QR</div>
+              )}
+              <div className="qr-actions">
+                <button type="button" className="qr-action-button" onClick={() => onCopyUrl(role)} title="Copier le lien">
                   <Copy size={16} />
-                  Copier
+                </button>
+                {role.qrCodeDataUrl ? (
+                  <a
+                    className="qr-action-button"
+                    href={role.qrCodeDataUrl}
+                    download={`qr-${event.slug}-${role.name}.png`}
+                    title="Telecharger le QR"
+                  >
+                    <Download size={16} />
+                  </a>
+                ) : null}
+                <button
+                  type="button"
+                  className="qr-action-button danger-button"
+                  onClick={() => onDeleteRole(role)}
+                  title="Supprimer le badge"
+                >
+                  <Trash2 size={16} />
                 </button>
               </div>
             </div>
-          ) : (
-            <p className="muted-text">Genere le QR code pour afficher le lien public.</p>
-          )}
-        </div>
+          </article>
+        ))}
       </div>
     </section>
   );

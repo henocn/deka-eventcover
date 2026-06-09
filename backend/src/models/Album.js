@@ -7,6 +7,12 @@ module.exports = (sequelize) => {
       Album.hasMany(models.Media, { foreignKey: 'albumId', as: 'media' });
       Album.hasMany(models.MediaStat, { foreignKey: 'albumId', as: 'stats' });
       Album.belongsTo(models.Media, { foreignKey: 'coverMediaId', as: 'coverMedia' });
+      Album.belongsToMany(models.AccessRole, {
+        through: models.AccessRoleAlbum,
+        foreignKey: 'albumId',
+        otherKey: 'accessRoleId',
+        as: 'accessRoles',
+      });
     }
   }
 

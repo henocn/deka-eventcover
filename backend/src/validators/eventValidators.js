@@ -57,6 +57,19 @@ const eventIdParamSchema = z.object({
   }),
 });
 
+const accessRoleIdParamSchema = z.object({
+  params: z.object({
+    roleId: z.coerce.number().int().positive(),
+  }),
+});
+
+const eventAccessRoleParamSchema = z.object({
+  params: z.object({
+    eventId: z.coerce.number().int().positive(),
+    roleId: z.coerce.number().int().positive(),
+  }),
+});
+
 const albumBody = z.object({
   title: z.string().trim().min(2, 'Le titre doit contenir au moins 2 caracteres').max(180),
   slug: z.string().trim().max(180).optional(),
@@ -64,6 +77,11 @@ const albumBody = z.object({
   coverMediaId: z.coerce.number().int().positive().optional().nullable(),
   sortOrder: z.coerce.number().int().optional(),
   isPublished: booleanField,
+  accessRoleIds: z
+    .array(z.coerce.number().int().positive())
+    .max(100)
+    .optional()
+    .transform((ids) => (ids ? [...new Set(ids)] : undefined)),
 });
 
 const createAlbumSchema = z.object({
@@ -71,6 +89,21 @@ const createAlbumSchema = z.object({
     eventId: z.coerce.number().int().positive(),
   }),
   body: albumBody,
+});
+
+const createAccessRoleSchema = z.object({
+  params: z.object({
+    eventId: z.coerce.number().int().positive(),
+  }),
+  body: z.object({
+    name: z.string().trim().min(2, 'Le nom du badge doit contenir au moins 2 caracteres').max(120),
+    description: nullableText,
+    albumIds: z
+      .array(z.coerce.number().int().positive())
+      .max(100)
+      .optional()
+      .transform((ids) => (ids ? [...new Set(ids)] : [])),
+  }),
 });
 
 const updateAlbumSchema = z.object({
@@ -86,6 +119,9 @@ module.exports = {
   createEventSchema,
   updateEventSchema,
   eventIdParamSchema,
+  accessRoleIdParamSchema,
+  eventAccessRoleParamSchema,
   createAlbumSchema,
   updateAlbumSchema,
+  createAccessRoleSchema,
 };

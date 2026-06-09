@@ -94,21 +94,41 @@ async function deleteEvent(eventId) {
   });
 }
 
-async function fetchQrCode(eventId) {
-  return apiRequest(`/api/admin/events/${eventId}/qrcode`);
-}
-
 async function fetchStats(eventId) {
   return apiRequest(`/api/admin/events/${eventId}/stats`);
+}
+
+async function fetchAccessRoles(eventId) {
+  return apiRequest(`/api/admin/events/${eventId}/access-roles`);
+}
+
+async function createAccessRole(eventId, payload) {
+  return apiRequest(`/api/admin/events/${eventId}/access-roles`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+async function deleteAccessRole(roleId) {
+  return apiRequest(`/api/admin/access-roles/${roleId}`, {
+    method: 'DELETE',
+  });
+}
+
+async function fetchAccessRoleQrCode(eventId, roleId) {
+  return apiRequest(`/api/admin/events/${eventId}/access-roles/${roleId}/qrcode`);
 }
 
 export {
   API_URL,
   clearSession,
+  createAccessRole,
   createEvent,
+  deleteAccessRole,
   deleteEvent,
+  fetchAccessRoleQrCode,
+  fetchAccessRoles,
   fetchEvents,
-  fetchQrCode,
   fetchStats,
   getStoredUser,
   getToken,

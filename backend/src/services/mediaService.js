@@ -6,6 +6,7 @@ const env = require('../config/env');
 const httpError = require('../utils/httpError');
 const { getMediaType } = require('../middlewares/upload');
 const { extensionFromName, sanitizeBaseName } = require('../utils/fileNames');
+const eventService = require('./eventService');
 
 function safeJoinUploadPath(relativePath) {
   const root = path.resolve(env.mediaRoot);
@@ -117,7 +118,7 @@ async function uploadAlbumMedia(albumId, files, user) {
   };
 }
 
-async function getPublicMedia(mediaId, accessCode) {
+async function getPublicMedia(mediaId, accessCode, roleToken) {
   const media = await Media.findByPk(mediaId, {
     include: [
       {
@@ -137,10 +138,16 @@ async function getPublicMedia(mediaId, accessCode) {
     throw httpError(404, 'Media not found');
   }
 
-  if (!hasAccess(media.event, accessCode)) {
+  const accessRole = await eventService.resolveAccessRole(media.event.id, roleToken);
+
+  if (!accessRole && !hasAccess(media.event, accessCode)) {
     const error = httpError(403, 'Access code required');
     error.requiresAccessCode = true;
     throw error;
+  }
+
+  if (accessRole && !eventService.getRoleAlbumIds(accessRole).has(media.albumId)) {
+    throw httpError(404, 'Media not found');
   }
 
   return media;
@@ -157,8 +164,8 @@ async function recordMediaStat(media, action, req) {
   });
 }
 
-async function getMediaFileResponse(mediaId, accessCode, req, action) {
-  const media = await getPublicMedia(mediaId, accessCode);
+async function getMediaFileResponse(mediaId, accessCode, roleToken, req, action) {
+  const media = await getPublicMedia(mediaId, accessCode, roleToken);
   await recordMediaStat(media, action, req);
 
   return {

@@ -7,6 +7,7 @@ module.exports = (sequelize) => {
       Event.hasMany(models.Album, { foreignKey: 'eventId', as: 'albums' });
       Event.hasMany(models.Media, { foreignKey: 'eventId', as: 'media' });
       Event.hasMany(models.MediaStat, { foreignKey: 'eventId', as: 'stats' });
+      Event.hasMany(models.AccessRole, { foreignKey: 'eventId', as: 'accessRoles' });
       Event.belongsTo(models.Media, { foreignKey: 'coverMediaId', as: 'coverMedia' });
     }
   }

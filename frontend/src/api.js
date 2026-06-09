@@ -13,24 +13,28 @@ async function parseResponse(response) {
   return payload.data;
 }
 
-function withAccessCode(path, accessCode) {
+function withAccess(path, accessCode, role) {
   const url = new URL(`${API_URL}${path}`);
 
   if (accessCode) {
     url.searchParams.set('accessCode', accessCode);
   }
 
+  if (role) {
+    url.searchParams.set('role', role);
+  }
+
   return url.toString();
 }
 
-export async function fetchPublicEvent(slug, accessCode) {
-  const response = await fetch(withAccessCode(`/api/public/events/${slug}`, accessCode));
+export async function fetchPublicEvent(slug, accessCode, role) {
+  const response = await fetch(withAccess(`/api/public/events/${slug}`, accessCode, role));
   return parseResponse(response);
 }
 
-export async function fetchPublicAlbum(eventSlug, albumSlug, accessCode) {
+export async function fetchPublicAlbum(eventSlug, albumSlug, accessCode, role) {
   const response = await fetch(
-    withAccessCode(`/api/public/events/${eventSlug}/albums/${albumSlug}`, accessCode),
+    withAccess(`/api/public/events/${eventSlug}/albums/${albumSlug}`, accessCode, role),
   );
   return parseResponse(response);
 }
@@ -47,12 +51,12 @@ export async function validateEventAccess(slug, accessCode) {
   return parseResponse(response);
 }
 
-export function getMediaUrl(media, accessCode, mode = 'file') {
+export function getMediaUrl(media, accessCode, role, mode = 'file') {
   if (!media?.id) {
     return '';
   }
 
-  return withAccessCode(`/api/public/media/${media.id}/${mode}`, accessCode);
+  return withAccess(`/api/public/media/${media.id}/${mode}`, accessCode, role);
 }
 
 export { API_URL };

@@ -16,7 +16,6 @@ function EventsPage({
   onOpenDetails,
   onEdit,
   onDelete,
-  onQr,
 }) {
   return (
     <section className="events-workspace compact-page">
@@ -47,7 +46,6 @@ function EventsPage({
           onOpenDetails={onOpenDetails}
           onEdit={onEdit}
           onDelete={onDelete}
-          onQr={onQr}
         />
       </div>
     </section>

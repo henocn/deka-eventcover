@@ -12,6 +12,7 @@ const mediaFileSchema = z.object({
   }),
   query: z.object({
     accessCode: z.string().trim().optional(),
+    role: z.string().trim().optional(),
   }),
 });
 

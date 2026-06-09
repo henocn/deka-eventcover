@@ -1,7 +1,7 @@
-import { Edit3, Loader2, QrCode, Trash2 } from 'lucide-react';
+import { Edit3, Loader2, Trash2 } from 'lucide-react';
 import { formatDate, getEventStatus, getStatusLabel } from '../../utils/eventUtils';
 
-function EventTable({ events, isLoading, selectedEventId, onOpenDetails, onEdit, onDelete, onQr }) {
+function EventTable({ events, isLoading, selectedEventId, onOpenDetails, onEdit, onDelete }) {
   return (
     <div className="events-table-wrap">
       <table className="events-table compact-table">
@@ -53,9 +53,6 @@ function EventTable({ events, isLoading, selectedEventId, onOpenDetails, onEdit,
                     </button>
                     <button type="button" onClick={() => onDelete(event)} title="Delete">
                       <Trash2 size={16} />
-                    </button>
-                    <button type="button" onClick={() => onQr(event)} title="QR">
-                      <QrCode size={16} />
                     </button>
                   </div>
                 </td>

@@ -112,6 +112,8 @@ Priorite design : interface simple, premium, mobile-first, rapide a comprendre e
 - [ ] Creer l'upload de medias
 - [ ] Ajouter l'edition des titres, descriptions et couvertures
 - [x] Ajouter la generation de QR code par evenement
+- [x] Afficher automatiquement le QR code sur la page detail evenement
+- [x] Ajouter des badges QR par role avec acces limite a certains albums
 - [x] Ajouter la copie du lien public
 - [x] Ajouter les statistiques basiques
 - [ ] Ajouter la gestion simple des utilisateurs internes
@@ -172,6 +174,7 @@ Priorite design : interface simple, premium, mobile-first, rapide a comprendre e
 - [ ] Un admin peut creer des albums
 - [ ] Un admin peut uploader photos et documents
 - [ ] Un admin peut generer/copier un QR code evenement
+- [x] Un admin peut generer/copier des QR codes par badge d'acces album
 - [ ] Un participant peut ouvrir un evenement via lien public
 - [ ] Un participant peut consulter les albums
 - [ ] Un participant peut ouvrir une galerie photo fluide
