@@ -6,12 +6,29 @@ const booleanField = z.union([z.boolean(), z.string()]).optional().transform((va
   return value === 'true';
 });
 
-const nullableText = z.string().trim().optional().transform((value) => value || null);
+const nullableText = z
+  .union([z.string(), z.null()])
+  .optional()
+  .transform((value) => {
+    if (value === null || value === undefined) return null;
+    const trimmed = value.trim();
+    return trimmed || null;
+  });
 
-const dateField = z.string().datetime().optional().nullable();
+const dateField = z
+  .union([z.string(), z.null()])
+  .optional()
+  .refine(
+    (value) => {
+      if (!value) return true;
+      return !Number.isNaN(Date.parse(value));
+    },
+    { message: 'Date invalide' }
+  )
+  .transform((value) => (value ? new Date(value).toISOString() : null));
 
 const eventBody = z.object({
-  title: z.string().trim().min(2).max(180),
+  title: z.string().trim().min(2, 'Le titre doit contenir au moins 2 caracteres').max(180),
   slug: z.string().trim().max(180).optional(),
   description: nullableText,
   location: nullableText,
@@ -41,7 +58,7 @@ const eventIdParamSchema = z.object({
 });
 
 const albumBody = z.object({
-  title: z.string().trim().min(2).max(180),
+  title: z.string().trim().min(2, 'Le titre doit contenir au moins 2 caracteres').max(180),
   slug: z.string().trim().max(180).optional(),
   description: nullableText,
   coverMediaId: z.coerce.number().int().positive().optional().nullable(),

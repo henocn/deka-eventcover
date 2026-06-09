@@ -73,6 +73,7 @@ Base locale prevue : `http://localhost:4000`
 - `GET /api/admin/events/:eventId/qrcode`
   - Genere le QR code du lien public.
   - Requiert un token admin.
+  - Encode l'URL participant basee sur `PARTICIPANT_APP_URL` ou `FRONTEND_APP_URL`, jamais l'URL back-office.
 
 - `GET /api/admin/events/:eventId/stats`
   - Retourne les statistiques basiques.

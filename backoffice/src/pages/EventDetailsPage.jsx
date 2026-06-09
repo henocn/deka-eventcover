@@ -34,9 +34,12 @@ function EventDetailsPage({ event, stats, qrCode, onBack, onEdit, onLoadStats, o
         <p>{event.description || 'Aucune description renseignee.'}</p>
         <div className="detail-meta">
           <span className={`status-pill ${status}`}>{getStatusLabel(status)}</span>
-          <span>{formatDate(event.startsAt)}</span>
+          <span className="meta-chip">{formatDate(event.startsAt)}</span>
           {event.location ? (
-            <span><MapPin size={15} /> {event.location}</span>
+            <span className="meta-chip location-chip">
+              <MapPin size={14} />
+              {event.location}
+            </span>
           ) : null}
         </div>
       </div>

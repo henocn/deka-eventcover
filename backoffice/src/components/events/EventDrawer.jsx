@@ -1,6 +1,16 @@
 import { CheckCircle2, Loader2, LockKeyhole, MapPin, X } from 'lucide-react';
 
-function EventDrawer({ open, selectedEvent, form, isSaving, onClose, onSubmit, onChange }) {
+function EventDrawer({
+  open,
+  selectedEvent,
+  form,
+  isSaving,
+  notice,
+  error,
+  onClose,
+  onSubmit,
+  onChange,
+}) {
   if (!open) return null;
 
   return (
@@ -17,6 +27,14 @@ function EventDrawer({ open, selectedEvent, form, isSaving, onClose, onSubmit, o
         </header>
 
         <form className="drawer-form" onSubmit={onSubmit}>
+          {notice ? <div className="drawer-status success">{notice}</div> : null}
+          {error ? (
+            <div className="drawer-status error">
+              {error.split('\n').map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </div>
+          ) : null}
           <label>
             Titre
             <input

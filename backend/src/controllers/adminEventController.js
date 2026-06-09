@@ -51,7 +51,7 @@ async function updateAlbum(req, res) {
 
 async function getEventQrCode(req, res) {
   const event = await eventService.getEventById(req.validated.params.eventId);
-  const publicUrl = `${env.publicAppUrl.replace(/\/$/, '')}/events/${event.slug}`;
+  const publicUrl = `${env.participantAppUrl.replace(/\/$/, '')}/events/${event.slug}`;
   const dataUrl = await QRCode.toDataURL(publicUrl, {
     margin: 1,
     width: 512,

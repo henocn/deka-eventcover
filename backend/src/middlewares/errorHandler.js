@@ -8,5 +8,6 @@ module.exports = function errorHandler(error, req, res, next) {
   res.status(status).json({
     message: error.message || 'Internal server error',
     requiresAccessCode: Boolean(error.requiresAccessCode),
+    errors: error.errors || undefined,
   });
 };

@@ -1,3 +1,29 @@
+const fieldLabels = {
+  'body.title': 'Titre',
+  'body.description': 'Description',
+  'body.location': 'Lieu',
+  'body.startsAt': 'Date de debut',
+  'body.endsAt': 'Date de fin',
+  'body.accessCode': "Code d'acces",
+  'body.isPublished': 'Publication',
+  'body.email': 'Email',
+  'body.password': 'Mot de passe',
+  'params.eventId': 'Evenement',
+  'params.albumId': 'Album',
+  'params.mediaId': 'Media',
+};
+
+function formatIssue(issue) {
+  const path = issue.path.join('.');
+  const label = fieldLabels[path] || path || 'Requete';
+
+  return {
+    field: path,
+    label,
+    message: `${label}: ${issue.message}`,
+  };
+}
+
 module.exports = function validate(schema) {
   return (req, res, next) => {
     const result = schema.safeParse({
@@ -7,12 +33,11 @@ module.exports = function validate(schema) {
     });
 
     if (!result.success) {
+      const errors = result.error.issues.map(formatIssue);
+
       return res.status(400).json({
-        message: 'Invalid request data',
-        errors: result.error.issues.map((issue) => ({
-          path: issue.path.join('.'),
-          message: issue.message,
-        })),
+        message: 'Certaines informations sont invalides.',
+        errors,
       });
     }
 

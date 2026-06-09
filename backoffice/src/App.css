@@ -329,6 +329,28 @@ p {
   color: var(--danger);
 }
 
+.drawer-status {
+  display: grid;
+  gap: 4px;
+  border-radius: 5px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.drawer-status.success {
+  border: 1px solid #c8ebc8;
+  background: #efffed;
+  color: #146a18;
+}
+
+.drawer-status.error {
+  border: 1px solid #ffd2d2;
+  background: #fff0f0;
+  color: var(--danger);
+}
+
 .table-card,
 .details-hero,
 .detail-panel {
@@ -662,6 +684,27 @@ button:disabled {
   flex-wrap: wrap;
   margin-top: 16px;
   color: var(--muted);
+}
+
+.meta-chip {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fafafa;
+  padding: 0 10px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.location-chip {
+  max-width: min(360px, 100%);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .details-grid {

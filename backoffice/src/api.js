@@ -6,7 +6,14 @@ async function parseResponse(response) {
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(payload.message || 'Une erreur est survenue');
+    const details = Array.isArray(payload.errors)
+      ? payload.errors.map((error) => error.message || error).filter(Boolean)
+      : [];
+    const message = [payload.message || 'Une erreur est survenue', ...details].join('\n');
+    const error = new Error(message);
+    error.status = response.status;
+    error.details = details;
+    throw error;
   }
 
   return payload.data;

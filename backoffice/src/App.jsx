@@ -42,6 +42,8 @@ function App() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const [drawerNotice, setDrawerNotice] = useState('');
+  const [drawerError, setDrawerError] = useState('');
   const selectedEventIdRef = useRef(null);
 
   const selectedEvent = useMemo(
@@ -144,6 +146,8 @@ function App() {
     setEventForm(emptyEventForm);
     setQrCode(null);
     setStats(null);
+    setDrawerNotice('');
+    setDrawerError('');
     setDrawerOpen(true);
   }
 
@@ -151,13 +155,16 @@ function App() {
     selectedEventIdRef.current = event.id;
     setSelectedEventId(event.id);
     setEventForm(formFromEvent(event));
+    setDrawerNotice('');
+    setDrawerError('');
     setDrawerOpen(true);
   }
 
   async function saveEvent(event) {
     event.preventDefault();
     setIsSaving(true);
-    setError('');
+    setDrawerError('');
+    setDrawerNotice('Enregistrement en cours...');
 
     try {
       const payload = buildEventPayload(eventForm);
@@ -168,11 +175,11 @@ function App() {
       selectedEventIdRef.current = saved.id;
       setSelectedEventId(saved.id);
       setEventForm(formFromEvent(saved));
-      setNotice(selectedEvent ? 'Evenement mis a jour' : 'Evenement cree');
-      setDrawerOpen(false);
+      setDrawerNotice(selectedEvent ? 'Evenement mis a jour.' : 'Evenement cree.');
       await loadEvents();
     } catch (saveError) {
-      setError(saveError.message);
+      setDrawerNotice('');
+      setDrawerError(saveError.message);
     } finally {
       setIsSaving(false);
     }
@@ -299,6 +306,8 @@ function App() {
         selectedEvent={selectedEvent}
         form={eventForm}
         isSaving={isSaving}
+        notice={drawerNotice}
+        error={drawerError}
         onClose={() => setDrawerOpen(false)}
         onSubmit={saveEvent}
         onChange={updateEventForm}
