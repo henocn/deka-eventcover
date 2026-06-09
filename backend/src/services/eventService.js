@@ -85,6 +85,7 @@ function serializeAlbum(album, includeMedia = false) {
     slug: album.slug,
     description: album.description,
     coverMediaId: album.coverMediaId,
+    coverMedia: serializeMedia(album.coverMedia),
     sortOrder: album.sortOrder,
     isPublished: album.isPublished,
     media,
@@ -535,6 +536,12 @@ async function getPublicEvent(slug, accessCode, roleToken) {
         required: false,
         attributes: albumPublicAttributes,
         include: [
+          {
+            model: Media,
+            as: 'coverMedia',
+            required: false,
+            attributes: mediaPublicAttributes,
+          },
           {
             model: AccessRole,
             as: 'accessRoles',

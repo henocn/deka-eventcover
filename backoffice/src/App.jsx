@@ -49,7 +49,6 @@ function App() {
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [route, setRoute] = useState(() => routeFromPath());
-  const [view, setView] = useState(() => routeFromPath().view);
   const [eventForm, setEventForm] = useState(emptyEventForm);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [query, setQuery] = useState('');
@@ -93,10 +92,11 @@ const [editingAlbumId, setEditingAlbumId] = useState(null);
     return events.flatMap((event) => event.albums || []).find((album) => album.slug === route.slug) || null;
   }, [events, route.slug]);
 
-  function pushRoute(path, nextRoute) {
+  const view = route.view;
+
+  function navigateTo(path) {
     window.history.pushState({}, '', path);
-    setRoute(nextRoute);
-    setView(nextRoute.view);
+    setRoute(routeFromPath(path));
   }
 
   const filteredEvents = useMemo(() => {
@@ -158,9 +158,7 @@ const [editingAlbumId, setEditingAlbumId] = useState(null);
 
   useEffect(() => {
     const onPopState = () => {
-      const nextRoute = routeFromPath();
-      setRoute(nextRoute);
-      setView(nextRoute.view);
+      setRoute(routeFromPath());
     };
 
     window.addEventListener('popstate', onPopState);
@@ -221,15 +219,14 @@ const [editingAlbumId, setEditingAlbumId] = useState(null);
     }
   }
 
-  function handleLogout() {
+function handleLogout() {
     clearSession();
     selectedEventIdRef.current = null;
     setUser(null);
     setEvents([]);
     setSelectedEventId(null);
     setDrawerOpen(false);
-    setView('events');
-    pushRoute('/events', { view: 'events' });
+    navigateTo('/events');
   }
 
   async function navigate(viewName) {
@@ -239,8 +236,7 @@ const [editingAlbumId, setEditingAlbumId] = useState(null);
     if (viewName === 'albums') {
       const nextEventId = albumEventId || selectedEventId || events[0]?.id || null;
       setAlbumEventId(nextEventId);
-      setView('albums');
-      pushRoute('/albums', { view: 'albums' });
+      navigateTo('/albums');
 
       if (nextEventId) {
         await loadAlbumAccessRoles(nextEventId);
@@ -248,7 +244,7 @@ const [editingAlbumId, setEditingAlbumId] = useState(null);
       return;
     }
 
-    pushRoute('/events', { view: 'events' });
+    navigateTo('/events');
   }
 
   function openCreateDrawer() {
@@ -304,7 +300,7 @@ const [editingAlbumId, setEditingAlbumId] = useState(null);
       setNotice('Evenement supprime');
       if (selectedEventId === event.id) {
         setSelectedEventId(null);
-        setView('events');
+        navigateTo('/events');
       }
       await loadEvents();
     } catch (deleteError) {
@@ -315,9 +311,8 @@ const [editingAlbumId, setEditingAlbumId] = useState(null);
   async function openDetails(event, options = { push: true }) {
     selectedEventIdRef.current = event.id;
     setSelectedEventId(event.id);
-    setView('details');
     if (options.push) {
-      pushRoute(`/event/${event.slug}`, { view: 'details', slug: event.slug });
+      navigateTo(`/event/${event.slug}`);
     }
     setStats(null);
     setAccessRoles([]);
@@ -470,7 +465,7 @@ const [editingAlbumId, setEditingAlbumId] = useState(null);
     setIsAlbumDetailsLoading(true);
     setError('');
     if (options.push) {
-      pushRoute(`/albums/${album.slug}`, { view: 'albumDetails', slug: album.slug });
+      navigateTo(`/albums/${album.slug}`);
     }
 
     try {
@@ -583,7 +578,7 @@ const [editingAlbumId, setEditingAlbumId] = useState(null);
             roleForm={accessRoleForm}
             isLoading={isDetailsLoading}
             isCreatingRole={isCreatingRole}
-            onBack={() => pushRoute('/events', { view: 'events' })}
+            onBack={() => navigateTo('/events')}
             onEdit={() => selectedEvent && openEditDrawer(selectedEvent)}
             onCopyUrl={copyPublicUrl}
             onRoleFormChange={updateAccessRoleForm}
@@ -597,7 +592,7 @@ const [editingAlbumId, setEditingAlbumId] = useState(null);
             error={error}
             isLoading={isAlbumDetailsLoading}
             isUploading={isUploadingAlbumMedia}
-            onBack={() => pushRoute('/albums', { view: 'albums' })}
+            onBack={() => navigateTo('/albums')}
             onUploadMedia={uploadMediaToAlbum}
           />
         ) : view === 'albums' ? (
