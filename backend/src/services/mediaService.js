@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const fs = require('fs/promises');
 const path = require('path');
-const { Album, Event, Media, MediaStat } = require('../models');
+const { Album, Event, Media, MediaStat, AccessRole } = require('../models');
 const env = require('../config/env');
 const httpError = require('../utils/httpError');
 const { getMediaType } = require('../middlewares/upload');
@@ -130,6 +130,15 @@ async function getPublicMedia(mediaId, accessCode, roleToken) {
         model: Album,
         as: 'album',
         required: true,
+        include: [
+          {
+            model: AccessRole,
+            as: 'accessRoles',
+            required: false,
+            attributes: ['id'],
+            through: { attributes: [] },
+          },
+        ],
       },
     ],
   });
@@ -146,7 +155,7 @@ async function getPublicMedia(mediaId, accessCode, roleToken) {
     throw error;
   }
 
-  if (accessRole && !eventService.getRoleAlbumIds(accessRole).has(media.albumId)) {
+  if (!eventService.canAccessAlbum(media.album, accessRole)) {
     throw httpError(404, 'Media not found');
   }
 
@@ -174,7 +183,21 @@ async function getMediaFileResponse(mediaId, accessCode, roleToken, req, action)
   };
 }
 
+async function getAdminMediaFileResponse(mediaId) {
+  const media = await Media.findByPk(mediaId);
+
+  if (!media) {
+    throw httpError(404, 'Media not found');
+  }
+
+  return {
+    media,
+    absolutePath: safeJoinUploadPath(media.storagePath),
+  };
+}
+
 module.exports = {
   uploadAlbumMedia,
   getMediaFileResponse,
+  getAdminMediaFileResponse,
 };

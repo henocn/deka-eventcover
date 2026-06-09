@@ -17,7 +17,7 @@ const {
   updateAlbumSchema,
   createAccessRoleSchema,
 } = require('../validators/eventValidators');
-const { albumIdParamSchema } = require('../validators/mediaValidators');
+const { albumIdParamSchema, mediaFileSchema } = require('../validators/mediaValidators');
 
 const router = express.Router();
 
@@ -81,16 +81,31 @@ router.post(
   validate(createAlbumSchema),
   asyncHandler(adminEventController.createAlbum)
 );
+router.get(
+  '/albums/:albumId',
+  validate(albumIdParamSchema),
+  asyncHandler(adminEventController.getAlbum)
+);
 router.patch(
   '/albums/:albumId',
   validate(updateAlbumSchema),
   asyncHandler(adminEventController.updateAlbum)
+);
+router.delete(
+  '/albums/:albumId',
+  validate(albumIdParamSchema),
+  asyncHandler(adminEventController.deleteAlbum)
 );
 router.post(
   '/albums/:albumId/media',
   validate(albumIdParamSchema),
   upload.array('files', 50),
   asyncHandler(adminMediaController.uploadAlbumMedia)
+);
+router.get(
+  '/media/:mediaId/file',
+  validate(mediaFileSchema),
+  asyncHandler(adminMediaController.sendAdminMediaFile)
 );
 
 module.exports = router;

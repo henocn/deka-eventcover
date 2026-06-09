@@ -88,6 +88,40 @@ async function updateEvent(eventId, payload) {
   });
 }
 
+async function createAlbum(eventId, payload) {
+  return apiRequest(`/api/admin/events/${eventId}/albums`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+async function fetchAlbum(albumId) {
+  return apiRequest(`/api/admin/albums/${albumId}`);
+}
+
+async function updateAlbum(albumId, payload) {
+  return apiRequest(`/api/admin/albums/${albumId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+async function uploadAlbumMedia(albumId, files) {
+  const formData = new FormData();
+  [...files].forEach((file) => formData.append('files', file));
+
+  return apiRequest(`/api/admin/albums/${albumId}/media`, {
+    method: 'POST',
+    body: formData,
+  });
+}
+
+async function deleteAlbum(albumId) {
+  return apiRequest(`/api/admin/albums/${albumId}`, {
+    method: 'DELETE',
+  });
+}
+
 async function deleteEvent(eventId) {
   return apiRequest(`/api/admin/events/${eventId}`, {
     method: 'DELETE',
@@ -123,15 +157,20 @@ export {
   API_URL,
   clearSession,
   createAccessRole,
+  createAlbum,
   createEvent,
   deleteAccessRole,
+  deleteAlbum,
   deleteEvent,
   fetchAccessRoleQrCode,
   fetchAccessRoles,
+  fetchAlbum,
   fetchEvents,
   fetchStats,
   getStoredUser,
   getToken,
   login,
+  updateAlbum,
   updateEvent,
+  uploadAlbumMedia,
 };

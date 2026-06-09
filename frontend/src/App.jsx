@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   CalendarDays,
+  Camera,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -11,6 +12,7 @@ import {
   LockKeyhole,
   MapPin,
   RefreshCw,
+  ScanLine,
   ShieldCheck,
   X,
 } from 'lucide-react';
@@ -28,7 +30,7 @@ import './App.css';
 function getInitialSlug() {
   const parts = window.location.pathname.split('/').filter(Boolean);
   const eventIndex = parts.indexOf('events');
-  return parts[eventIndex + 1] || demoEvent.slug;
+  return eventIndex >= 0 ? parts[eventIndex + 1] || '' : '';
 }
 
 function getInitialRole() {
@@ -57,6 +59,89 @@ function isDemoMedia(media) {
   return String(media?.id || '').startsWith('demo-');
 }
 
+function QrScannerPanel({ title, description, onScan }) {
+  const videoRef = useRef(null);
+  const [scannerError, setScannerError] = useState('');
+
+  useEffect(() => {
+    let stream;
+    let frameId;
+    let isActive = true;
+
+    async function startScanner() {
+      if (!('BarcodeDetector' in window)) {
+        setScannerError("Ce navigateur ne supporte pas encore le scan QR integre. Ouvrez le lien QR avec l'appareil photo du telephone.");
+        return;
+      }
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+          audio: false,
+        });
+
+        const video = videoRef.current;
+        if (!video) return;
+
+        video.srcObject = stream;
+        await video.play();
+
+        const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+
+        const scan = async () => {
+          if (!isActive || !videoRef.current) return;
+
+          try {
+            const codes = await detector.detect(videoRef.current);
+            const value = codes[0]?.rawValue;
+
+            if (value) {
+              onScan(value);
+              return;
+            }
+          } catch {
+            setScannerError('Scan impossible pour le moment. Repositionnez le QR code ou rescanner avec la camera du telephone.');
+          }
+
+          frameId = window.requestAnimationFrame(scan);
+        };
+
+        frameId = window.requestAnimationFrame(scan);
+      } catch {
+        setScannerError("Autorisez l'acces a la camera pour scanner le QR code.");
+      }
+    }
+
+    startScanner();
+
+    return () => {
+      isActive = false;
+      if (frameId) window.cancelAnimationFrame(frameId);
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [onScan]);
+
+  return (
+    <main className="participant-shell access-screen">
+      <section className="access-panel scanner-panel">
+        <div className="access-icon">
+          <Camera size={24} />
+        </div>
+        <p className="eyebrow">Scan QR</p>
+        <h1>{title}</h1>
+        <p className="access-hint">{description}</p>
+        <div className="scanner-frame">
+          <video ref={videoRef} muted playsInline />
+          <ScanLine className="scanner-mark" size={42} />
+        </div>
+        {scannerError ? <p className="form-error">{scannerError}</p> : null}
+      </section>
+    </main>
+  );
+}
+
 function App() {
   const [eventSlug] = useState(getInitialSlug);
   const [accessRole] = useState(getInitialRole);
@@ -66,6 +151,7 @@ function App() {
   const [accessCode, setAccessCode] = useState('');
   const [pendingCode, setPendingCode] = useState('');
   const [requiresAccessCode, setRequiresAccessCode] = useState(false);
+  const [invalidBadge, setInvalidBadge] = useState(false);
   const [isLoadingEvent, setIsLoadingEvent] = useState(true);
   const [isLoadingAlbum, setIsLoadingAlbum] = useState(false);
   const [error, setError] = useState('');
@@ -81,6 +167,11 @@ function App() {
 
   const loadEvent = useCallback(
     async (nextAccessCode = accessCode) => {
+      if (!eventSlug) {
+        setIsLoadingEvent(false);
+        return;
+      }
+
       setIsLoadingEvent(true);
       setError('');
 
@@ -89,9 +180,15 @@ function App() {
         setEventData(data);
         setUsingDemo(false);
         setRequiresAccessCode(false);
+        setInvalidBadge(false);
         setSelectedAlbumSlug((current) => current || data.albums?.[0]?.slug || null);
       } catch (loadError) {
-        if (loadError.requiresAccessCode) {
+        if (loadError.invalidBadge) {
+          setInvalidBadge(true);
+          setEventData(null);
+          setUsingDemo(false);
+          setError('');
+        } else if (loadError.requiresAccessCode) {
           setRequiresAccessCode(true);
           setEventData(null);
         } else {
@@ -209,12 +306,31 @@ function App() {
 
   const activeImage = activeImageIndex !== null ? imageMedia[activeImageIndex] : null;
 
+  const handleQrScan = useCallback((value) => {
+    try {
+      const scannedUrl = new URL(value, window.location.origin);
+      window.location.href = scannedUrl.toString();
+    } catch {
+      setError('QR code non reconnu. Veuillez rescanner le QR de votre badge.');
+    }
+  }, []);
+
   if (isLoadingEvent) {
     return (
       <main className="participant-shell center-state">
         <Loader2 className="animate-spin" size={28} />
         <p>Chargement de l'evenement</p>
       </main>
+    );
+  }
+
+  if (!eventSlug) {
+    return (
+      <QrScannerPanel
+        title="Scannez votre QR code"
+        description="Autorisez la camera puis placez le QR code du badge dans le cadre."
+        onScan={handleQrScan}
+      />
     );
   }
 
@@ -239,6 +355,16 @@ function App() {
           {error ? <p className="form-error">{error}</p> : null}
         </section>
       </main>
+    );
+  }
+
+  if (invalidBadge) {
+    return (
+      <QrScannerPanel
+        title="Badge non reconnu"
+        description="Ce lien ne correspond pas a un badge actif. Veuillez rescanner le QR code correct."
+        onScan={handleQrScan}
+      />
     );
   }
 

@@ -13,6 +13,8 @@ Base locale prevue : `http://localhost:4000`
   - Recupere un evenement public avec ses albums publies.
   - Si l'evenement est protege, le backend demandera un code d'acces.
   - Ajouter `?role=PUBLIC_TOKEN` pour limiter les albums au badge QR scanne.
+  - Sans `role`, seuls les albums marques `Tout` sont visibles.
+  - Avec `role`, les albums `Tout` et les albums rattaches au badge sont visibles.
 
 - `POST /api/public/events/:slug/access`
   - Valide le code d'acces d'un evenement ferme.
@@ -62,6 +64,7 @@ Base locale prevue : `http://localhost:4000`
   - Cree un album dans un evenement.
   - Requiert un token admin.
   - Body peut inclure `accessRoleIds` pour choisir les badges qui verront cet album.
+  - `accessRoleIds: []` signifie `Tout`, visible via l'acces evenement classique.
 
 - `PATCH /api/admin/albums/:albumId`
   - Met a jour un album.

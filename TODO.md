@@ -108,7 +108,8 @@ Priorite design : interface simple, premium, mobile-first, rapide a comprendre e
 - [x] Ajouter une authentification admin / super admin
 - [x] Creer la liste des evenements
 - [x] Creer le formulaire de creation/modification d'evenement
-- [ ] Creer la gestion des albums
+- [x] Creer la gestion des albums
+- [x] Permettre la creation d'albums avec badges d'acces autorises
 - [ ] Creer l'upload de medias
 - [ ] Ajouter l'edition des titres, descriptions et couvertures
 - [x] Ajouter la generation de QR code par evenement

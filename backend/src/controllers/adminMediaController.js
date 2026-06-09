@@ -20,6 +20,14 @@ async function uploadAlbumMedia(req, res) {
   res.status(201).json({ data: result.media });
 }
 
+async function sendAdminMediaFile(req, res) {
+  const result = await mediaService.getAdminMediaFileResponse(req.validated.params.mediaId);
+
+  res.type(result.media.mimeType);
+  res.sendFile(result.absolutePath);
+}
+
 module.exports = {
   uploadAlbumMedia,
+  sendAdminMediaFile,
 };

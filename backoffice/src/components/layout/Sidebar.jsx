@@ -3,13 +3,12 @@ import {
   ChevronRight,
   FileImage,
   FolderKanban,
-  LayoutDashboard,
   LogOut,
   Upload,
   Users,
 } from 'lucide-react';
 
-function Sidebar({ onLogout }) {
+function Sidebar({ activeView, onNavigate, onLogout }) {
   return (
     <aside className="admin-sidebar">
       <div>
@@ -20,17 +19,13 @@ function Sidebar({ onLogout }) {
           </button>
         </div>
         <nav className="sidebar-menu" aria-label="Navigation principale">
-          <button type="button">
-            <LayoutDashboard size={20} />
-            Dashboard
-          </button>
-          <button type="button" className="active">
+          <button type="button" className={activeView === 'events' || activeView === 'details' ? 'active' : ''} onClick={() => onNavigate('events')}>
             <FolderKanban size={20} />
             Evenements
           </button>
-          <button type="button" disabled>
+          <button type="button" className={activeView === 'albums' || activeView === 'albumDetails' ? 'active' : ''} onClick={() => onNavigate('albums')}>
             <FileImage size={20} />
-            Medias
+            Albums
           </button>
           <button type="button" disabled>
             <Upload size={20} />

@@ -2,21 +2,28 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   clearSession,
   createAccessRole,
+  createAlbum,
   createEvent,
   deleteAccessRole,
+  deleteAlbum,
   deleteEvent,
   fetchAccessRoleQrCode,
   fetchAccessRoles,
+  fetchAlbum,
   fetchEvents,
   fetchStats,
   getStoredUser,
   getToken,
   login,
+  updateAlbum,
   updateEvent,
+  uploadAlbumMedia,
 } from './api';
 import Sidebar from './components/layout/Sidebar';
 import Topbar from './components/layout/Topbar';
 import EventDrawer from './components/events/EventDrawer';
+import AlbumDetailsPage from './pages/AlbumDetailsPage';
+import AlbumsPage from './pages/AlbumsPage';
 import EventDetailsPage from './pages/EventDetailsPage';
 import EventsPage from './pages/EventsPage';
 import LoginPage from './pages/LoginPage';
@@ -28,19 +35,38 @@ import {
 } from './utils/eventUtils';
 import './App.css';
 
+function routeFromPath(pathname = window.location.pathname) {
+  const parts = pathname.split('/').filter(Boolean);
+
+  if (parts[0] === 'event' && parts[1]) return { view: 'details', slug: parts[1] };
+  if (parts[0] === 'albums' && parts[1]) return { view: 'albumDetails', slug: parts[1] };
+  if (parts[0] === 'albums') return { view: 'albums' };
+  return { view: 'events' };
+}
+
 function App() {
   const [user, setUser] = useState(() => getStoredUser());
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState(null);
-  const [view, setView] = useState('events');
+  const [route, setRoute] = useState(() => routeFromPath());
+  const [view, setView] = useState(() => routeFromPath().view);
   const [eventForm, setEventForm] = useState(emptyEventForm);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [accessRoles, setAccessRoles] = useState([]);
   const [accessRoleForm, setAccessRoleForm] = useState({ name: '' });
+  const [albumEventId, setAlbumEventId] = useState(null);
+  const [albumAccessRoles, setAlbumAccessRoles] = useState([]);
+const [editingAlbumId, setEditingAlbumId] = useState(null);
+  const [selectedAlbumDetails, setSelectedAlbumDetails] = useState(null);
+  const [albumForm, setAlbumForm] = useState({ title: '', description: '', accessRoleIds: [], isPublished: true });
   const [stats, setStats] = useState(null);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
+  const [isAlbumRolesLoading, setIsAlbumRolesLoading] = useState(false);
+  const [isAlbumDetailsLoading, setIsAlbumDetailsLoading] = useState(false);
+  const [isSavingAlbum, setIsSavingAlbum] = useState(false);
+  const [isUploadingAlbumMedia, setIsUploadingAlbumMedia] = useState(false);
   const [isCreatingRole, setIsCreatingRole] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(Boolean(getToken()));
@@ -56,6 +82,22 @@ function App() {
     () => events.find((event) => event.id === selectedEventId) || null,
     [events, selectedEventId],
   );
+
+  const selectedAlbumEvent = useMemo(
+    () => events.find((event) => event.id === albumEventId) || null,
+    [albumEventId, events],
+  );
+
+  const routeAlbum = useMemo(() => {
+    if (!route.slug) return null;
+    return events.flatMap((event) => event.albums || []).find((album) => album.slug === route.slug) || null;
+  }, [events, route.slug]);
+
+  function pushRoute(path, nextRoute) {
+    window.history.pushState({}, '', path);
+    setRoute(nextRoute);
+    setView(nextRoute.view);
+  }
 
   const filteredEvents = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -94,6 +136,7 @@ function App() {
     try {
       const data = await fetchEvents();
       setEvents(data);
+      setAlbumEventId((current) => current || data[0]?.id || null);
     } catch (loadError) {
       setError(loadError.message);
       if (loadError.message.toLowerCase().includes('token')) {
@@ -112,6 +155,48 @@ function App() {
       loadEvents();
     }
   }, [loadEvents, user]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const nextRoute = routeFromPath();
+      setRoute(nextRoute);
+      setView(nextRoute.view);
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  useEffect(() => {
+    if (view !== 'details' || !route.slug || events.length === 0) return;
+    const event = events.find((item) => item.slug === route.slug);
+
+    if (event && selectedEventId !== event.id) {
+      openDetails(event, { push: false });
+    }
+    // URL state is synchronized with loaded event data.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, route.slug, selectedEventId, view]);
+
+  useEffect(() => {
+    if (view !== 'albumDetails' || !routeAlbum) return;
+
+    queueMicrotask(() => {
+      setAlbumEventId(routeAlbum.eventId);
+      loadAlbumAccessRoles(routeAlbum.eventId);
+      openAlbumDetails(routeAlbum, { push: false });
+    });
+    // URL state is synchronized with loaded album data.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeAlbum, view]);
+
+  useEffect(() => {
+    if (view !== 'albums' || !albumEventId) return;
+
+    queueMicrotask(() => {
+      loadAlbumAccessRoles(albumEventId);
+    });
+  }, [albumEventId, view]);
 
   function updateEventForm(field, value) {
     setEventForm((current) => ({
@@ -144,6 +229,26 @@ function App() {
     setSelectedEventId(null);
     setDrawerOpen(false);
     setView('events');
+    pushRoute('/events', { view: 'events' });
+  }
+
+  async function navigate(viewName) {
+    setError('');
+    setNotice('');
+
+    if (viewName === 'albums') {
+      const nextEventId = albumEventId || selectedEventId || events[0]?.id || null;
+      setAlbumEventId(nextEventId);
+      setView('albums');
+      pushRoute('/albums', { view: 'albums' });
+
+      if (nextEventId) {
+        await loadAlbumAccessRoles(nextEventId);
+      }
+      return;
+    }
+
+    pushRoute('/events', { view: 'events' });
   }
 
   function openCreateDrawer() {
@@ -207,10 +312,13 @@ function App() {
     }
   }
 
-  async function openDetails(event) {
+  async function openDetails(event, options = { push: true }) {
     selectedEventIdRef.current = event.id;
     setSelectedEventId(event.id);
     setView('details');
+    if (options.push) {
+      pushRoute(`/event/${event.slug}`, { view: 'details', slug: event.slug });
+    }
     setStats(null);
     setAccessRoles([]);
     setAccessRoleForm({ name: '' });
@@ -295,6 +403,156 @@ function App() {
     setNotice('Lien public copie');
   }
 
+  async function loadAlbumAccessRoles(eventId) {
+    if (!eventId) {
+      setAlbumAccessRoles([]);
+      return;
+    }
+
+    setIsAlbumRolesLoading(true);
+    setError('');
+
+    try {
+      const roles = await fetchAccessRoles(eventId);
+      setAlbumAccessRoles(roles);
+    } catch (rolesError) {
+      setAlbumAccessRoles([]);
+      setError(rolesError.message);
+    } finally {
+      setIsAlbumRolesLoading(false);
+    }
+  }
+
+  async function selectAlbumEvent(eventId) {
+    setAlbumEventId(eventId);
+    setEditingAlbumId(null);
+    setSelectedAlbumDetails(null);
+    setAlbumForm({ title: '', description: '', accessRoleIds: [], isPublished: true });
+    await loadAlbumAccessRoles(eventId);
+  }
+
+  function updateAlbumForm(field, value) {
+    setAlbumForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  function toggleAlbumRole(roleId) {
+    setAlbumForm((current) => {
+      const hasRole = current.accessRoleIds.includes(roleId);
+      const nextRoleIds = hasRole
+        ? current.accessRoleIds.filter((id) => id !== roleId)
+        : [...current.accessRoleIds, roleId];
+
+      return {
+        ...current,
+        accessRoleIds: nextRoleIds,
+      };
+    });
+  }
+
+  function editAlbum(album) {
+    const accessRoleIds = albumAccessRoles
+      .filter((role) => (role.albums || []).some((item) => item.id === album.id))
+      .map((role) => role.id);
+
+    setEditingAlbumId(album.id);
+    setAlbumForm({
+      title: album.title || '',
+      description: album.description || '',
+      accessRoleIds,
+      isPublished: Boolean(album.isPublished),
+    });
+  }
+
+  async function openAlbumDetails(album, options = { push: true }) {
+    setIsAlbumDetailsLoading(true);
+    setError('');
+    if (options.push) {
+      pushRoute(`/albums/${album.slug}`, { view: 'albumDetails', slug: album.slug });
+    }
+
+    try {
+      const details = await fetchAlbum(album.id);
+      setSelectedAlbumDetails(details);
+    } catch (albumError) {
+      setSelectedAlbumDetails(null);
+      setError(albumError.message);
+    } finally {
+      setIsAlbumDetailsLoading(false);
+    }
+  }
+
+  async function saveAlbum(event) {
+    event.preventDefault();
+    if (!albumEventId) return;
+
+    setIsSavingAlbum(true);
+    setError('');
+    setNotice('');
+
+    try {
+      if (editingAlbumId) {
+        await updateAlbum(editingAlbumId, albumForm);
+      } else {
+        await createAlbum(albumEventId, albumForm);
+      }
+
+      setEditingAlbumId(null);
+      setAlbumForm({ title: '', description: '', accessRoleIds: [], isPublished: true });
+      setNotice(editingAlbumId ? 'Album mis a jour' : 'Album cree');
+      await loadEvents();
+      await loadAlbumAccessRoles(albumEventId);
+      if (selectedAlbumDetails?.id) {
+        await openAlbumDetails({ id: selectedAlbumDetails.id });
+      }
+    } catch (albumError) {
+      setError(albumError.message);
+    } finally {
+      setIsSavingAlbum(false);
+    }
+  }
+
+  async function removeAlbum(album) {
+    if (!window.confirm(`Supprimer l'album "${album.title}" ?`)) return;
+
+    try {
+      await deleteAlbum(album.id);
+      if (editingAlbumId === album.id) {
+        setEditingAlbumId(null);
+        setAlbumForm({ title: '', description: '', accessRoleIds: [], isPublished: true });
+      }
+      if (selectedAlbumDetails?.id === album.id) {
+        setSelectedAlbumDetails(null);
+      }
+      setNotice('Album supprime');
+      await loadEvents();
+      await loadAlbumAccessRoles(albumEventId);
+    } catch (albumError) {
+      setError(albumError.message);
+    }
+  }
+
+  async function uploadMediaToAlbum(files) {
+    if (!selectedAlbumDetails?.id || !files?.length) return;
+
+    setIsUploadingAlbumMedia(true);
+    setError('');
+    setNotice('');
+
+    try {
+      await uploadAlbumMedia(selectedAlbumDetails.id, files);
+      setNotice('Images ajoutees');
+      await openAlbumDetails({ id: selectedAlbumDetails.id });
+      await loadEvents();
+    } catch (uploadError) {
+      setError(uploadError.message);
+    } finally {
+      setIsUploadingAlbumMedia(false);
+    }
+  }
+
   if (!user) {
     return (
       <LoginPage
@@ -314,7 +572,7 @@ function App() {
 
   return (
     <main className="admin-page compact-admin">
-      <Sidebar onLogout={handleLogout} />
+      <Sidebar activeView={view} onNavigate={navigate} onLogout={handleLogout} />
       <section className="admin-content">
         <Topbar user={user} />
         {view === 'details' ? (
@@ -325,12 +583,42 @@ function App() {
             roleForm={accessRoleForm}
             isLoading={isDetailsLoading}
             isCreatingRole={isCreatingRole}
-            onBack={() => setView('events')}
+            onBack={() => pushRoute('/events', { view: 'events' })}
             onEdit={() => selectedEvent && openEditDrawer(selectedEvent)}
             onCopyUrl={copyPublicUrl}
             onRoleFormChange={updateAccessRoleForm}
             onCreateRole={saveAccessRole}
             onDeleteRole={removeAccessRole}
+          />
+        ) : view === 'albumDetails' ? (
+          <AlbumDetailsPage
+            album={selectedAlbumDetails}
+            notice={notice}
+            error={error}
+            isLoading={isAlbumDetailsLoading}
+            isUploading={isUploadingAlbumMedia}
+            onBack={() => pushRoute('/albums', { view: 'albums' })}
+            onUploadMedia={uploadMediaToAlbum}
+          />
+        ) : view === 'albums' ? (
+          <AlbumsPage
+            events={events}
+            selectedEventId={albumEventId}
+            selectedEvent={selectedAlbumEvent}
+            accessRoles={albumAccessRoles}
+            form={albumForm}
+            editingAlbumId={editingAlbumId}
+            notice={notice}
+            error={error}
+            isLoadingRoles={isAlbumRolesLoading}
+            isSaving={isSavingAlbum}
+            onSelectEvent={selectAlbumEvent}
+            onFormChange={updateAlbumForm}
+            onToggleRole={toggleAlbumRole}
+            onOpenAlbum={openAlbumDetails}
+            onEditAlbum={editAlbum}
+            onDeleteAlbum={removeAlbum}
+            onSubmit={saveAlbum}
           />
         ) : (
           <EventsPage

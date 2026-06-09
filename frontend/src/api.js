@@ -7,6 +7,7 @@ async function parseResponse(response) {
     const error = new Error(payload.message || 'Une erreur est survenue');
     error.status = response.status;
     error.requiresAccessCode = Boolean(payload.requiresAccessCode);
+    error.invalidBadge = Boolean(payload.invalidBadge);
     throw error;
   }
 
