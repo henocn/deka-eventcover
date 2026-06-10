@@ -24,8 +24,14 @@ async function getAlbum(req, res) {
   res.json({ data: result });
 }
 
+async function resolveBadge(req, res) {
+  const result = await eventService.resolveBadgeCode(req.validated.params.badgeCode);
+  res.json({ data: result });
+}
+
 module.exports = {
   getEvent,
   validateAccess,
   getAlbum,
+  resolveBadge,
 };

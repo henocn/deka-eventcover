@@ -30,7 +30,14 @@ const eventAccessSchema = z.object({
   }),
 });
 
+const badgeCodeSchema = z.object({
+  params: z.object({
+    badgeCode: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{6}$/, 'Code badge invalide'),
+  }),
+});
+
 module.exports = {
+  badgeCodeSchema,
   publicEventSchema,
   publicAlbumSchema,
   eventAccessSchema,

@@ -2,7 +2,7 @@ import { ArrowLeft, Copy, Download, Edit3, Loader2, MapPin, Plus, Trash2 } from 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { createAccessRole, deleteAccessRole, fetchAccessRoleQrCode, fetchAccessRoles, fetchStats } from '../api';
+import { createAccessRole, deleteAccessRole, fetchAccessRoleQrCode, fetchAccessRoles, fetchStats, updateAccessRole } from '../api';
 import { Button, Field, StatusPill } from '../components/ui';
 import useEvents from '../hooks/useEvents';
 import { formatDate, getEventStatus, getStatusLabel } from '../utils/eventUtils';
@@ -16,8 +16,11 @@ function EventDetailsPage() {
   const [stats, setStats] = useState(null);
   const [accessRoles, setAccessRoles] = useState([]);
   const [roleForm, setRoleForm] = useState({ name: '' });
+  const [editingRoleId, setEditingRoleId] = useState(null);
+  const [editRoleForm, setEditRoleForm] = useState({ name: '', badgeCode: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [isCreatingRole, setIsCreatingRole] = useState(false);
+  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
 
   useEffect(() => {
     if (!event) return;
@@ -86,6 +89,34 @@ function EventDetailsPage() {
       toast.success('Badge supprime');
     } catch (roleError) {
       toast.error(roleError.message);
+    }
+  }
+
+  function startEditRole(role) {
+    setEditingRoleId(role.id);
+    setEditRoleForm({
+      name: role.name || '',
+      badgeCode: role.badgeCode || role.publicToken || '',
+    });
+  }
+
+  async function saveEditedRole(formEvent) {
+    formEvent.preventDefault();
+    if (!editingRoleId || !event) return;
+
+    setIsUpdatingRole(true);
+    const toastId = toast.loading('Mise a jour du badge...');
+
+    try {
+      const updated = await updateAccessRole(editingRoleId, editRoleForm);
+      const updatedWithQr = await fetchAccessRoleQrCode(event.id, updated.id);
+      setAccessRoles((current) => current.map((role) => (role.id === updated.id ? updatedWithQr : role)));
+      setEditingRoleId(null);
+      toast.success('Badge mis a jour', { id: toastId });
+    } catch (roleError) {
+      toast.error(roleError.message, { id: toastId });
+    } finally {
+      setIsUpdatingRole(false);
     }
   }
 
@@ -192,9 +223,31 @@ function EventDetailsPage() {
             <div className="grid min-w-0 gap-3.5">
               <div>
                 <p className="mb-2 text-xs font-extrabold uppercase text-neutral-500">Role</p>
-                <h3 className="mb-1 text-xl font-black">{role.name}</h3>
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <h3 className="text-xl font-black">{role.name}</h3>
+                  <span className="inline-flex min-h-[28px] items-center rounded-full border border-black bg-[#9cff00] px-3 text-xs font-black text-black">{role.badgeCode || role.publicToken}</span>
+                </div>
                 {role.description ? <p className="text-neutral-500">{role.description}</p> : null}
               </div>
+              {editingRoleId === role.id ? (
+                <form className="grid gap-3 rounded border border-neutral-300 bg-neutral-50 p-3" onSubmit={saveEditedRole}>
+                  <div className="grid grid-cols-2 gap-3 max-[760px]:grid-cols-1">
+                    <Field label="Nom du badge">
+                      <input className={`${inputClass} min-h-[38px]`} value={editRoleForm.name} onChange={(inputEvent) => setEditRoleForm((current) => ({ ...current, name: inputEvent.target.value }))} />
+                    </Field>
+                    <Field label="Code badge">
+                      <input className={`${inputClass} min-h-[38px] uppercase`} maxLength={6} value={editRoleForm.badgeCode} onChange={(inputEvent) => setEditRoleForm((current) => ({ ...current, badgeCode: inputEvent.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) }))} placeholder="A7K9P2" />
+                    </Field>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={isUpdatingRole}>
+                      {isUpdatingRole ? <Loader2 className="animate-spin" size={16} /> : <Edit3 size={16} />}
+                      Enregistrer
+                    </Button>
+                    <Button tone="soft" onClick={() => setEditingRoleId(null)}>Annuler</Button>
+                  </div>
+                </form>
+              ) : null}
               <div>
                 <p className="mb-2 text-xs font-extrabold uppercase text-neutral-500">Dossiers d'acces</p>
                 {(role.albums || []).length > 0 ? (
@@ -215,9 +268,12 @@ function EventDetailsPage() {
               ) : (
                 <div className="grid aspect-square w-full place-items-center rounded border border-dashed border-neutral-200 font-black text-neutral-500">QR</div>
               )}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 <Button tone="soft" className="min-h-9 min-w-0 px-0" onClick={() => copyPublicUrl(role)} title="Copier le lien">
                   <Copy size={16} />
+                </Button>
+                <Button tone="soft" className="min-h-9 min-w-0 px-0" onClick={() => startEditRole(role)} title="Modifier le badge">
+                  <Edit3 size={16} />
                 </Button>
                 {role.qrCodeDataUrl ? (
                   <a className="grid min-h-9 place-items-center rounded border border-neutral-300 bg-white text-neutral-950 transition hover:border-[#9cff00] hover:ring-1 hover:ring-[#9cff00]/70" href={role.qrCodeDataUrl} download={`qr-${event.slug}-${role.name}.png`} title="Telecharger le QR">

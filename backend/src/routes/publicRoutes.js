@@ -4,6 +4,7 @@ const validate = require('../middlewares/validate');
 const publicEventController = require('../controllers/publicEventController');
 const publicMediaController = require('../controllers/publicMediaController');
 const {
+  badgeCodeSchema,
   publicEventSchema,
   publicAlbumSchema,
   eventAccessSchema,
@@ -12,6 +13,7 @@ const { mediaFileSchema } = require('../validators/mediaValidators');
 
 const router = express.Router();
 
+router.get('/badges/:badgeCode', validate(badgeCodeSchema), asyncHandler(publicEventController.resolveBadge));
 router.get('/events/:slug', validate(publicEventSchema), asyncHandler(publicEventController.getEvent));
 router.post(
   '/events/:slug/access',

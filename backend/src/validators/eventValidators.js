@@ -97,12 +97,27 @@ const createAccessRoleSchema = z.object({
   }),
   body: z.object({
     name: z.string().trim().min(2, 'Le nom du badge doit contenir au moins 2 caracteres').max(120),
+    badgeCode: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{6}$/, 'Le code badge doit contenir 6 caracteres majuscules ou chiffres').optional(),
     description: nullableText,
     albumIds: z
       .array(z.coerce.number().int().positive())
       .max(100)
       .optional()
       .transform((ids) => (ids ? [...new Set(ids)] : [])),
+  }),
+});
+
+const updateAccessRoleSchema = z.object({
+  params: z.object({
+    roleId: z.coerce.number().int().positive(),
+  }),
+  body: z.object({
+    name: z.string().trim().min(2, 'Le nom du badge doit contenir au moins 2 caracteres').max(120).optional(),
+    badgeCode: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{6}$/, 'Le code badge doit contenir 6 caracteres majuscules ou chiffres').optional(),
+    description: nullableText,
+    isActive: booleanField,
+  }).refine((value) => Object.keys(value).length > 0, {
+    message: 'At least one field is required',
   }),
 });
 
@@ -124,4 +139,5 @@ module.exports = {
   createAlbumSchema,
   updateAlbumSchema,
   createAccessRoleSchema,
+  updateAccessRoleSchema,
 };

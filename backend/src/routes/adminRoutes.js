@@ -19,6 +19,7 @@ const {
   createAlbumSchema,
   updateAlbumSchema,
   createAccessRoleSchema,
+  updateAccessRoleSchema,
 } = require('../validators/eventValidators');
 const { albumIdParamSchema, mediaFileSchema } = require('../validators/mediaValidators');
 const { createUserSchema, updateUserSchema, userIdParamSchema } = require('../validators/userValidators');
@@ -77,6 +78,11 @@ router.post(
   '/events/:eventId/access-roles',
   validate(createAccessRoleSchema),
   asyncHandler(adminEventController.createAccessRole)
+);
+router.patch(
+  '/access-roles/:roleId',
+  validate(updateAccessRoleSchema),
+  asyncHandler(adminEventController.updateAccessRole)
 );
 router.get(
   '/events/:eventId/access-roles/:roleId/qrcode',

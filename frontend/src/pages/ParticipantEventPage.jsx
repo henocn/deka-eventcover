@@ -7,6 +7,7 @@ import {
   fetchPublicAlbum,
   fetchPublicEvent,
   getMediaUrl,
+  resolveBadgeCode,
   validateEventAccess,
 } from '../api';
 import AccessGate from '../components/AccessGate';
@@ -203,6 +204,15 @@ function ParticipantEventPage() {
     }
   }, []);
 
+  const handleManualBadgeCode = useCallback(async (badgeCode) => {
+    try {
+      const badge = await resolveBadgeCode(badgeCode);
+      window.location.href = badge.publicUrl;
+    } catch (badgeError) {
+      setError(badgeError.message || 'Badge non reconnu');
+    }
+  }, []);
+
   const downloadItems = useCallback((items) => {
     if (items.length === 0) return;
 
@@ -267,6 +277,8 @@ function ParticipantEventPage() {
       <QrScannerPanel
         title="Scannez votre QR code"
         description="Autorisez la camera puis placez le QR code du badge dans le cadre."
+        error={error}
+        onManualCode={handleManualBadgeCode}
         onScan={handleQrScan}
       />
     );
@@ -288,6 +300,8 @@ function ParticipantEventPage() {
       <QrScannerPanel
         title="Badge non reconnu"
         description="Ce lien ne correspond pas a un badge actif. Veuillez rescanner le QR code correct."
+        error={error}
+        onManualCode={handleManualBadgeCode}
         onScan={handleQrScan}
       />
     );

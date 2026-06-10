@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const { Op } = require('sequelize');
 const { Event, Album, Media, MediaStat, AccessRole } = require('../models');
 const env = require('../config/env');
@@ -52,7 +51,7 @@ function buildParticipantUrl(event, role) {
   const publicUrl = new URL(`/events/${event.slug}`, env.participantAppUrl.replace(/\/$/, ''));
 
   if (role?.publicToken) {
-    publicUrl.searchParams.set('role', role.publicToken);
+    publicUrl.searchParams.set('role', role.publicToken.toUpperCase());
   }
 
   return publicUrl.toString();
@@ -115,6 +114,7 @@ function serializeAccessRole(role, event) {
     eventId: role.eventId,
     name: role.name,
     publicToken: role.publicToken,
+    badgeCode: role.publicToken,
     description: role.description,
     isActive: role.isActive,
     albums: role.albums ? role.albums.map((album) => serializeAlbum(album)) : [],
@@ -431,9 +431,29 @@ async function getEventStats(eventId) {
   };
 }
 
-async function buildUniqueAccessToken() {
+function normalizeBadgeCode(code) {
+  return String(code || '').trim().toUpperCase();
+}
+
+function generateBadgeCode() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+}
+
+async function buildUniqueBadgeCode(preferredCode) {
+  if (preferredCode) {
+    const normalizedCode = normalizeBadgeCode(preferredCode);
+    const existing = await AccessRole.findOne({ where: { publicToken: normalizedCode } });
+
+    if (existing) {
+      throw httpError(409, 'Ce code badge est deja utilise.');
+    }
+
+    return normalizedCode;
+  }
+
   while (true) {
-    const candidate = `badge_${crypto.randomBytes(10).toString('hex')}`;
+    const candidate = generateBadgeCode();
     const existing = await AccessRole.findOne({ where: { publicToken: candidate } });
 
     if (!existing) {
@@ -481,7 +501,7 @@ async function createAccessRole(eventId, payload) {
     eventId,
     name: payload.name,
     description: payload.description,
-    publicToken: await buildUniqueAccessToken(),
+    publicToken: await buildUniqueBadgeCode(payload.badgeCode),
     isActive: true,
   });
 
@@ -498,6 +518,62 @@ async function createAccessRole(eventId, payload) {
     ],
   });
 
+  return serializeAccessRole(role, event);
+}
+
+async function updateAccessRole(roleId, payload) {
+  const role = await AccessRole.findByPk(roleId, {
+    include: [
+      {
+        model: Album,
+        as: 'albums',
+        required: false,
+        attributes: albumPublicAttributes,
+        through: { attributes: [] },
+      },
+    ],
+  });
+
+  if (!role) {
+    throw httpError(404, 'Badge not found');
+  }
+
+  const updates = {};
+
+  if (payload.name !== undefined) updates.name = payload.name;
+  if (payload.description !== undefined) updates.description = payload.description;
+  if (payload.isActive !== undefined) updates.isActive = payload.isActive;
+
+  if (payload.badgeCode !== undefined) {
+    const normalizedCode = normalizeBadgeCode(payload.badgeCode);
+    const existing = await AccessRole.findOne({
+      where: {
+        publicToken: normalizedCode,
+        id: { [Op.ne]: role.id },
+      },
+    });
+
+    if (existing) {
+      throw httpError(409, 'Ce code badge est deja utilise.');
+    }
+
+    updates.publicToken = normalizedCode;
+  }
+
+  await role.update(updates);
+  await role.reload({
+    include: [
+      {
+        model: Album,
+        as: 'albums',
+        required: false,
+        attributes: albumPublicAttributes,
+        through: { attributes: [] },
+      },
+    ],
+  });
+
+  const event = await getEventById(role.eventId);
   return serializeAccessRole(role, event);
 }
 
@@ -522,7 +598,7 @@ async function resolveAccessRole(eventId, publicToken) {
   const role = await AccessRole.findOne({
     where: {
       eventId,
-      publicToken,
+      publicToken: normalizeBadgeCode(publicToken),
       isActive: true,
     },
     include: [
@@ -543,6 +619,35 @@ async function resolveAccessRole(eventId, publicToken) {
   }
 
   return role;
+}
+
+async function resolveBadgeCode(publicToken) {
+  const role = await AccessRole.findOne({
+    where: {
+      publicToken: normalizeBadgeCode(publicToken),
+      isActive: true,
+    },
+    include: [
+      {
+        model: Event,
+        as: 'event',
+        required: true,
+        attributes: eventPublicAttributes,
+      },
+    ],
+  });
+
+  if (!role || !role.event?.isPublished) {
+    const error = httpError(403, 'Badge non reconnu');
+    error.invalidBadge = true;
+    throw error;
+  }
+
+  return {
+    badgeCode: role.publicToken,
+    eventSlug: role.event.slug,
+    publicUrl: buildParticipantUrl(role.event, role),
+  };
 }
 
 function getRoleAlbumIds(role) {
@@ -702,9 +807,11 @@ module.exports = {
   deleteAlbum,
   listAccessRoles,
   createAccessRole,
+  updateAccessRole,
   deleteAccessRole,
   buildParticipantUrl,
   resolveAccessRole,
+  resolveBadgeCode,
   getRoleAlbumIds,
   canAccessAlbum,
   getPublicEvent,

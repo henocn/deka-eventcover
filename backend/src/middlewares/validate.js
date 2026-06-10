@@ -5,6 +5,7 @@ const fieldLabels = {
   'body.startsAt': 'Date de debut',
   'body.endsAt': 'Date de fin',
   'body.accessCode': "Code d'acces",
+  'body.badgeCode': 'Code badge',
   'body.isPublished': 'Publication',
   'body.email': 'Email',
   'body.password': 'Mot de passe',

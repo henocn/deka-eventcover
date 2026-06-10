@@ -7,7 +7,7 @@ function getInitialSlug() {
 }
 
 function getInitialRole() {
-  return new URLSearchParams(window.location.search).get('role') || '';
+  return (new URLSearchParams(window.location.search).get('role') || '').toUpperCase();
 }
 
 function formatDate(value) {

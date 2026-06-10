@@ -90,6 +90,11 @@ async function createAccessRole(req, res) {
   res.status(201).json({ data: role });
 }
 
+async function updateAccessRole(req, res) {
+  const role = await eventService.updateAccessRole(req.validated.params.roleId, req.validated.body);
+  res.json({ data: role });
+}
+
 async function deleteAccessRole(req, res) {
   const result = await eventService.deleteAccessRole(req.validated.params.roleId);
   res.json({ data: result });
@@ -136,6 +141,7 @@ module.exports = {
   getEventStats,
   listAccessRoles,
   createAccessRole,
+  updateAccessRole,
   deleteAccessRole,
   getAccessRoleQrCode,
 };

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, ScanLine } from 'lucide-react';
 
-function QrScannerPanel({ title, description, onScan }) {
+function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
   const videoRef = useRef(null);
   const [scannerError, setScannerError] = useState('');
+  const [badgeCode, setBadgeCode] = useState('');
 
   useEffect(() => {
     let stream;
@@ -76,7 +77,30 @@ function QrScannerPanel({ title, description, onScan }) {
           <video className="h-full w-full object-cover" ref={videoRef} muted playsInline />
           <ScanLine className="absolute inset-[34px] h-auto w-auto rounded-[22px] border-2 border-[var(--accent)] shadow-[0_0_0_999px_rgba(0,0,0,0.28)]" size={42} />
         </div>
-        {scannerError ? <p className="mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">{scannerError}</p> : null}
+        {onManualCode ? (
+          <form
+            className="mt-4 grid gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (badgeCode.length === 6) onManualCode(badgeCode);
+            }}
+          >
+            <label className="text-sm font-black text-[var(--text)]">Entrer le code badge</label>
+            <div className="flex gap-2">
+              <input
+                className="min-h-12 min-w-0 flex-1 rounded-2xl border border-[var(--line)] bg-[var(--surface-strong)] px-4 font-black uppercase tracking-[0.18em] text-[var(--text)]"
+                value={badgeCode}
+                maxLength={6}
+                onChange={(event) => setBadgeCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+                placeholder="A7K9P2"
+              />
+              <button className="min-h-12 rounded-2xl border-2 border-[var(--line-strong)] bg-[var(--text)] px-4 font-black text-[var(--bg)] transition hover:border-[var(--accent)]" type="submit">
+                OK
+              </button>
+            </div>
+          </form>
+        ) : null}
+        {scannerError || error ? <p className="mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">{scannerError || error}</p> : null}
       </section>
     </main>
   );

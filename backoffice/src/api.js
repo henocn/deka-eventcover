@@ -189,6 +189,13 @@ async function createAccessRole(eventId, payload) {
   });
 }
 
+async function updateAccessRole(roleId, payload) {
+  return apiRequest(`/api/admin/access-roles/${roleId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
 async function deleteAccessRole(roleId) {
   return apiRequest(`/api/admin/access-roles/${roleId}`, {
     method: 'DELETE',
@@ -222,6 +229,7 @@ export {
   getToken,
   login,
   updateAlbum,
+  updateAccessRole,
   updateEvent,
   updateProfile,
   updateUser,
