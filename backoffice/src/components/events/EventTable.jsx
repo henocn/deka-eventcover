@@ -1,5 +1,5 @@
 import { Edit3, Loader2, Trash2 } from 'lucide-react';
-import { Button, StatusPill } from '../ui';
+import { StatusPill } from '../ui';
 import { formatDate, getEventStatus, getStatusLabel } from '../../utils/eventUtils';
 
 function EventTable({ events, isLoading, selectedEventId, onOpenDetails, onEdit, onDelete }) {

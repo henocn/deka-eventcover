@@ -6,7 +6,7 @@ const { upload } = require('../middlewares/upload');
 const authController = require('../controllers/authController');
 const adminEventController = require('../controllers/adminEventController');
 const adminMediaController = require('../controllers/adminMediaController');
-const { loginSchema } = require('../validators/authValidators');
+const { loginSchema, updateProfileSchema } = require('../validators/authValidators');
 const {
   createEventSchema,
   updateEventSchema,
@@ -24,6 +24,9 @@ const router = express.Router();
 router.post('/auth/login', validate(loginSchema), asyncHandler(authController.login));
 
 router.use(requireAdmin);
+
+router.get('/profile', asyncHandler(authController.getProfile));
+router.patch('/profile', validate(updateProfileSchema), asyncHandler(authController.updateProfile));
 
 router.get('/overview', (req, res) => {
   res.json({

@@ -10,6 +10,7 @@ import AlbumsPage from './pages/AlbumsPage';
 import EventDetailsPage from './pages/EventDetailsPage';
 import EventsPage from './pages/EventsPage';
 import LoginPage from './pages/LoginPage';
+import SettingsPage from './pages/SettingsPage';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
@@ -61,6 +62,7 @@ function AppRoutes() {
           <Route path="/event/:slug" element={<EventDetailsPage />} />
           <Route path="/albums" element={<AlbumsPage />} />
           <Route path="/albums/:slug" element={<AlbumDetailsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>
 
@@ -74,7 +76,7 @@ function App() {
     <AuthProvider>
       <AppRoutes />
       <Toaster
-        position="bottom-left"
+        position="bottom-right"
         toastOptions={{
           duration: 5000,
           classNames: {

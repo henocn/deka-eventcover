@@ -33,6 +33,10 @@ function persistSession(token, user) {
   window.localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
+function persistUser(user) {
+  window.localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
 function clearSession() {
   window.localStorage.removeItem(TOKEN_KEY);
   window.localStorage.removeItem(USER_KEY);
@@ -72,6 +76,19 @@ async function login(email, password) {
 
 async function fetchEvents() {
   return apiRequest('/api/admin/events');
+}
+
+async function fetchProfile() {
+  return apiRequest('/api/admin/profile');
+}
+
+async function updateProfile(payload) {
+  const user = await apiRequest('/api/admin/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+  persistUser(user);
+  return user;
 }
 
 async function createEvent(payload) {
@@ -166,11 +183,13 @@ export {
   fetchAccessRoles,
   fetchAlbum,
   fetchEvents,
+  fetchProfile,
   fetchStats,
   getStoredUser,
   getToken,
   login,
   updateAlbum,
   updateEvent,
+  updateProfile,
   uploadAlbumMedia,
 };
