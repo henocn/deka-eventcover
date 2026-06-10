@@ -1,9 +1,10 @@
 import { Edit3, FileImage, FolderPlus, Image, Loader2, LockKeyhole, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { createAlbum, deleteAlbum, fetchAccessRoles, updateAlbum } from '../api';
 import AdminMediaImage from '../components/media/AdminMediaImage';
-import { Button, Field, Notice } from '../components/ui';
+import { Button, Field } from '../components/ui';
 import useEvents from '../hooks/useEvents';
 import { inputClass } from '../utils/styleClasses';
 
@@ -32,8 +33,6 @@ function AlbumsPage() {
   const [editingAlbum, setEditingAlbum] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false);
-  const [notice, setNotice] = useState('');
-  const [error, setError] = useState('');
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -51,12 +50,11 @@ function AlbumsPage() {
 
     async function loadRoles() {
       setIsLoadingRoles(true);
-      setError('');
       try {
         setAccessRoles(await fetchAccessRoles(selectedEvent.id));
       } catch (rolesError) {
         setAccessRoles([]);
-        setError(rolesError.message);
+        toast.error(rolesError.message);
       } finally {
         setIsLoadingRoles(false);
       }
@@ -72,7 +70,6 @@ function AlbumsPage() {
   function openCreateModal() {
     setEditingAlbum(null);
     setForm(emptyAlbumForm);
-    setError('');
     setIsModalOpen(true);
   }
 
@@ -122,8 +119,7 @@ function AlbumsPage() {
     if (!selectedEvent?.id) return;
 
     setIsSaving(true);
-    setError('');
-    setNotice('');
+    const toastId = toast.loading(editingAlbum ? 'Mise a jour de l album...' : 'Creation de l album...');
 
     const payload = {
       ...form,
@@ -142,11 +138,11 @@ function AlbumsPage() {
         });
       }
       closeModal();
-      setNotice(editingAlbum ? 'Album mis a jour' : 'Album cree');
+      toast.success(editingAlbum ? 'Album mis a jour' : 'Album cree', { id: toastId });
       await loadEvents();
       setAccessRoles(await fetchAccessRoles(selectedEvent.id));
     } catch (albumError) {
-      setError(albumError.message);
+      toast.error(albumError.message, { id: toastId });
     } finally {
       setIsSaving(false);
     }
@@ -158,48 +154,39 @@ function AlbumsPage() {
     try {
       await deleteAlbum(album.id);
       if (editingAlbum?.id === album.id) closeModal();
-      setNotice('Album supprime');
+      toast.success('Album supprime');
       await loadEvents();
       if (selectedEvent?.id) setAccessRoles(await fetchAccessRoles(selectedEvent.id));
     } catch (albumError) {
-      setError(albumError.message);
+      toast.error(albumError.message);
     }
   }
 
   return (
     <section className="min-w-0 px-6 pb-8 pt-6 max-[760px]:p-4">
-      <div className="mb-5 flex items-center justify-between gap-3.5 max-[760px]:items-start">
+      <div className="mb-5 pb-7 flex items-center justify-between gap-3.5 max-[760px]:flex-col max-[760px]:items-stretch">
         <div>
           <h2 className="text-[22px] font-black">Albums photos</h2>
-          <p className="mt-1 text-neutral-500">Organisez les dossiers photo, leurs acces et leurs couvertures.</p>
         </div>
-        <Button className="shrink-0" onClick={openCreateModal}>
-          <Plus size={16} />
-          Creer
-        </Button>
-      </div>
-
-      {notice ? <Notice>{notice}</Notice> : null}
-      {error && !isModalOpen ? <Notice tone="error">{error}</Notice> : null}
-
-      <div className="mb-5 flex items-center justify-between gap-4 rounded border border-neutral-200 bg-white p-4 max-[760px]:flex-col max-[760px]:items-stretch">
-        <Field label="Evenement" className="w-[min(520px,100%)]">
-          <select className={`${inputClass} min-h-[42px]`} value={selectedEvent?.id || ''} onChange={(event) => selectEvent(Number(event.target.value))}>
-            <option value="" disabled>Choisir un evenement</option>
-            {events.map((event) => (
-              <option key={event.id} value={event.id}>{event.title}</option>
-            ))}
-          </select>
-        </Field>
-        <div className="text-right max-[760px]:text-left">
-          <strong className="block text-2xl font-black">{albums.length}</strong>
-          <span className="text-sm font-bold text-neutral-500">albums</span>
+        <div className="flex items-end gap-3 max-[760px]:items-stretch">
+          <Field className="w-[min(360px,52vw)] max-[760px]:w-full">
+            <select className={`${inputClass} min-h-[38px]`} value={selectedEvent?.id || ''} onChange={(event) => selectEvent(Number(event.target.value))}>
+              <option value="" disabled>Choisir un evenement</option>
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>{event.title}</option>
+              ))}
+            </select>
+          </Field>
+          <Button className="shrink-0" onClick={openCreateModal}>
+            <Plus size={16} />
+            Creer
+          </Button>
         </div>
       </div>
 
       <div className="grid min-w-0 grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))] gap-5">
         {albums.length === 0 ? (
-          <div className="grid min-h-[260px] place-items-center content-center gap-2 rounded border border-neutral-200 bg-white p-6 font-extrabold text-neutral-500">
+          <div className="grid min-h-[260px] place-items-center content-center gap-2 rounded border border-neutral-300 bg-white p-6 font-extrabold text-neutral-500">
             <Image size={24} />
             <p>Aucun album pour cet evenement.</p>
           </div>
@@ -210,7 +197,7 @@ function AlbumsPage() {
 
           return (
             <article
-              className="group relative min-w-0 cursor-pointer overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-[0_14px_34px_rgba(0,0,0,0.05)] transition hover:-translate-y-0.5 hover:border-black hover:shadow-[0_22px_60px_rgba(0,0,0,0.1)]"
+              className="group relative min-w-0 cursor-pointer overflow-hidden rounded-xl border border-neutral-400 bg-white transition hover:-translate-y-0.5 hover:border-[#9cff00] hover:ring-2 hover:ring-[#9cff00]/70"
               key={album.id}
               onClick={() => navigate(`/albums/${album.slug}`)}
             >
@@ -264,8 +251,6 @@ function AlbumsPage() {
               </Button>
             </div>
 
-            {error ? <Notice tone="error">{error}</Notice> : null}
-
             <form className="grid gap-3.5" onSubmit={saveAlbum}>
               <Field label="Nom de l'album">
                 <input className={`${inputClass} min-h-[42px]`} value={form.title} onChange={(event) => updateForm('title', event.target.value)} placeholder="Photos officielles, Cocktail, VIP..." required />
@@ -282,7 +267,7 @@ function AlbumsPage() {
               {editingAlbum ? (
                 <div className="grid gap-2">
                   <div className="text-[13px] font-extrabold text-neutral-950">Photo de couverture</div>
-                  <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-3 rounded border border-neutral-200 bg-neutral-50 p-2">
+                  <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-3 rounded border border-neutral-300 bg-neutral-50 p-2">
                     {selectedCover ? (
                       <AdminMediaImage media={selectedCover} className="aspect-square w-24 rounded object-cover" fallbackClassName="aspect-square w-24 rounded" />
                     ) : (
@@ -312,7 +297,7 @@ function AlbumsPage() {
                   ) : null}
                 </div>
               ) : (
-                <p className="rounded border border-neutral-200 bg-neutral-50 p-3 text-sm font-bold text-neutral-500">
+                <p className="rounded border border-neutral-300 bg-neutral-50 p-3 text-sm font-bold text-neutral-500">
                   La couverture pourra etre choisie apres l'ajout des premieres photos.
                 </p>
               )}
@@ -335,7 +320,7 @@ function AlbumsPage() {
                 {!isLoadingRoles && accessRoles.length > 0 ? (
                   <div className="flex min-w-0 flex-wrap gap-2">
                     {accessRoles.map((role) => (
-                      <label key={role.id} className="inline-flex min-h-8 max-w-full items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-2.5 text-xs font-extrabold">
+                      <label key={role.id} className="inline-flex min-h-8 max-w-full items-center gap-2 rounded-full border border-neutral-300 bg-neutral-50 px-2.5 text-xs font-extrabold">
                         <input className="h-3.5 w-3.5 accent-black" type="checkbox" checked={form.accessRoleIds.includes(role.id)} onChange={() => toggleRole(role.id)} />
                         <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{role.name}</span>
                       </label>
@@ -377,7 +362,7 @@ function AlbumsPage() {
                   <button
                     key={media.id}
                     type="button"
-                    className={`overflow-hidden rounded-lg border bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-black ${selected ? 'border-black ring-2 ring-[#9cff00]' : 'border-neutral-200'}`}
+                    className={`overflow-hidden rounded-lg border bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[#9cff00] hover:ring-2 hover:ring-[#9cff00]/70 ${selected ? 'border-black ring-2 ring-[#9cff00]' : 'border-neutral-300'}`}
                     onClick={() => {
                       updateForm('coverMediaId', media.id);
                       setIsCoverPickerOpen(false);

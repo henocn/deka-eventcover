@@ -1,9 +1,9 @@
 function Button({ children, className = '', tone = 'primary', ...props }) {
   const tones = {
     primary: 'border-black bg-black text-white',
-    soft: 'border-neutral-200 bg-white text-neutral-950',
-    danger: 'border-neutral-200 bg-white text-red-600',
-    icon: 'border-transparent bg-transparent text-neutral-950 hover:border-neutral-200 hover:bg-neutral-50',
+    soft: 'border-neutral-300 bg-white text-neutral-950 hover:border-[#9cff00] hover:ring-1 hover:ring-[#9cff00]/70',
+    danger: 'border-neutral-300 bg-white text-red-600 hover:border-[#9cff00] hover:ring-1 hover:ring-[#9cff00]/70',
+    icon: 'border-neutral-300 bg-white text-neutral-950 hover:border-[#9cff00] hover:bg-neutral-50 hover:ring-1 hover:ring-[#9cff00]/70',
   };
 
   return (
@@ -14,19 +14,6 @@ function Button({ children, className = '', tone = 'primary', ...props }) {
     >
       {children}
     </button>
-  );
-}
-
-function Notice({ children, tone = 'success' }) {
-  const tones = {
-    success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-    error: 'border-red-200 bg-red-50 text-red-700',
-  };
-
-  return (
-    <div className={`mb-3 flex min-h-[38px] items-center rounded border px-3 py-2 font-extrabold ${tones[tone]}`}>
-      {children}
-    </div>
   );
 }
 
@@ -49,5 +36,5 @@ function StatusPill({ status, children }) {
   return <span className={`${pillBase} ${tones[status] || tones.draft}`}>{children}</span>;
 }
 
-export { Button, Field, Notice, StatusPill };
+export { Button, Field, StatusPill };
 import { pillBase } from '../utils/styleClasses';

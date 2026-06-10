@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import EventDrawer from '../components/events/EventDrawer';
 import EventTable from '../components/events/EventTable';
 import EventToolbar from '../components/events/EventToolbar';
-import { Notice } from '../components/ui';
 import useEvents from '../hooks/useEvents';
 import {
   buildEventPayload,
@@ -14,15 +14,12 @@ import {
 
 function EventsPage() {
   const navigate = useNavigate();
-  const { error, events, isLoading, removeEvent, saveEvent, setError } = useEvents();
+  const { events, isLoading, removeEvent, saveEvent } = useEvents();
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [eventForm, setEventForm] = useState(emptyEventForm);
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
-  const [notice, setNotice] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerNotice, setDrawerNotice] = useState('');
-  const [drawerError, setDrawerError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const filteredEvents = useMemo(() => {
@@ -58,34 +55,28 @@ function EventsPage() {
   function openCreateDrawer() {
     setSelectedEvent(null);
     setEventForm(emptyEventForm);
-    setDrawerNotice('');
-    setDrawerError('');
     setDrawerOpen(true);
   }
 
   function openEditDrawer(event) {
     setSelectedEvent(event);
     setEventForm(formFromEvent(event));
-    setDrawerNotice('');
-    setDrawerError('');
     setDrawerOpen(true);
   }
 
   async function handleSaveEvent(event) {
     event.preventDefault();
     setIsSaving(true);
-    setDrawerError('');
-    setDrawerNotice('Enregistrement en cours...');
+    const toastId = toast.loading('Enregistrement en cours...');
 
     try {
       const payload = buildEventPayload(eventForm);
       const saved = await saveEvent(selectedEvent?.id, payload);
       setSelectedEvent(saved);
       setEventForm(formFromEvent(saved));
-      setDrawerNotice(selectedEvent ? 'Evenement mis a jour.' : 'Evenement cree.');
+      toast.success(selectedEvent ? 'Evenement mis a jour.' : 'Evenement cree.', { id: toastId });
     } catch (saveError) {
-      setDrawerNotice('');
-      setDrawerError(saveError.message);
+      toast.error(saveError.message, { id: toastId });
     } finally {
       setIsSaving(false);
     }
@@ -96,10 +87,10 @@ function EventsPage() {
 
     try {
       await removeEvent(event.id);
-      setNotice('Evenement supprime');
+      toast.success('Evenement supprime');
       if (selectedEvent?.id === event.id) setSelectedEvent(null);
     } catch (deleteError) {
-      setError(deleteError.message);
+      toast.error(deleteError.message);
     }
   }
 
@@ -114,10 +105,7 @@ function EventsPage() {
         </div>
       </div>
 
-      {notice ? <Notice>{notice}</Notice> : null}
-      {error ? <Notice tone="error">{error}</Notice> : null}
-
-      <div className="overflow-hidden rounded border border-neutral-200 bg-white">
+      <div className="overflow-hidden rounded border border-neutral-300 bg-white">
         <EventToolbar
           query={query}
           filter={activeFilter}
@@ -140,8 +128,6 @@ function EventsPage() {
         selectedEvent={selectedEvent}
         form={eventForm}
         isSaving={isSaving}
-        notice={drawerNotice}
-        error={drawerError}
         onClose={() => setDrawerOpen(false)}
         onSubmit={handleSaveEvent}
         onChange={updateEventForm}

@@ -1,3 +1,4 @@
+import { Toaster } from 'sonner';
 import { Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
 import Topbar from './components/layout/Topbar';
@@ -72,6 +73,15 @@ function App() {
   return (
     <AuthProvider>
       <AppRoutes />
+      <Toaster
+        position="bottom-left"
+        toastOptions={{
+          duration: 5000,
+          classNames: {
+            toast: 'border border-neutral-200 bg-white text-neutral-950 shadow-xl',
+          },
+        }}
+      />
     </AuthProvider>
   );
 }

@@ -51,12 +51,12 @@ function EventTable({ events, isLoading, selectedEventId, onOpenDetails, onEdit,
                 <td className="border-b border-neutral-200 px-4 py-3 align-middle">{event.accessCode ? 'Code requis' : 'Libre'}</td>
                 <td className="border-b border-neutral-200 px-4 py-3 align-middle">
                   <div className="flex items-center gap-2.5">
-                    <Button tone="icon" className="h-8 min-h-0 w-8 px-0" onClick={() => onEdit(event)} title="Edit">
-                      <Edit3 size={16} />
-                    </Button>
-                    <Button tone="icon" className="h-8 min-h-0 w-8 px-0" onClick={() => onDelete(event)} title="Delete">
-                      <Trash2 size={16} />
-                    </Button>
+                    <button className="grid h-9 w-9 place-items-center border border-black rounded-full" onClick={() => onEdit(event)} title="Edit">
+                      <Edit3 size={15} />
+                    </button>
+                    <button className="grid h-9 w-9 place-items-center border border-black rounded-full" onClick={() => onDelete(event)} title="Delete">
+                      <Trash2 size={15} />
+                    </button>
                   </div>
                 </td>
               </tr>

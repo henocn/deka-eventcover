@@ -1,7 +1,8 @@
 import { LockKeyhole, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Field, Notice } from '../components/ui';
+import { toast } from 'sonner';
+import { Button, Field } from '../components/ui';
 import useAuth from '../hooks/useAuth';
 import { inputClass } from '../utils/styleClasses';
 
@@ -9,19 +10,19 @@ function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setIsLoading(true);
-    setError('');
+    const toastId = toast.loading('Connexion en cours...');
 
     try {
       await login(form.email, form.password);
+      toast.success('Session ouverte', { id: toastId });
       navigate('/events', { replace: true });
     } catch (loginError) {
-      setError(loginError.message);
+      toast.error(loginError.message, { id: toastId });
     } finally {
       setIsLoading(false);
     }
@@ -38,7 +39,6 @@ function LoginPage() {
           <span className="block text-3xl font-black text-black">Deka.</span>
         </div>
         <h1 className="text-2xl font-black">Connexion</h1>
-        {error ? <Notice tone="error">{error}</Notice> : null}
         <form className="mt-6 grid gap-3.5" onSubmit={handleSubmit}>
           <Field label="Email">
             <input

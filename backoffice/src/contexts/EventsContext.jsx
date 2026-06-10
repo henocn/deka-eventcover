@@ -1,4 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import {
   clearSession,
   createEvent,
@@ -29,6 +30,7 @@ function EventsProvider({ children }) {
       return data;
     } catch (loadError) {
       setError(loadError.message);
+      toast.error(loadError.message);
       if (loadError.message.toLowerCase().includes('token')) {
         clearSession();
         logout();

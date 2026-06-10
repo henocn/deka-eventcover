@@ -1,5 +1,5 @@
 import { CheckCircle2, Loader2, LockKeyhole, MapPin, X } from 'lucide-react';
-import { Button, Field, Notice } from '../ui';
+import { Button, Field } from '../ui';
 import { inputClass } from '../../utils/styleClasses';
 
 function EventDrawer({
@@ -7,8 +7,6 @@ function EventDrawer({
   selectedEvent,
   form,
   isSaving,
-  notice,
-  error,
   onClose,
   onSubmit,
   onChange,
@@ -29,15 +27,6 @@ function EventDrawer({
         </header>
 
         <form className="grid gap-3.5" onSubmit={onSubmit}>
-          {notice ? <Notice>{notice}</Notice> : null}
-          {error ? (
-            <Notice tone="error">
-              <div className="grid gap-1">
-                {error.split('\n').map((line) => <span key={line}>{line}</span>)}
-              </div>
-            </Notice>
-          ) : null}
-
           <Field label="Titre">
             <input className={`${inputClass} min-h-[42px]`} value={form.title} onChange={(event) => onChange('title', event.target.value)} placeholder="Conference institutionnelle" required />
           </Field>
