@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
 async function parseResponse(response) {
   const payload = await response.json().catch(() => ({}));
@@ -15,7 +15,7 @@ async function parseResponse(response) {
 }
 
 function withAccess(path, accessCode, role) {
-  const url = new URL(`${API_URL}${path}`);
+  const url = new URL(path, API_URL);
 
   if (accessCode) {
     url.searchParams.set('accessCode', accessCode);
@@ -41,7 +41,7 @@ export async function fetchPublicAlbum(eventSlug, albumSlug, accessCode, role) {
 }
 
 export async function validateEventAccess(slug, accessCode) {
-  const response = await fetch(`${API_URL}/api/public/events/${slug}/access`, {
+  const response = await fetch(new URL(`/api/public/events/${slug}/access`, API_URL), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

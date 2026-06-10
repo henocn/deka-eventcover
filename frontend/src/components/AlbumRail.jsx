@@ -1,4 +1,4 @@
-import { Image as ImageIcon, Layers3 } from 'lucide-react';
+import { Image as ImageIcon } from 'lucide-react';
 import { getMediaUrl } from '../api';
 import { albumCover } from '../utils/participantUtils';
 

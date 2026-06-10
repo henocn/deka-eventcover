@@ -1,44 +1,69 @@
 import { LockKeyhole, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button, Field, Notice } from '../components/ui';
+import useAuth from '../hooks/useAuth';
+import { inputClass } from '../utils/styleClasses';
 
-function LoginPage({ form, error, isLoading, onChange, onSubmit }) {
+function LoginPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      await login(form.email, form.password);
+      navigate('/events', { replace: true });
+    } catch (loginError) {
+      setError(loginError.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function updateField(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
   return (
-    <main className="login-page">
-      <section className="login-card">
-        <div className="login-brand">
-          <span>Deka.</span>
-          <small>EventCover Admin</small>
+    <main className="grid min-h-svh place-items-center bg-neutral-200 p-6 text-neutral-950">
+      <section className="w-[min(410px,100%)] rounded-lg border border-neutral-200 bg-white p-8 shadow-[0_28px_80px_rgba(0,0,0,0.12)]">
+        <div className="mb-7">
+          <span className="block text-3xl font-black text-black">Deka.</span>
         </div>
-        <div>
-          <p className="section-kicker">Back-office interne</p>
-          <h1>Connexion</h1>
-          <p className="login-copy">Gestion des evenements, albums, medias et liens QR.</p>
-        </div>
-        {error ? <p className="form-error">{error}</p> : null}
-        <form className="login-form" onSubmit={onSubmit}>
-          <label>
-            Email
+        <h1 className="text-2xl font-black">Connexion</h1>
+        {error ? <Notice tone="error">{error}</Notice> : null}
+        <form className="mt-6 grid gap-3.5" onSubmit={handleSubmit}>
+          <Field label="Email">
             <input
+              className={`${inputClass} min-h-[42px]`}
               type="email"
               value={form.email}
-              onChange={(event) => onChange('email', event.target.value)}
+              onChange={(event) => updateField('email', event.target.value)}
               placeholder="admin@example.com"
               required
             />
-          </label>
-          <label>
-            Mot de passe
+          </Field>
+          <Field label="Mot de passe">
             <input
+              className={`${inputClass} min-h-[42px]`}
               type="password"
               value={form.password}
-              onChange={(event) => onChange('password', event.target.value)}
+              onChange={(event) => updateField('password', event.target.value)}
               placeholder="Mot de passe"
               required
             />
-          </label>
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? <Loader2 className="spin" size={16} /> : <LockKeyhole size={16} />}
+          </Field>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? <Loader2 className="animate-spin" size={16} /> : <LockKeyhole size={16} />}
             Se connecter
-          </button>
+          </Button>
         </form>
       </section>
     </main>

@@ -14,7 +14,7 @@ const corsOrigins = [
 
 module.exports = {
   nodeEnv: process.env.NODE_ENV || 'development',
-  port: toNumber(process.env.PORT, 4000),
+  port: toNumber(process.env.PORT, 3000),
   corsOrigins,
   mediaRoot: process.env.MEDIA_ROOT || 'uploads',
   maxUploadMb: toNumber(process.env.MAX_UPLOAD_MB, 25),

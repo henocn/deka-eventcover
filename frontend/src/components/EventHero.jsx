@@ -1,4 +1,4 @@
-import { CalendarDays, Camera, Download, MapPin, Sparkles } from 'lucide-react';
+import { CalendarDays, Camera, Download, MapPin } from 'lucide-react';
 import { formatDate } from '../utils/participantUtils';
 import ThemeToggle from './ThemeToggle';
 

@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
 const TOKEN_KEY = 'deka.backoffice.token';
 const USER_KEY = 'deka.backoffice.user';
 
@@ -49,7 +49,7 @@ async function apiRequest(path, options = {}) {
   let response;
 
   try {
-    response = await fetch(`${API_URL}${path}`, {
+    response = await fetch(new URL(path, API_URL), {
       ...options,
       headers,
     });
