@@ -378,7 +378,7 @@
   text-align: left;
   color: inherit;
   border: 1px solid var(--line);
-  border-radius: 30px;
+  border-radius: 18px;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, transparent), color-mix(in srgb, var(--surface) 76%, transparent)),
     var(--surface);
@@ -405,7 +405,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1.08 / 1;
-  border-radius: 24px;
+  border-radius: 14px;
   overflow: hidden;
   background:
     linear-gradient(135deg, rgba(153, 255, 0, 0.23), transparent 45%),
@@ -524,11 +524,13 @@
 }
 
 .gallery-section {
-  padding: 28px 0 70px;
+  padding: 18px 0 70px;
 }
 
 .section-heading {
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
 }
 
 .section-heading > div {
@@ -558,7 +560,7 @@
 .photo-tile {
   position: relative;
   aspect-ratio: 1 / 1;
-  border-radius: 24px;
+  border-radius: 12px;
   overflow: hidden;
   background: var(--sage);
   color: #ffffff;
@@ -568,11 +570,7 @@
 }
 
 .photo-tile::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.58));
-  opacity: 0.92;
+  content: none;
 }
 
 .photo-tile:hover img {
@@ -581,23 +579,6 @@
 
 .photo-tile img {
   transition: transform 320ms ease;
-}
-
-.photo-title {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 14px;
-  z-index: 1;
-  display: block;
-  padding: 9px 11px;
-  border-radius: 12px;
-  background: rgba(12, 13, 10, 0.55);
-  font-size: 0.88rem;
-  font-weight: 850;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .photo-tile-actions {
@@ -697,7 +678,7 @@
   max-width: min(1120px, 92vw);
   max-height: 78vh;
   object-fit: contain;
-  border-radius: 24px;
+  border-radius: 14px;
   box-shadow: 0 34px 100px rgba(0, 0, 0, 0.45);
 }
 
@@ -903,13 +884,20 @@
   .hero-topbar,
   .section-heading {
     align-items: flex-start;
-    flex-direction: column;
+  }
+
+  .section-heading {
+    grid-template-columns: 44px minmax(0, 1fr);
   }
 
   .hero-actions,
   .section-heading-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .section-heading-actions {
+    grid-column: 1 / -1;
   }
 
   .hero-art {

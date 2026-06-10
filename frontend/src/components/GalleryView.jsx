@@ -30,15 +30,17 @@ function GalleryView({
           <p className="eyebrow">Album</p>
           <h2>{album?.title || 'Selectionnez un album'}</h2>
         </div>
-        <button type="button" className="compact-action" onClick={onDownloadAlbum} disabled={!album}>
-          <Download size={16} />
-          <span>Album</span>
-        </button>
-        <button type="button" className="compact-action selected-download-action" onClick={onDownloadSelected} disabled={!selectedMediaIds.length}>
-          <Download size={16} />
-          <span>{selectedMediaIds.length || 0} selection</span>
-        </button>
-        {isLoading ? <Loader2 className="animate-spin muted-icon" size={20} /> : null}
+        <div className="section-heading-actions">
+          <button type="button" className="compact-action" onClick={onDownloadAlbum} disabled={!album}>
+            <Download size={16} />
+            <span>Album</span>
+          </button>
+          <button type="button" className="compact-action selected-download-action" onClick={onDownloadSelected} disabled={!selectedMediaIds.length}>
+            <Download size={16} />
+            <span>{selectedMediaIds.length || 0} selection</span>
+          </button>
+          {isLoading ? <Loader2 className="animate-spin muted-icon" size={20} /> : null}
+        </div>
       </div>
 
       {album?.description ? <p className="album-description">{album.description}</p> : null}
@@ -61,7 +63,6 @@ function GalleryView({
                 alt={item.originalName}
                 loading="lazy"
               />
-              <span className="photo-title">{item.originalName}</span>
               <div className="photo-tile-actions">
                 <button
                   type="button"

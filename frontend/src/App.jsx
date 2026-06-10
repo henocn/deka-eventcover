@@ -321,34 +321,36 @@ function App() {
         </div>
       ) : null}
 
-      <AlbumRail
-        albums={albums}
-        selectedAlbumSlug={selectedAlbumSlug}
-        accessCode={accessCode}
-        accessRole={accessRole}
-        onSelectAlbum={selectAlbum}
-        onDownloadAlbum={downloadAlbum}
-      />
-
-      <GalleryView
-        album={albumData}
-        images={imageMedia}
-        documents={documents}
-        accessCode={accessCode}
-        accessRole={accessRole}
-        isLoading={isLoadingAlbum}
-        selectedMediaIds={selectedMediaIds}
-        onBackToAlbums={() => {
-          setAlbumData(null);
-          setActiveImageIndex(null);
-          setSelectedMediaIds([]);
-          navigate(`/events/${eventSlug}${location.search}`);
-        }}
-        onOpenImage={openImage}
-        onToggleMediaSelection={toggleMediaSelection}
-        onDownloadAlbum={() => downloadAlbum()}
-        onDownloadSelected={downloadSelectedMedia}
-      />
+      {selectedAlbumSlug ? (
+        <GalleryView
+          album={albumData}
+          images={imageMedia}
+          documents={documents}
+          accessCode={accessCode}
+          accessRole={accessRole}
+          isLoading={isLoadingAlbum}
+          selectedMediaIds={selectedMediaIds}
+          onBackToAlbums={() => {
+            setAlbumData(null);
+            setActiveImageIndex(null);
+            setSelectedMediaIds([]);
+            navigate(`/events/${eventSlug}${location.search}`);
+          }}
+          onOpenImage={openImage}
+          onToggleMediaSelection={toggleMediaSelection}
+          onDownloadAlbum={() => downloadAlbum()}
+          onDownloadSelected={downloadSelectedMedia}
+        />
+      ) : (
+        <AlbumRail
+          albums={albums}
+          selectedAlbumSlug={selectedAlbumSlug}
+          accessCode={accessCode}
+          accessRole={accessRole}
+          onSelectAlbum={selectAlbum}
+          onDownloadAlbum={downloadAlbum}
+        />
+      )}
 
       <Lightbox
         activeImage={activeImage}

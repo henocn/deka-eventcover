@@ -32,7 +32,6 @@ function Lightbox({
       </button>
       <div className="viewer-caption">
         <span>{activeImageIndex + 1} / {imageCount}</span>
-        <strong>{activeImage.originalName}</strong>
         <a
           href={isDemoMedia(activeImage) ? activeImage.publicUrl : getMediaUrl(activeImage, accessCode, accessRole, 'download')}
           title="Telecharger"
