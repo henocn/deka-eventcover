@@ -7,6 +7,7 @@ import { EventsProvider } from './contexts/EventsContext';
 import useAuth from './hooks/useAuth';
 import AlbumDetailsPage from './pages/AlbumDetailsPage';
 import AlbumsPage from './pages/AlbumsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 import EventDetailsPage from './pages/EventDetailsPage';
 import EventsPage from './pages/EventsPage';
 import LoginPage from './pages/LoginPage';
@@ -62,6 +63,7 @@ function AppRoutes() {
           <Route path="/event/:slug" element={<EventDetailsPage />} />
           <Route path="/albums" element={<AlbumsPage />} />
           <Route path="/albums/:slug" element={<AlbumDetailsPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>

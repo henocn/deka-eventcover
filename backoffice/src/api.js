@@ -149,6 +149,11 @@ async function fetchStats(eventId) {
   return apiRequest(`/api/admin/events/${eventId}/stats`);
 }
 
+async function fetchAnalytics(eventId) {
+  const query = eventId ? `?${new URLSearchParams({ eventId })}` : '';
+  return apiRequest(`/api/admin/analytics${query}`);
+}
+
 async function fetchAccessRoles(eventId) {
   return apiRequest(`/api/admin/events/${eventId}/access-roles`);
 }
@@ -181,6 +186,7 @@ export {
   deleteEvent,
   fetchAccessRoleQrCode,
   fetchAccessRoles,
+  fetchAnalytics,
   fetchAlbum,
   fetchEvents,
   fetchProfile,

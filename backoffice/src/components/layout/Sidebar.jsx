@@ -14,6 +14,7 @@ function Sidebar({ onLogout }) {
   const eventDetailsMatch = useMatch('/event/:slug');
   const albumsMatch = useMatch('/albums');
   const albumDetailsMatch = useMatch('/albums/:slug');
+  const analyticsMatch = useMatch('/analytics');
   const isEventSection = Boolean(eventsMatch || eventDetailsMatch);
   const isAlbumSection = Boolean(albumsMatch || albumDetailsMatch);
 
@@ -39,10 +40,10 @@ function Sidebar({ onLogout }) {
             <Upload size={20} />
             Uploads
           </button>
-          <button type="button" disabled className="flex min-h-[46px] cursor-not-allowed items-center gap-3 rounded-md px-4 text-base font-bold text-neutral-500 opacity-60 max-[1180px]:justify-center max-[1180px]:p-0 max-[1180px]:text-[0px]">
+          <NavLink to="/analytics" className={`flex min-h-[46px] items-center gap-3 rounded-md px-4 text-base font-bold no-underline max-[1180px]:justify-center max-[1180px]:p-0 max-[1180px]:text-[0px] ${analyticsMatch ? 'bg-[#9cff00] text-black' : 'text-neutral-300'}`}>
             <BarChart3 size={20} />
             Analytics
-          </button>
+          </NavLink>
           <button type="button" disabled className="flex min-h-[46px] cursor-not-allowed items-center gap-3 rounded-md px-4 text-base font-bold text-neutral-500 opacity-60 max-[1180px]:justify-center max-[1180px]:p-0 max-[1180px]:text-[0px]">
             <Users size={20} />
             Utilisateurs

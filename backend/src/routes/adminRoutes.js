@@ -4,9 +4,11 @@ const validate = require('../middlewares/validate');
 const { requireAdmin } = require('../middlewares/auth');
 const { upload } = require('../middlewares/upload');
 const authController = require('../controllers/authController');
+const adminAnalyticsController = require('../controllers/adminAnalyticsController');
 const adminEventController = require('../controllers/adminEventController');
 const adminMediaController = require('../controllers/adminMediaController');
 const { loginSchema, updateProfileSchema } = require('../validators/authValidators');
+const { analyticsQuerySchema } = require('../validators/analyticsValidators');
 const {
   createEventSchema,
   updateEventSchema,
@@ -40,6 +42,7 @@ router.get('/overview', (req, res) => {
   });
 });
 
+router.get('/analytics', validate(analyticsQuerySchema), asyncHandler(adminAnalyticsController.getAnalytics));
 router.get('/events', asyncHandler(adminEventController.listEvents));
 router.post('/events', validate(createEventSchema), asyncHandler(adminEventController.createEvent));
 router.get('/events/:eventId', validate(eventIdParamSchema), asyncHandler(adminEventController.getEvent));
