@@ -64,19 +64,19 @@ function QrScannerPanel({ title, description, onScan }) {
   }, [onScan]);
 
   return (
-    <main className="participant-shell access-screen">
-      <section className="access-panel scanner-panel">
-        <div className="access-icon">
+    <main className="participant-shell grid min-h-svh place-items-center p-5">
+      <section className="animate-fade-up w-[min(480px,100%)] rounded-[32px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-7 shadow-[var(--shadow)]">
+        <div className="mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-[var(--text)] text-[var(--accent)]">
           <Camera size={24} />
         </div>
-        <p className="eyebrow">Scan QR</p>
-        <h1>{title}</h1>
-        <p className="access-hint">{description}</p>
-        <div className="scanner-frame">
-          <video ref={videoRef} muted playsInline />
-          <ScanLine className="scanner-mark" size={42} />
+        <p className="mb-3 text-xs font-black uppercase tracking-[0.08em] text-[var(--gold)]">Scan QR</p>
+        <h1 className="m-0 text-[clamp(1.7rem,5vw,2.4rem)] font-black leading-none">{title}</h1>
+        <p className="mt-4 border-l-4 border-[var(--accent)] pl-3 leading-relaxed text-[var(--muted)]">{description}</p>
+        <div className="relative my-5 aspect-square overflow-hidden rounded-3xl border border-[var(--line)] bg-black">
+          <video className="h-full w-full object-cover" ref={videoRef} muted playsInline />
+          <ScanLine className="absolute inset-[34px] h-auto w-auto rounded-[22px] border-2 border-[var(--accent)] shadow-[0_0_0_999px_rgba(0,0,0,0.28)]" size={42} />
         </div>
-        {scannerError ? <p className="form-error">{scannerError}</p> : null}
+        {scannerError ? <p className="mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">{scannerError}</p> : null}
       </section>
     </main>
   );
