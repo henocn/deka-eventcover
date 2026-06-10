@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import {
   API_URL,
@@ -17,18 +18,19 @@ import QrScannerPanel from './components/QrScannerPanel';
 import { demoAlbums, demoEvent } from './demoData';
 import {
   getInitialRole,
-  getInitialSlug,
   isDemoMedia,
   normalizeAlbums,
 } from './utils/participantUtils';
 import './App.css';
 
 function App() {
-  const [eventSlug] = useState(getInitialSlug);
+  const { albumSlug, eventSlug: routeEventSlug } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const eventSlug = routeEventSlug || '';
   const [accessRole] = useState(getInitialRole);
   const [theme, setTheme] = useState(() => window.localStorage.getItem('deka.participant.theme') || 'light');
   const [eventData, setEventData] = useState(null);
-  const [selectedAlbumSlug, setSelectedAlbumSlug] = useState(null);
   const [albumData, setAlbumData] = useState(null);
   const [accessCode, setAccessCode] = useState('');
   const [pendingCode, setPendingCode] = useState('');
@@ -39,8 +41,10 @@ function App() {
   const [error, setError] = useState('');
   const [usingDemo, setUsingDemo] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(null);
+  const [selectedMediaIds, setSelectedMediaIds] = useState([]);
   const touchStartX = useRef(null);
 
+  const selectedAlbumSlug = albumSlug || null;
   const albums = useMemo(() => normalizeAlbums(eventData?.albums), [eventData]);
   const media = albumData?.media || [];
   const imageMedia = media.filter((item) => item.type === 'image');
@@ -75,7 +79,6 @@ function App() {
         } else {
           setEventData(demoEvent);
           setUsingDemo(true);
-          setSelectedAlbumSlug(null);
           setError("Aucun evenement publie n'a encore ete trouve. Apercu de demonstration affiche.");
         }
       } finally {
@@ -120,6 +123,15 @@ function App() {
   }, [loadEvent]);
 
   useEffect(() => {
+    if (!selectedAlbumSlug) {
+      queueMicrotask(() => {
+        setAlbumData(null);
+        setActiveImageIndex(null);
+        setSelectedMediaIds([]);
+      });
+      return;
+    }
+
     if (selectedAlbumSlug) {
       // The selected album is synchronized with the current public state.
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -161,9 +173,10 @@ function App() {
   const toggleTheme = () => setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
 
   const selectAlbum = (albumSlug) => {
-    setSelectedAlbumSlug(albumSlug);
     setAlbumData(null);
     setActiveImageIndex(null);
+    setSelectedMediaIds([]);
+    navigate(`/events/${eventSlug}/albums/${albumSlug}${location.search}`);
   };
 
   const openImage = (mediaItem) => {
@@ -201,8 +214,7 @@ function App() {
     }
   }, []);
 
-  const downloadAlbum = () => {
-    const items = [...imageMedia, ...documents];
+  const downloadItems = useCallback((items) => {
     if (items.length === 0) return;
 
     items.forEach((item, index) => {
@@ -216,6 +228,38 @@ function App() {
         link.remove();
       }, index * 220);
     });
+  }, [accessCode, accessRole]);
+
+  const downloadAlbum = useCallback(async (nextAlbumSlug = selectedAlbumSlug) => {
+    if (!nextAlbumSlug) return;
+
+    let targetAlbum = nextAlbumSlug === albumData?.slug ? albumData : null;
+
+    if (!targetAlbum) {
+      try {
+        targetAlbum = usingDemo
+          ? demoAlbums[nextAlbumSlug]
+          : (await fetchPublicAlbum(eventSlug, nextAlbumSlug, accessCode, accessRole)).album;
+      } catch (downloadError) {
+        setError(downloadError.message);
+        return;
+      }
+    }
+
+    downloadItems(targetAlbum?.media || []);
+  }, [accessCode, accessRole, albumData, downloadItems, eventSlug, selectedAlbumSlug, usingDemo]);
+
+  const toggleMediaSelection = (mediaId) => {
+    setSelectedMediaIds((current) => (
+      current.includes(mediaId)
+        ? current.filter((id) => id !== mediaId)
+        : [...current, mediaId]
+    ));
+  };
+
+  const downloadSelectedMedia = () => {
+    const selectedItems = media.filter((item) => selectedMediaIds.includes(item.id));
+    downloadItems(selectedItems);
   };
 
   const showMyPhotos = () => {
@@ -269,8 +313,6 @@ function App() {
         theme={theme}
         onThemeToggle={toggleTheme}
         onMyPhotos={showMyPhotos}
-        onDownloadAlbum={downloadAlbum}
-        canDownloadAlbum={Boolean(albumData && media.length > 0)}
       />
 
       {usingDemo || error ? (
@@ -285,6 +327,7 @@ function App() {
         accessCode={accessCode}
         accessRole={accessRole}
         onSelectAlbum={selectAlbum}
+        onDownloadAlbum={downloadAlbum}
       />
 
       <GalleryView
@@ -294,9 +337,17 @@ function App() {
         accessCode={accessCode}
         accessRole={accessRole}
         isLoading={isLoadingAlbum}
-        onBackToAlbums={() => setSelectedAlbumSlug(null)}
+        selectedMediaIds={selectedMediaIds}
+        onBackToAlbums={() => {
+          setAlbumData(null);
+          setActiveImageIndex(null);
+          setSelectedMediaIds([]);
+          navigate(`/events/${eventSlug}${location.search}`);
+        }}
         onOpenImage={openImage}
-        onDownloadAlbum={downloadAlbum}
+        onToggleMediaSelection={toggleMediaSelection}
+        onDownloadAlbum={() => downloadAlbum()}
+        onDownloadSelected={downloadSelectedMedia}
       />
 
       <Lightbox

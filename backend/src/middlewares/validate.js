@@ -8,9 +8,13 @@ const fieldLabels = {
   'body.isPublished': 'Publication',
   'body.email': 'Email',
   'body.password': 'Mot de passe',
+  'body.fullName': 'Nom',
+  'body.role': 'Role',
+  'body.isActive': 'Statut',
   'params.eventId': 'Evenement',
   'params.albumId': 'Album',
   'params.mediaId': 'Media',
+  'params.userId': 'Utilisateur',
 };
 
 function formatIssue(issue) {

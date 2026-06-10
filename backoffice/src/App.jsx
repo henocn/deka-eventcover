@@ -12,6 +12,7 @@ import EventDetailsPage from './pages/EventDetailsPage';
 import EventsPage from './pages/EventsPage';
 import LoginPage from './pages/LoginPage';
 import SettingsPage from './pages/SettingsPage';
+import UsersPage from './pages/UsersPage';
 
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
@@ -65,6 +66,7 @@ function AppRoutes() {
           <Route path="/albums/:slug" element={<AlbumDetailsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/users" element={<UsersPage />} />
         </Route>
       </Route>
 

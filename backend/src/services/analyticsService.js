@@ -1,18 +1,4 @@
-const { Op } = require('sequelize');
 const { Event, Album, Media, MediaStat, AccessRole } = require('../models');
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-const RECENT_DAYS = 14;
-
-function startOfDay(date) {
-  const nextDate = new Date(date);
-  nextDate.setHours(0, 0, 0, 0);
-  return nextDate;
-}
-
-function formatDateKey(date) {
-  return date.toISOString().slice(0, 10);
-}
 
 function buildWhere(eventId) {
   return eventId ? { eventId } : {};
@@ -27,30 +13,6 @@ function countByAction(stats) {
     },
     { views: 0, downloads: 0 }
   );
-}
-
-function buildDailySeries(stats) {
-  const today = startOfDay(new Date());
-  const days = Array.from({ length: RECENT_DAYS }, (_, index) => {
-    const date = new Date(today.getTime() - (RECENT_DAYS - 1 - index) * DAY_MS);
-    return {
-      date: formatDateKey(date),
-      label: date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
-      views: 0,
-      downloads: 0,
-    };
-  });
-  const byDate = new Map(days.map((day) => [day.date, day]));
-
-  stats.forEach((stat) => {
-    const key = formatDateKey(new Date(stat.createdAt));
-    const day = byDate.get(key);
-    if (!day) return;
-    if (stat.action === 'view') day.views += 1;
-    if (stat.action === 'download') day.downloads += 1;
-  });
-
-  return days;
 }
 
 async function getEventSummaries() {
@@ -128,33 +90,8 @@ async function getAlbumLeaderboard(eventId) {
     .slice(0, 8);
 }
 
-async function getRecentUploads(eventId) {
-  const media = await Media.findAll({
-    where: buildWhere(eventId),
-    attributes: ['id', 'originalName', 'type', 'mimeType', 'createdAt', 'sizeBytes'],
-    include: [
-      { model: Album, as: 'album', attributes: ['id', 'title', 'slug'], required: true },
-      { model: Event, as: 'event', attributes: ['id', 'title', 'slug'], required: true },
-    ],
-    order: [['createdAt', 'DESC']],
-    limit: 8,
-  });
-
-  return media.map((item) => ({
-    id: item.id,
-    originalName: item.originalName,
-    type: item.type,
-    mimeType: item.mimeType,
-    sizeBytes: Number(item.sizeBytes || 0),
-    createdAt: item.createdAt,
-    album: item.album,
-    event: item.event,
-  }));
-}
-
 async function getAnalytics({ eventId } = {}) {
   const where = buildWhere(eventId);
-  const recentStart = startOfDay(new Date(Date.now() - (RECENT_DAYS - 1) * DAY_MS));
 
   const [
     eventsCount,
@@ -164,10 +101,8 @@ async function getAnalytics({ eventId } = {}) {
     mediaCount,
     badgesCount,
     stats,
-    recentStats,
     eventSummaries,
     topAlbums,
-    recentUploads,
   ] = await Promise.all([
     Event.count(eventId ? { where: { id: eventId } } : undefined),
     Event.count(eventId ? { where: { id: eventId, isPublished: true } } : { where: { isPublished: true } }),
@@ -176,17 +111,8 @@ async function getAnalytics({ eventId } = {}) {
     Media.count({ where }),
     AccessRole.count({ where }),
     MediaStat.findAll({ where: { ...where, action: ['view', 'download'] }, attributes: ['action'] }),
-    MediaStat.findAll({
-      where: {
-        ...where,
-        action: ['view', 'download'],
-        createdAt: { [Op.gte]: recentStart },
-      },
-      attributes: ['action', 'createdAt'],
-    }),
     getEventSummaries(),
     getAlbumLeaderboard(eventId),
-    getRecentUploads(eventId),
   ]);
 
   const actionCounts = countByAction(stats);
@@ -208,10 +134,8 @@ async function getAnalytics({ eventId } = {}) {
       downloadsCount: actionCounts.downloads,
       interactionsCount: actionCounts.views + actionCounts.downloads,
     },
-    dailySeries: buildDailySeries(recentStats),
     eventSummaries,
     topAlbums,
-    recentUploads,
   };
 }
 

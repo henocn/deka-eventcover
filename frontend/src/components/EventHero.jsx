@@ -1,8 +1,8 @@
-import { CalendarDays, Camera, Download, MapPin } from 'lucide-react';
+import { CalendarDays, Camera, MapPin } from 'lucide-react';
 import { formatDate } from '../utils/participantUtils';
 import ThemeToggle from './ThemeToggle';
 
-function EventHero({ event, theme, onThemeToggle, onMyPhotos, onDownloadAlbum, canDownloadAlbum }) {
+function EventHero({ event, theme, onThemeToggle, onMyPhotos }) {
   return (
     <header className="event-hero">
       <div className="hero-topbar">
@@ -35,13 +35,6 @@ function EventHero({ event, theme, onThemeToggle, onMyPhotos, onDownloadAlbum, c
           </div>
           <h1 className="pt-5">{event?.title}</h1>
           <p className="event-description">{event?.description}</p>
-          <div className="hero-command-row">
-            <button type="button" className="primary-gallery-action" onClick={onDownloadAlbum} disabled={!canDownloadAlbum}>
-              <Download size={18} />
-              <span>Telecharger l'album</span>
-            </button>
-            
-          </div>
         </div>
 
         <div className="hero-art" aria-hidden="true">

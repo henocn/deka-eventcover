@@ -1,8 +1,8 @@
 function MetricCard({ icon, label, tone = 'light', value }) {
   const tones = {
-    dark: 'border-black bg-black text-white',
-    accent: 'border-[#9cff00] bg-[#9cff00] text-black',
-    light: 'border-neutral-300 bg-white text-neutral-950',
+    dark: 'border-[#9cff00] border-3 bg-black text-white',
+    accent: 'border-gray-500 bg-[#9cff00] text-black',
+    light: 'border-black/60 bg-white text-neutral-950',
   };
 
   return (
@@ -11,7 +11,7 @@ function MetricCard({ icon, label, tone = 'light', value }) {
         <span className={`grid h-9 w-9 place-items-center rounded-full ${tone === 'dark' ? 'bg-white text-black' : 'bg-black text-white'}`}>
           {icon}
         </span>
-        <span className="rounded-full border border-current/20 px-2.5 py-1 text-[11px] font-black uppercase opacity-75">
+        <span className="rounded-full border border-current/70 px-2.5 py-1 text-[11px] font-black uppercase opacity-75">
           KPI
         </span>
       </div>

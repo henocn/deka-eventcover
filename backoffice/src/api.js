@@ -91,6 +91,30 @@ async function updateProfile(payload) {
   return user;
 }
 
+async function fetchUsers() {
+  return apiRequest('/api/admin/users');
+}
+
+async function createUser(payload) {
+  return apiRequest('/api/admin/users', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+async function updateUser(userId, payload) {
+  return apiRequest(`/api/admin/users/${userId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+async function deleteUser(userId) {
+  return apiRequest(`/api/admin/users/${userId}`, {
+    method: 'DELETE',
+  });
+}
+
 async function createEvent(payload) {
   return apiRequest('/api/admin/events', {
     method: 'POST',
@@ -181,9 +205,11 @@ export {
   createAccessRole,
   createAlbum,
   createEvent,
+  createUser,
   deleteAccessRole,
   deleteAlbum,
   deleteEvent,
+  deleteUser,
   fetchAccessRoleQrCode,
   fetchAccessRoles,
   fetchAnalytics,
@@ -191,11 +217,13 @@ export {
   fetchEvents,
   fetchProfile,
   fetchStats,
+  fetchUsers,
   getStoredUser,
   getToken,
   login,
   updateAlbum,
   updateEvent,
   updateProfile,
+  updateUser,
   uploadAlbumMedia,
 };

@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, Download, FileText, Image as ImageIcon, Loader2, Square } from 'lucide-react';
 import { getMediaUrl } from '../api';
 import { isDemoMedia } from '../utils/participantUtils';
 
@@ -9,9 +9,12 @@ function GalleryView({
   accessCode,
   accessRole,
   isLoading,
+  selectedMediaIds,
   onBackToAlbums,
   onOpenImage,
+  onToggleMediaSelection,
   onDownloadAlbum,
+  onDownloadSelected,
 }) {
   if (!album && !isLoading) {
     return null;
@@ -31,6 +34,10 @@ function GalleryView({
           <Download size={16} />
           <span>Album</span>
         </button>
+        <button type="button" className="compact-action selected-download-action" onClick={onDownloadSelected} disabled={!selectedMediaIds.length}>
+          <Download size={16} />
+          <span>{selectedMediaIds.length || 0} selection</span>
+        </button>
         {isLoading ? <Loader2 className="animate-spin muted-icon" size={20} /> : null}
       </div>
 
@@ -38,9 +45,12 @@ function GalleryView({
 
       {images.length > 0 ? (
         <div className="photo-grid">
-          {images.map((item, index) => (
-            <button
-              type="button"
+          {images.map((item, index) => {
+            const isSelected = selectedMediaIds.includes(item.id);
+            const downloadUrl = isDemoMedia(item) ? item.downloadUrl : getMediaUrl(item, accessCode, accessRole, 'download');
+
+            return (
+            <article
               className="photo-tile"
               key={item.id}
               onClick={() => onOpenImage(item)}
@@ -51,9 +61,32 @@ function GalleryView({
                 alt={item.originalName}
                 loading="lazy"
               />
-              <span>{item.originalName}</span>
-            </button>
-          ))}
+              <span className="photo-title">{item.originalName}</span>
+              <div className="photo-tile-actions">
+                <button
+                  type="button"
+                  className={`photo-action-button ${isSelected ? 'is-selected' : ''}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onToggleMediaSelection(item.id);
+                  }}
+                  title={isSelected ? 'Retirer de la selection' : 'Cocher'}
+                >
+                  {isSelected ? <Check size={16} /> : <Square size={16} />}
+                </button>
+                <a
+                  className="photo-action-button"
+                  href={downloadUrl}
+                  download={item.originalName}
+                  onClick={(event) => event.stopPropagation()}
+                  title="Telecharger"
+                >
+                  <Download size={16} />
+                </a>
+              </div>
+            </article>
+            );
+          })}
         </div>
       ) : (
         <div className="empty-state">

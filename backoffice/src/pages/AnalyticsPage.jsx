@@ -12,9 +12,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { fetchAnalytics } from '../api';
-import DailyActivityChart from '../components/analytics/DailyActivityChart';
 import MetricCard from '../components/analytics/MetricCard';
-import RecentUploads from '../components/analytics/RecentUploads';
 import TopAlbumsTable from '../components/analytics/TopAlbumsTable';
 import { Button, Field, StatusPill } from '../components/ui';
 import useEvents from '../hooks/useEvents';
@@ -57,19 +55,9 @@ function AnalyticsPage() {
   return (
     <section className="min-w-0 px-6 pb-8 pt-6 max-[760px]:p-4">
       <div className="mb-6 flex items-end justify-between gap-4 max-[860px]:flex-col max-[860px]:items-stretch">
-        <div>
-          <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-black px-3 py-1 text-xs font-black uppercase text-[#9cff00]">
-            <BarChart3 size={14} />
-            Analytics
-          </p>
-          <h2 className="text-[24px] font-black">Vue analytique</h2>
-          <p className="mt-1 max-w-2xl text-sm font-bold text-neutral-500">
-            Suivez l'activite des evenements, albums, medias et interactions participants.
-          </p>
-        </div>
-
+        <h2 className="text-[24px] font-black">Vue analytique</h2>
         <div className="flex items-end gap-3 max-[760px]:flex-col max-[760px]:items-stretch">
-          <Field label="Portee" className="w-[min(360px,55vw)] max-[760px]:w-full">
+          <Field className="w-[min(360px,55vw)] max-[760px]:w-full">
             <select className={`${inputClass} min-h-[40px]`} value={selectedEventId} onChange={(event) => setSelectedEventId(event.target.value)}>
               <option value="">Tout le compte</option>
               {events.map((event) => (
@@ -120,13 +108,8 @@ function AnalyticsPage() {
             <MetricCard icon={<FolderOpen size={18} />} value={formatNumber(totals.activeAlbumsCount)} label="Albums actifs" />
           </div>
 
-          <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(340px,0.8fr)] gap-5 max-[1080px]:grid-cols-1">
-            <DailyActivityChart series={analytics.dailySeries} />
-            <TopAlbumsTable albums={analytics.topAlbums} />
-          </div>
-
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)] gap-5 max-[1080px]:grid-cols-1">
-            <section className="rounded-xl border border-neutral-300 bg-white p-5 shadow-sm">
+            <section className="rounded-xl border border-neutral-400 bg-white p-5 shadow-sm">
               <div className="mb-4">
                 <h3 className="text-lg font-black">Repartition par evenement</h3>
                 <p className="mt-1 text-sm font-bold text-neutral-500">Volume de medias et structure des collections.</p>
@@ -157,7 +140,7 @@ function AnalyticsPage() {
               </div>
             </section>
 
-            <RecentUploads uploads={analytics.recentUploads} />
+            <TopAlbumsTable albums={analytics.topAlbums} />
           </div>
         </div>
       ) : null}

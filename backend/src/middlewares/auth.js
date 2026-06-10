@@ -26,6 +26,15 @@ async function requireAdmin(req, res, next) {
   }
 }
 
+function requireSuperAdmin(req, res, next) {
+  if (req.user?.role !== 'super_admin') {
+    return next(httpError(403, 'Acces reserve aux super administrateurs.'));
+  }
+
+  return next();
+}
+
 module.exports = {
   requireAdmin,
+  requireSuperAdmin,
 };

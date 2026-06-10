@@ -5,7 +5,7 @@ function TopAlbumsTable({ albums = [] }) {
   const navigate = useNavigate();
 
   return (
-    <section className="rounded-xl border border-neutral-300 bg-white p-5 shadow-sm">
+    <section className="rounded-xl border border-neutral-400 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-black">Albums les plus actifs</h3>

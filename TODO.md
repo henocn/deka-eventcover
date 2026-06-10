@@ -118,7 +118,7 @@ Priorite design : interface simple, premium, mobile-first, rapide a comprendre e
 - [x] Ajouter la copie du lien public
 - [x] Ajouter les statistiques basiques
 - [x] Creer une page analytics back-office avec vue globale et filtre evenement
-- [ ] Ajouter la gestion simple des utilisateurs internes
+- [x] Ajouter la gestion simple des utilisateurs internes
 
 ## 9. Upload et stockage des medias
 
