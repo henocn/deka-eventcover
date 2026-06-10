@@ -18,7 +18,7 @@ function Sidebar({ onLogout }) {
   const isAlbumSection = Boolean(albumsMatch || albumDetailsMatch);
 
   return (
-    <aside className="flex min-h-svh flex-col justify-between bg-black px-5 py-6 text-white max-[1180px]:px-3 max-[1180px]:py-5 max-[760px]:min-h-0 max-[760px]:flex-row max-[760px]:items-center max-[760px]:overflow-x-auto max-[760px]:px-3 max-[760px]:py-2.5">
+    <aside className="sticky top-0 flex h-svh min-h-svh flex-col justify-between bg-black px-5 py-6 text-white max-[1180px]:px-3 max-[1180px]:py-5 max-[760px]:static max-[760px]:h-auto max-[760px]:min-h-0 max-[760px]:flex-row max-[760px]:items-center max-[760px]:overflow-x-auto max-[760px]:px-3 max-[760px]:py-2.5">
       <div>
         <div className="flex items-center justify-between gap-3 border-b border-neutral-800 pb-5 max-[760px]:border-b-0 max-[760px]:pb-0">
           <strong className="block text-[30px] font-black text-[#9cff00] max-[1180px]:text-xl">Deka.</strong>

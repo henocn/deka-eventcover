@@ -77,6 +77,7 @@ function serializeMedia(media) {
 
 function serializeAlbum(album, includeMedia = false) {
   const media = includeMedia && album.media ? album.media.map(serializeMedia) : undefined;
+  const mediaCount = album.media ? album.media.length : undefined;
 
   return {
     id: album.id,
@@ -86,6 +87,7 @@ function serializeAlbum(album, includeMedia = false) {
     description: album.description,
     coverMediaId: album.coverMediaId,
     coverMedia: serializeMedia(album.coverMedia),
+    mediaCount,
     sortOrder: album.sortOrder,
     isPublished: album.isPublished,
     media,
@@ -228,8 +230,22 @@ async function listEvents() {
       {
         model: Album,
         as: 'albums',
-        attributes: ['id', 'title', 'slug', 'isPublished', 'sortOrder'],
+        attributes: albumPublicAttributes,
         required: false,
+        include: [
+          {
+            model: Media,
+            as: 'coverMedia',
+            required: false,
+            attributes: mediaPublicAttributes,
+          },
+          {
+            model: Media,
+            as: 'media',
+            required: false,
+            attributes: mediaPublicAttributes,
+          },
+        ],
       },
     ],
   });
@@ -314,6 +330,20 @@ async function updateAlbum(albumId, payload) {
   const { nextPayload: albumPayload, accessRoleIds } = extractAccessRoleIds(payload);
   const nextPayload = normalizeAlbumPayload(albumPayload, album.slug);
 
+  if (nextPayload.coverMediaId) {
+    const coverMedia = await Media.findOne({
+      where: {
+        id: nextPayload.coverMediaId,
+        albumId: album.id,
+        type: 'image',
+      },
+    });
+
+    if (!coverMedia) {
+      throw httpError(400, "La photo de couverture doit appartenir a cet album.");
+    }
+  }
+
   if (nextPayload.slug) {
     nextPayload.slug = await buildUniqueAlbumSlug(album.eventId, nextPayload.slug, album.id);
   }
@@ -330,6 +360,12 @@ async function updateAlbum(albumId, payload) {
 async function getAlbumById(albumId) {
   const album = await Album.findByPk(albumId, {
     include: [
+      {
+        model: Media,
+        as: 'coverMedia',
+        required: false,
+        attributes: mediaPublicAttributes,
+      },
       {
         model: AccessRole,
         as: 'accessRoles',

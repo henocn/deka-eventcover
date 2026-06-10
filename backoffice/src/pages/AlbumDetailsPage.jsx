@@ -1,49 +1,10 @@
 import { ArrowLeft, Image, Images, Loader2, Upload } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { API_URL, fetchAlbum, getToken, uploadAlbumMedia } from '../api';
+import { fetchAlbum, uploadAlbumMedia } from '../api';
+import AdminMediaImage from '../components/media/AdminMediaImage';
 import { Button, Notice, StatusPill } from '../components/ui';
 import useEvents from '../hooks/useEvents';
-
-function AdminMediaPreview({ media }) {
-  const [src, setSrc] = useState('');
-
-  useEffect(() => {
-    let objectUrl = '';
-    let cancelled = false;
-
-    async function loadPreview() {
-      try {
-        const response = await fetch(new URL(`/api/admin/media/${media.id}/file`, API_URL), {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        });
-        if (!response.ok) return;
-        const blob = await response.blob();
-        objectUrl = URL.createObjectURL(blob);
-        if (!cancelled) setSrc(objectUrl);
-      } catch {
-        setSrc('');
-      }
-    }
-
-    loadPreview();
-
-    return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [media.id]);
-
-  if (!src) {
-    return (
-      <div className="grid aspect-4/3 w-full place-items-center bg-neutral-100">
-        <Image size={20} />
-      </div>
-    );
-  }
-
-  return <img className="aspect-4/3 w-full object-cover" src={src} alt={media.originalName} />;
-}
 
 function AlbumDetailsPage() {
   const navigate = useNavigate();
@@ -168,7 +129,9 @@ function AlbumDetailsPage() {
             ) : null}
             {media.map((item) => (
               <figure key={item.id} className="m-0 min-w-0 overflow-hidden rounded border border-neutral-200 bg-neutral-50">
-                {item.type === 'image' ? <AdminMediaPreview media={item} /> : (
+                {item.type === 'image' ? (
+                  <AdminMediaImage media={item} className="aspect-4/3 w-full object-cover" fallbackClassName="aspect-4/3 w-full" />
+                ) : (
                   <div className="grid aspect-4/3 w-full place-items-center bg-neutral-100">
                     <Image size={20} />
                   </div>
