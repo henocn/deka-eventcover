@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Camera, Keyboard, ScanLine, ShieldCheck, X } from 'lucide-react';
+import { Camera, Keyboard, ScanLine, X } from 'lucide-react';
 
 function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
   const videoRef = useRef(null);
@@ -80,10 +80,13 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
   }
 
   return (
-    <main className="participant-shell grid min-h-svh place-items-center p-5">
+    <main
+      className="participant-shell grid min-h-svh place-items-center p-5"
+      style={{ background: 'linear-gradient(135deg, #003c28 0%, #062f2c 46%, #082936 100%)' }}
+    >
       <section className="animate-fade-up w-[min(620px,100%)] rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] p-6 shadow-[var(--shadow)] border border-3 border-black">
-        <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl border border-[var(--line-strong)] bg-[var(--text)] text-[var(--accent)]">
-          <ShieldCheck size={24} />
+        <div className="mx-auto mb-5 grid h-16 w-16 place-items-center overflow-hidden rounded-2xl border border-[var(--line-strong)] bg-white shadow-sm">
+          <img className="h-full w-full object-contain bg-" src="/favicon.png" alt="Logo evenement" />
         </div>
 
         <div className="mx-auto max-w-[520px] text-center">

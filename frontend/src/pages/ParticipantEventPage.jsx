@@ -265,7 +265,7 @@ function ParticipantEventPage() {
 
   if (isLoadingEvent) {
     return (
-      <main className="participant-shell grid min-h-svh place-items-center gap-3 p-5 text-[var(--muted)]" data-theme={theme}>
+      <main className="participant-shell grid min-h-svh place-items-center gap-3 p-5 text-[var(--muted)] text-white" data-theme={theme}>
         <Loader2 className="animate-spin" size={28} />
         <p className="font-bold">Chargement de l'evenement</p>
       </main>
