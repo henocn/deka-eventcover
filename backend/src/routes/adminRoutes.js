@@ -117,7 +117,7 @@ router.delete(
 router.post(
   '/albums/:albumId/media',
   validate(albumIdParamSchema),
-  upload.array('files', 50),
+  upload.array('files', 100),
   asyncHandler(adminMediaController.uploadAlbumMedia)
 );
 router.get(

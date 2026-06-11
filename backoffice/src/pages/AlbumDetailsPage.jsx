@@ -7,6 +7,9 @@ import AdminMediaImage from '../components/media/AdminMediaImage';
 import { Button } from '../components/ui';
 import useEvents from '../hooks/useEvents';
 
+const MAX_UPLOAD_FILES = 100;
+const UPLOAD_BATCH_SIZE = 10;
+
 function AlbumDetailsPage() {
   const navigate = useNavigate();
   const { slug } = useParams();
@@ -40,12 +43,27 @@ function AlbumDetailsPage() {
 
   async function uploadMedia(files) {
     if (!album?.id || !files?.length) return;
+    const selectedFiles = [...files];
+
+    if (selectedFiles.length > MAX_UPLOAD_FILES) {
+      toast.error(`Vous pouvez uploader ${MAX_UPLOAD_FILES} fichiers maximum en une seule fois.`);
+      return;
+    }
+
     setIsUploading(true);
-    const toastId = toast.loading('Upload en cours...');
+    const totalFiles = selectedFiles.length;
+    let savedFiles = 0;
+    const toastId = toast.loading(`Sauvegarde en cours... 0/${totalFiles}`);
 
     try {
-      await uploadAlbumMedia(album.id, files);
-      toast.success('Images ajoutees', { id: toastId });
+      for (let index = 0; index < selectedFiles.length; index += UPLOAD_BATCH_SIZE) {
+        const batch = selectedFiles.slice(index, index + UPLOAD_BATCH_SIZE);
+        const createdMedia = await uploadAlbumMedia(album.id, batch);
+        savedFiles += createdMedia.length;
+        toast.loading(`Sauvegardees ${savedFiles}/${totalFiles}`, { id: toastId });
+      }
+
+      toast.success(`${savedFiles}/${totalFiles} fichiers sauvegardes`, { id: toastId });
       await loadAlbum();
       await loadEvents();
     } catch (uploadError) {
@@ -92,7 +110,17 @@ function AlbumDetailsPage() {
             <label className="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-2 rounded border border-black bg-black px-3.5 font-extrabold text-white transition disabled:cursor-not-allowed disabled:opacity-50">
               <Upload size={16} />
               <span>{isUploading ? 'Upload...' : 'Upload'}</span>
-              <input className="hidden" type="file" multiple accept="image/*" disabled={isUploading} onChange={(event) => uploadMedia(event.target.files)} />
+              <input
+                className="hidden"
+                type="file"
+                multiple
+                accept="image/*"
+                disabled={isUploading}
+                onChange={async (event) => {
+                  await uploadMedia(event.target.files);
+                  event.target.value = '';
+                }}
+              />
             </label>
           </div>
 

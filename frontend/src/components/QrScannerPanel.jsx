@@ -120,7 +120,8 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
       {modal ? (
         <div className="fixed inset-0 z-40 grid place-items-center bg-black/45 p-4" onMouseDown={closeModal}>
           <section
-            className="animate-fade-up w-[min(520px,100%)] rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_30px_100px_rgba(0,0,0,0.28)]"
+            className="animate-fade-up w-[min(520px,100%)] rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_3
+            0px_100px_rgba(0,0,0,0.28)]"
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="mb-5 flex items-start justify-between gap-4 border-b border-[var(--line)] pb-4">

@@ -18,6 +18,7 @@ module.exports = {
   corsOrigins,
   mediaRoot: process.env.MEDIA_ROOT || 'uploads',
   maxUploadMb: toNumber(process.env.MAX_UPLOAD_MB, 25),
+  maxUploadFiles: toNumber(process.env.MAX_UPLOAD_FILES, 100),
   jwtSecret: process.env.JWT_SECRET || 'change-this-secret-in-production',
   participantAppUrl:
     process.env.PARTICIPANT_APP_URL ||
