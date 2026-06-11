@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Camera, Keyboard, ScanLine, ShieldCheck } from 'lucide-react';
+import { Camera, Keyboard, ScanLine, ShieldCheck, X } from 'lucide-react';
 
 function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
   const videoRef = useRef(null);
-  const [mode, setMode] = useState(null);
+  const [modal, setModal] = useState(null);
   const [scannerError, setScannerError] = useState('');
   const [badgeCode, setBadgeCode] = useState('');
 
   useEffect(() => {
-    if (mode !== 'scan') return undefined;
+    if (modal !== 'scan') return undefined;
 
     let stream;
     let frameId;
@@ -18,7 +18,7 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
       setScannerError('');
 
       if (!('BarcodeDetector' in window)) {
-        setScannerError("Ce navigateur ne supporte pas encore le scan QR integre. Utilisez pluôt le code manuel.");
+        setScannerError("Ce navigateur ne supporte pas encore le scan QR integre. Ouvrez le lien QR avec l'appareil photo du telephone.");
         return;
       }
 
@@ -67,7 +67,12 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
       if (frameId) window.cancelAnimationFrame(frameId);
       if (stream) stream.getTracks().forEach((track) => track.stop());
     };
-  }, [mode, onScan]);
+  }, [modal, onScan]);
+
+  function closeModal() {
+    setModal(null);
+    setScannerError('');
+  }
 
   function submitBadgeCode(event) {
     event.preventDefault();
@@ -76,71 +81,100 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
 
   return (
     <main className="participant-shell grid min-h-svh place-items-center p-5">
-      <section className="animate-fade-up w-[min(760px,100%)] rounded-[30px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-5 shadow-[var(--shadow)] max-[640px]:p-4">
-        <div className="mb-6 flex items-start justify-between gap-4 max-[640px]:flex-col">
-          <div>
-            <p className="mb-3 text-xl font-black uppercase tracking-[0.08em] text-[var(--gold)]">{title}</p>
-            <p className="mt-4 leading-relaxed text-[var(--muted)]">{description}</p>
-          </div>
+      <section className="animate-fade-up w-[min(620px,100%)] rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] p-6 shadow-[var(--shadow)] border border-3 border-black">
+        <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl border border-[var(--line-strong)] bg-[var(--text)] text-[var(--accent)]">
+          <ShieldCheck size={24} />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 max-[640px]:grid-cols-1">
-          <button
-            type="button"
-            className={`rounded-2xl border-2 p-4 text-left transition hover:-translate-y-0.5 hover:border-[var(--accent)] ${mode === 'code' ? 'border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_14%,var(--surface))]' : 'border-[var(--line-strong)] bg-[var(--surface)]'}`}
-            onClick={() => setMode('code')}
-          >
-            <span className="mb-4 grid h-11 w-11 place-items-center rounded-full bg-[var(--text)] text-[var(--accent)]">
-              <Keyboard size={20} />
-            </span>
-            <strong className="block text-lg font-black text-[var(--text)]">Entrer mon code</strong>
-            <span className="mt-1 block text-sm font-bold text-[var(--muted)]">Utilisez le code a 6 caracteres inscrit sur votre badge.</span>
-          </button>
+        <div className="mx-auto max-w-[520px] text-center">
+          <p className="mb-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--gold)]">Acces participant</p>
+          <h1 className="m-0 text-[clamp(2rem,5vw,3.2rem)] font-black leading-none">{title}</h1>
+          <p className="mt-4 leading-relaxed text-[var(--muted)]">{description}</p>
+        </div>
 
+        <div className="mt-7 grid grid-cols-2 gap-3">
           <button
             type="button"
-            className={`rounded-2xl border-2 p-4 text-left transition hover:-translate-y-0.5 hover:border-[var(--accent)] ${mode === 'scan' ? 'border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_14%,var(--surface))]' : 'border-[var(--line-strong)] bg-[var(--surface)]'}`}
-            onClick={() => setMode('scan')}
+            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-[#79c705] bg-[var(--surface)] px-4 font-black text-[var(--text)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[color-mix(in_srgb,var(--accent)_10%,var(--surface))]"
+            onClick={() => setModal('code')}
           >
-            <span className="mb-4 grid h-11 w-11 place-items-center rounded-full bg-[var(--text)] text-[var(--accent)]">
-              <Camera size={20} />
-            </span>
-            <strong className="block text-lg font-black text-[var(--text)]">Scanner le QR</strong>
-            <span className="mt-1 block text-sm font-bold text-[var(--muted)]">La camera est demandée uniquement pour lire le QR.</span>
+            <Keyboard size={20} />
+            Code
+          </button>
+          <button
+            type="button"
+            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-black bg-gray-300 px-4 font-black text-[var(--text)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[color-mix(in_srgb,var(--accent)_10%,var(--surface))]"
+            onClick={() => setModal('scan')}
+          >
+            <Camera size={20} />
+            Scan
           </button>
         </div>
 
-        {mode === 'code' ? (
-          <form className="mt-5 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4" onSubmit={submitBadgeCode}>
-            <label className="text-sm font-black text-[var(--text)]">Code badge</label>
-            <div className="mt-2 flex gap-2 max-[520px]:flex-col">
-              <input
-                className="min-h-12 min-w-0 flex-1 rounded-2xl border border-[var(--line)] bg-[var(--surface-strong)] px-4 text-center font-black uppercase tracking-[0.22em] text-[var(--text)]"
-                value={badgeCode}
-                maxLength={6}
-                onChange={(event) => setBadgeCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
-                placeholder="A7K9P2"
-                autoFocus
-              />
-              <button className="min-h-12 rounded-2xl border-2 border-[var(--line-strong)] bg-[var(--text)] px-5 font-black text-[var(--bg)] transition hover:border-[var(--accent)]" type="submit">
-                Continuer
+        {error ? <p className="mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">{error}</p> : null}
+      </section>
+
+      {modal ? (
+        <div className="fixed inset-0 z-40 grid place-items-center bg-black/45 p-4" onMouseDown={closeModal}>
+          <section
+            className="animate-fade-up w-[min(520px,100%)] rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_30px_100px_rgba(0,0,0,0.28)]"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="mb-5 flex items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
+              <div>
+                <p className="mb-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--gold)]">
+                  {modal === 'code' ? 'Code badge' : 'Scan QR'}
+                </p>
+                <h2 className="m-0 text-2xl font-black">
+                  {modal === 'code' ? 'Entrer le code' : 'Scanner le badge'}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="grid h-10 w-10 place-items-center rounded-full border-2 border-[var(--line-strong)] bg-[var(--surface)] text-[var(--text)] transition hover:border-[var(--accent)]"
+                onClick={closeModal}
+                title="Fermer"
+              >
+                <X size={18} />
               </button>
             </div>
-          </form>
-        ) : null}
 
-        {mode === 'scan' ? (
-          <div className="mt-5">
-            <div className="relative aspect-square max-h-[460px] overflow-hidden rounded-3xl border border-[var(--line)] bg-black">
-              <video className="h-full w-full object-cover" ref={videoRef} muted playsInline />
-              <ScanLine className="absolute inset-[34px] h-auto w-auto rounded-[22px] border-2 border-[var(--accent)] shadow-[0_0_0_999px_rgba(0,0,0,0.28)]" size={42} />
-            </div>
-            <p className="mt-3 text-sm font-bold text-[var(--muted)]">Placez simplement le QR dans le cadre. Aucune video n'est enregistree.</p>
-          </div>
-        ) : null}
+            {modal === 'code' ? (
+              <form className="grid gap-4" onSubmit={submitBadgeCode}>
+                <p className="text-sm font-bold leading-relaxed text-[var(--muted)]">
+                  Entrez les 6 caracteres inscrits sur votre badge.
+                </p>
+                <input
+                  className="min-h-14 rounded-2xl border-2 border-[var(--line-strong)] bg-[var(--surface-strong)] px-4 text-center text-xl font-black uppercase tracking-[0.24em] text-[var(--text)] outline-none transition focus:border-[var(--accent)]"
+                  value={badgeCode}
+                  maxLength={6}
+                  onChange={(event) => setBadgeCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+                  placeholder="A7K9P2"
+                  autoFocus
+                />
+                <button
+                  className="min-h-12 rounded-2xl border-2 border-black bg-[var(--text)] px-5 font-black text-[var(--bg)] transition hover:border-[var(--accent)]"
+                  type="submit"
+                >
+                  Continuer
+                </button>
+              </form>
+            ) : null}
 
-        {scannerError || error ? <p className="mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">{scannerError || error}</p> : null}
-      </section>
+            {modal === 'scan' ? (
+              <div>
+                <div className="relative aspect-square max-h-[420px] overflow-hidden rounded-2xl border-2 border-[var(--line-strong)] bg-black">
+                  <video className="h-full w-full object-cover" ref={videoRef} muted playsInline />
+                  <ScanLine className="absolute inset-[34px] h-auto w-auto rounded-[18px] border-2 border-[var(--accent)] shadow-[0_0_0_999px_rgba(0,0,0,0.28)]" size={42} />
+                </div>
+                <p className="mt-3 text-sm font-bold text-[var(--muted)]">Autorisez uniquement l'acces camera. Aucune video n'est enregistree.</p>
+              </div>
+            ) : null}
+
+            {scannerError ? <p className="mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">{scannerError}</p> : null}
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }
