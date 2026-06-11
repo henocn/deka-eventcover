@@ -98,7 +98,7 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
         <div className="mt-7 grid grid-cols-2 gap-3">
           <button
             type="button"
-            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-[#79c705] bg-[var(--surface)] px-4 font-black text-[var(--text)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[color-mix(in_srgb,var(--accent)_10%,var(--surface))]"
+            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-[#79c705] bg-[var(--surface)] px-4 font-black text-[var(--text)] transition hover:-translate-y-0.5"
             onClick={() => setModal('code')}
           >
             <Keyboard size={20} />
@@ -106,7 +106,7 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
           </button>
           <button
             type="button"
-            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-black bg-gray-300 px-4 font-black text-[var(--text)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[color-mix(in_srgb,var(--accent)_10%,var(--surface))]"
+            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-black bg-gray-300 px-4 font-black text-[var(--text)] transition hover:-translate-y-0.5"
             onClick={() => setModal('scan')}
           >
             <Camera size={20} />
