@@ -275,8 +275,8 @@ function ParticipantEventPage() {
   if (!eventSlug) {
     return (
       <QrScannerPanel
-        title="Scannez votre QR code"
-        description="Autorisez la camera puis placez le QR code du badge dans le cadre."
+        title="Votre mode d'accès"
+        description="Utilisez le code manuel ou scannez le QR code de votre badge."
         error={error}
         onManualCode={handleManualBadgeCode}
         onScan={handleQrScan}
@@ -299,7 +299,7 @@ function ParticipantEventPage() {
     return (
       <QrScannerPanel
         title="Badge non reconnu"
-        description="Ce lien ne correspond pas a un badge actif. Veuillez rescanner le QR code correct."
+        description="Le QR code ne correspond pas a un badge actif. Veuillez scanner un badge actif."
         error={error}
         onManualCode={handleManualBadgeCode}
         onScan={handleQrScan}
