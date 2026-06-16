@@ -141,7 +141,7 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
                       {selected ? <Check size={16} /> : <Image size={16} />}
                     </button>
                     <span className="absolute bottom-2 right-2 rounded-full bg-black/70 px-2 py-1 text-xs font-black text-white">
-                      {Math.round((1 - match.score) * 100)}%
+                      {Math.round(match.score * 100)}%
                     </span>
                   </article>
                 );

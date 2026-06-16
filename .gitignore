@@ -5,3 +5,7 @@ node_modules/
 uploads/
 dist/
 .qa/
+backend/models/face/
+face-microservice/.venv/
+face-microservice/__pycache__/
+face-microservice/app/__pycache__/
