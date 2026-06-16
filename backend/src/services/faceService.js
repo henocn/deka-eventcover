@@ -47,7 +47,7 @@ async function detectFacesFromImage(imageLike) {
 
   const image = Buffer.isBuffer(imageLike) ? await loadImage(imageLike) : await loadImage(imageLike);
   const detections = await faceapi
-    .detectAllFaces(image, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 }))
+    .detectAllFaces(image, new faceapi.TinyFaceDetectorOptions({ inputSize: 608, scoreThreshold: 0.47 }))
     .withFaceLandmarks()
     .withFaceDescriptors();
 
