@@ -1,4 +1,4 @@
-import { ArrowLeft, Image, Images, Loader2, Upload } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Image, Images, Loader2, Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -38,6 +38,7 @@ function AlbumDetailsPage() {
   const [album, setAlbum] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(null);
 
   const loadAlbum = useCallback(async () => {
     if (!albumId) return;
@@ -91,6 +92,20 @@ function AlbumDetailsPage() {
 
   const roles = album?.accessRoles || [];
   const media = album?.media || [];
+  const imageMedia = media.filter((item) => item.type === 'image');
+  const previewMedia = previewIndex !== null ? imageMedia[previewIndex] : null;
+
+  function openPreview(mediaItem) {
+    const nextIndex = imageMedia.findIndex((item) => item.id === mediaItem.id);
+    if (nextIndex >= 0) setPreviewIndex(nextIndex);
+  }
+
+  function goToPreview(direction) {
+    setPreviewIndex((current) => {
+      if (current === null || imageMedia.length === 0) return current;
+      return (current + direction + imageMedia.length) % imageMedia.length;
+    });
+  }
 
   return (
     <section className="px-6 pb-8 pt-6 max-[760px]:p-4">
@@ -163,7 +178,13 @@ function AlbumDetailsPage() {
               <figure key={item.id} className="m-0 min-w-0 overflow-hidden rounded border border-neutral-300 bg-neutral-50 transition hover:border-[#9cff00] hover:ring-2 hover:ring-[#9cff00]/70">
                 <div className="relative">
                   {item.type === 'image' ? (
-                    <AdminMediaImage media={item} className="aspect-4/3 w-full object-cover" fallbackClassName="aspect-4/3 w-full" />
+                    <button
+                      type="button"
+                      className="block w-full cursor-zoom-in text-left"
+                      onClick={() => openPreview(item)}
+                    >
+                      <AdminMediaImage media={item} className="aspect-4/3 w-full object-cover" fallbackClassName="aspect-4/3 w-full" />
+                    </button>
                   ) : (
                     <div className="grid aspect-4/3 w-full place-items-center bg-neutral-100">
                       <Image size={20} />
@@ -175,9 +196,60 @@ function AlbumDetailsPage() {
                     </span>
                   ) : null}
                 </div>
-                <figcaption className="overflow-hidden text-ellipsis whitespace-nowrap p-2 text-xs font-extrabold text-neutral-500">{item.originalName}</figcaption>
               </figure>
             ))}
+          </div>
+        </div>
+      ) : null}
+
+      {previewMedia ? (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-5"
+          onMouseDown={() => setPreviewIndex(null)}
+        >
+          <div
+            className="relative grid h-full w-full max-w-6xl grid-rows-[auto_1fr] gap-3"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 rounded border border-white/15 bg-black/45 px-3 py-2 text-white backdrop-blur">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase text-white/55">Apercu image</p>
+                <p className="truncate text-sm font-extrabold">{previewIndex + 1} / {imageMedia.length}</p>
+              </div>
+              <button
+                type="button"
+                className="grid h-10 w-10 place-items-center rounded border border-white/25 bg-white/10 transition hover:border-[#9cff00] hover:text-[#9cff00]"
+                onClick={() => setPreviewIndex(null)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="relative grid min-h-0 place-items-center rounded border border-white/15 bg-black/30 p-3">
+              {imageMedia.length > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    className="absolute left-3 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/25 bg-black/55 text-white transition hover:border-[#9cff00] hover:text-[#9cff00]"
+                    onClick={() => goToPreview(-1)}
+                  >
+                    <ChevronLeft size={22} />
+                  </button>
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/25 bg-black/55 text-white transition hover:border-[#9cff00] hover:text-[#9cff00]"
+                    onClick={() => goToPreview(1)}
+                  >
+                    <ChevronRight size={22} />
+                  </button>
+                </>
+              ) : null}
+              <AdminMediaImage
+                media={previewMedia}
+                className="max-h-full max-w-full rounded object-contain"
+                fallbackClassName="h-80 w-full max-w-xl rounded"
+              />
+            </div>
           </div>
         </div>
       ) : null}
