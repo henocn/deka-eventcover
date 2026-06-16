@@ -62,7 +62,12 @@ async function extractFaces(input) {
       );
     }
 
-    return Array.isArray(payload.faces) ? payload.faces : [];
+    return {
+      faces: Array.isArray(payload.faces) ? payload.faces : [],
+      quality: payload.quality || null,
+      warnings: Array.isArray(payload.warnings) ? payload.warnings : [],
+      durationMs: payload.durationMs || null,
+    };
   } catch (error) {
     if (error.name === 'AbortError') {
       throw httpError(504, 'Le service IA facial a mis trop de temps a repondre.');
@@ -127,10 +132,12 @@ async function analyzeMediaFaces(mediaId) {
   try {
     const absolutePath = safeJoinUploadPath(media.storagePath);
     await fs.access(absolutePath);
-    const faces = await extractFaces(absolutePath);
+    const analysis = await extractFaces(absolutePath);
+    const { faces } = analysis;
+    const warningMessage = analysis.warnings.join(' ');
 
     if (faces.length === 0) {
-      await media.update({ faceAnalysisStatus: 'no_face', faceAnalysisError: null });
+      await media.update({ faceAnalysisStatus: 'no_face', faceAnalysisError: warningMessage || null });
       return;
     }
 
@@ -143,7 +150,7 @@ async function analyzeMediaFaces(mediaId) {
       confidence: Number.isFinite(face.confidence) ? face.confidence : null,
     })));
 
-    await media.update({ faceAnalysisStatus: 'completed', faceAnalysisError: null });
+    await media.update({ faceAnalysisStatus: 'completed', faceAnalysisError: warningMessage || null });
   } catch (error) {
     await media.update({
       faceAnalysisStatus: 'failed',
@@ -154,17 +161,23 @@ async function analyzeMediaFaces(mediaId) {
 }
 
 async function extractSelfieDescriptor(selfieBuffer) {
-  const faces = await extractFaces(selfieBuffer);
+  const analysis = await extractFaces(selfieBuffer);
+  const { faces } = analysis;
+  const warningMessage = analysis.warnings.join(' ');
 
   if (faces.length === 0) {
-    throw httpError(400, 'Aucun visage detecte sur la photo.');
+    throw httpError(400, warningMessage || 'Aucun visage detecte sur la photo.');
   }
 
   if (faces.length > 1) {
-    throw httpError(400, 'Plusieurs visages detectes. Envoyez une photo avec un seul visage.');
+    throw httpError(400, `Plusieurs visages detectes (${faces.length}). Envoyez une photo avec un seul visage.`);
   }
 
-  return serializeDescriptor(faces[0].embedding);
+  return {
+    descriptor: serializeDescriptor(faces[0].embedding),
+    warnings: analysis.warnings,
+    quality: analysis.quality,
+  };
 }
 
 function serializeMatch(media, score) {
@@ -200,7 +213,7 @@ async function searchMyPhotos(eventSlug, accessCode, roleToken, selfieBuffer) {
     return [];
   }
 
-  const selfieDescriptor = await extractSelfieDescriptor(selfieBuffer);
+  const selfie = await extractSelfieDescriptor(selfieBuffer);
   const embeddings = await FaceEmbedding.findAll({
     where: {
       eventId: publicEvent.id,
@@ -231,7 +244,7 @@ async function searchMyPhotos(eventSlug, accessCode, roleToken, selfieBuffer) {
   const matchesByMedia = new Map();
 
   embeddings.forEach((embedding) => {
-    const score = cosineSimilarity(selfieDescriptor, embedding.embedding);
+    const score = cosineSimilarity(selfie.descriptor, embedding.embedding);
     if (score < env.faceMatchThreshold) return;
 
     const existing = matchesByMedia.get(embedding.mediaId);
@@ -243,9 +256,19 @@ async function searchMyPhotos(eventSlug, accessCode, roleToken, selfieBuffer) {
     }
   });
 
-  return [...matchesByMedia.values()]
+  const matches = [...matchesByMedia.values()]
     .sort((a, b) => b.score - a.score)
     .map((match) => serializeMatch(match.media, Number(match.score.toFixed(4))));
+
+  return {
+    matches,
+    diagnostics: {
+      selfieQuality: selfie.quality,
+      selfieWarnings: selfie.warnings,
+      threshold: env.faceMatchThreshold,
+      indexedFaces: embeddings.length,
+    },
+  };
 }
 
 module.exports = {

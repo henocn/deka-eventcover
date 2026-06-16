@@ -8,11 +8,12 @@ async function findMyPhotos(req, res) {
 
   const { slug } = req.validated.params;
   const { accessCode, role } = req.validated.query;
-  const matches = await faceService.searchMyPhotos(slug, accessCode, role, req.file.buffer);
+  const result = await faceService.searchMyPhotos(slug, accessCode, role, req.file.buffer);
 
   res.json({
     data: {
-      matches,
+      matches: result.matches,
+      diagnostics: result.diagnostics,
     },
   });
 }

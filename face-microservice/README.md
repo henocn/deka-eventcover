@@ -50,11 +50,22 @@ pm2 save
 INSIGHTFACE_MODEL=buffalo_s
 INSIGHTFACE_DET_SIZE=640
 FACE_MAX_CONCURRENCY=1
+FACE_MIN_SHARPNESS=35
+FACE_MIN_SIZE=24
 ```
 
 `buffalo_s` is the CPU-friendly model. If the model is not already available,
 InsightFace may need to download it on first startup. In production, start the
 service once during deployment so the model is cached before the event.
+
+## Quick checks
+
+```bash
+curl http://127.0.0.1:8001/health
+curl -F "file=@test.jpg" http://127.0.0.1:8001/extract
+```
+
+The response includes `quality`, `warnings`, `durationMs`, and detected faces.
 
 ## API
 

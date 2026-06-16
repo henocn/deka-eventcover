@@ -6,6 +6,7 @@ import { isDemoMedia } from '../utils/participantUtils';
 function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
   const [matches, setMatches] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [diagnostics, setDiagnostics] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState('');
 
@@ -36,10 +37,12 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
     setError('');
     setMatches([]);
     setSelectedIds([]);
+    setDiagnostics(null);
 
     try {
       const result = await searchMyPhotos(eventSlug, file, accessCode, accessRole);
       setMatches(result.matches || []);
+      setDiagnostics(result.diagnostics || null);
     } catch (searchError) {
       setError(searchError.message);
     } finally {
@@ -150,7 +153,24 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
           </div>
         ) : null}
 
-        {!isSearching && matches.length === 0 && !error ? (
+        {!isSearching && matches.length === 0 && !error && diagnostics ? (
+          <div className="mt-5 rounded-xl border border-[var(--line-strong)] p-5 text-sm font-bold text-[var(--muted)]">
+            <p className="text-[var(--text)]">Aucune photo correspondante trouvee.</p>
+            {diagnostics.indexedFaces === 0 ? (
+              <p className="mt-2">Les photos de cet acces ne sont peut-etre pas encore indexees.</p>
+            ) : null}
+            {diagnostics.selfieWarnings?.length ? (
+              <p className="mt-2">{diagnostics.selfieWarnings.join(' ')}</p>
+            ) : null}
+            {diagnostics.selfieQuality ? (
+              <p className="mt-2">
+                Nettete: {Math.round(diagnostics.selfieQuality.sharpness)} · Luminosite: {Math.round(diagnostics.selfieQuality.brightness)}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        {!isSearching && matches.length === 0 && !error && !diagnostics ? (
           <div className="mt-5 rounded-xl border border-dashed border-[var(--line-strong)] p-5 text-sm font-bold text-[var(--muted)]">
             Les resultats apparaitront ici apres l'envoi du selfie.
           </div>

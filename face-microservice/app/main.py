@@ -1,13 +1,20 @@
 import asyncio
 from typing import Annotated
 
+import logging
+import time
+
 import cv2
 import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from insightface.app import FaceAnalysis
 from starlette.concurrency import run_in_threadpool
 
-from .settings import APP_NAME, DET_SIZE, MAX_CONCURRENCY, MODEL_NAME
+from .settings import APP_NAME, DET_SIZE, MAX_CONCURRENCY, MIN_FACE_SIZE, MIN_SHARPNESS, MODEL_NAME
+
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(APP_NAME)
 
 
 face_app = FaceAnalysis(
@@ -36,15 +43,70 @@ def _decode_image(contents: bytes) -> np.ndarray:
     return image
 
 
+def _image_quality(image: np.ndarray) -> dict:
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    sharpness = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+    brightness = float(np.mean(gray))
+
+    return {
+        "sharpness": round(sharpness, 2),
+        "brightness": round(brightness, 2),
+    }
+
+
+def _face_warnings(image: np.ndarray, faces: list) -> list[str]:
+    warnings = []
+    quality = _image_quality(image)
+
+    if quality["sharpness"] < MIN_SHARPNESS:
+        warnings.append("Image probablement floue.")
+
+    if quality["brightness"] < 45:
+        warnings.append("Image probablement trop sombre.")
+
+    if quality["brightness"] > 215:
+        warnings.append("Image probablement trop claire.")
+
+    if not faces:
+        warnings.append("Aucun visage detecte.")
+
+    small_faces = 0
+    for face in faces:
+        x1, y1, x2, y2 = face.bbox.tolist()
+        if min(x2 - x1, y2 - y1) < MIN_FACE_SIZE:
+            small_faces += 1
+
+    if small_faces:
+        warnings.append(f"{small_faces} visage(s) tres petit(s), reconnaissance moins fiable.")
+
+    return warnings
+
+
 def _extract_faces(contents: bytes) -> dict:
+    started_at = time.perf_counter()
     image = _decode_image(contents)
     faces = face_app.get(image)
+    quality = _image_quality(image)
+    duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
+
+    logger.info(
+        "extract width=%s height=%s faces=%s sharpness=%s brightness=%s duration_ms=%s",
+        image.shape[1],
+        image.shape[0],
+        len(faces),
+        quality["sharpness"],
+        quality["brightness"],
+        duration_ms,
+    )
 
     return {
         "image": {
             "width": int(image.shape[1]),
             "height": int(image.shape[0]),
         },
+        "quality": quality,
+        "warnings": _face_warnings(image, faces),
+        "durationMs": duration_ms,
         "faces": [
             {
                 "bbox": [float(value) for value in face.bbox.tolist()],
@@ -68,6 +130,8 @@ def health() -> dict:
         "provider": "CPUExecutionProvider",
         "detSize": DET_SIZE,
         "maxConcurrency": MAX_CONCURRENCY,
+        "minSharpness": MIN_SHARPNESS,
+        "minFaceSize": MIN_FACE_SIZE,
     }
 
 

@@ -18,3 +18,5 @@ APP_NAME = "deka-face-service"
 MODEL_NAME = os.getenv("INSIGHTFACE_MODEL", "buffalo_s")
 DET_SIZE = _to_int(os.getenv("INSIGHTFACE_DET_SIZE"), 640)
 MAX_CONCURRENCY = max(1, _to_int(os.getenv("FACE_MAX_CONCURRENCY"), 1))
+MIN_SHARPNESS = _to_int(os.getenv("FACE_MIN_SHARPNESS"), 35)
+MIN_FACE_SIZE = _to_int(os.getenv("FACE_MIN_SIZE"), 24)
