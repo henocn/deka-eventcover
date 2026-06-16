@@ -21,6 +21,16 @@ const publicAlbumSchema = z.object({
   }),
 });
 
+const publicMyPhotosSchema = z.object({
+  params: z.object({
+    slug: z.string().trim().min(1),
+  }),
+  query: z.object({
+    accessCode: z.string().trim().optional(),
+    role: z.string().trim().optional(),
+  }),
+});
+
 const eventAccessSchema = z.object({
   params: z.object({
     slug: z.string().trim().min(1),
@@ -40,5 +50,6 @@ module.exports = {
   badgeCodeSchema,
   publicEventSchema,
   publicAlbumSchema,
+  publicMyPhotosSchema,
   eventAccessSchema,
 };

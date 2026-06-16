@@ -37,6 +37,8 @@ const mediaPublicAttributes = [
   'width',
   'height',
   'sortOrder',
+  'faceAnalysisStatus',
+  'faceAnalysisError',
 ];
 
 function isProtected(event) {
@@ -70,6 +72,8 @@ function serializeMedia(media) {
     width: media.width,
     height: media.height,
     sortOrder: media.sortOrder,
+    faceAnalysisStatus: media.faceAnalysisStatus,
+    faceAnalysisError: media.faceAnalysisError,
     downloadUrl: `/api/public/media/${media.id}/download`,
   };
 }

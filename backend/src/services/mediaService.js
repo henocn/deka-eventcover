@@ -7,6 +7,7 @@ const httpError = require('../utils/httpError');
 const { getMediaType } = require('../middlewares/upload');
 const { extensionFromName, sanitizeBaseName } = require('../utils/fileNames');
 const eventService = require('./eventService');
+const faceQueue = require('./faceQueue');
 
 function safeJoinUploadPath(relativePath) {
   const root = path.resolve(env.mediaRoot);
@@ -61,6 +62,8 @@ function serializeMedia(media) {
     width: media.width,
     height: media.height,
     sortOrder: media.sortOrder,
+    faceAnalysisStatus: media.faceAnalysisStatus,
+    faceAnalysisError: media.faceAnalysisError,
     createdAt: media.createdAt,
   };
 }
@@ -110,6 +113,8 @@ async function uploadAlbumMedia(albumId, files, user) {
     createdMedia.push(media);
     nextSortOrder += 1;
   }
+
+  faceQueue.enqueueMediaList(createdMedia);
 
   return {
     event,

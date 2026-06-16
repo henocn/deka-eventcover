@@ -40,6 +40,18 @@ export async function fetchPublicAlbum(eventSlug, albumSlug, accessCode, role) {
   return parseResponse(response);
 }
 
+export async function searchMyPhotos(eventSlug, file, accessCode, role) {
+  const formData = new FormData();
+  formData.append('selfie', file);
+
+  const response = await fetch(withAccess(`/api/public/events/${eventSlug}/my-photos`, accessCode, role), {
+    method: 'POST',
+    body: formData,
+  });
+
+  return parseResponse(response);
+}
+
 export async function resolveBadgeCode(badgeCode) {
   const response = await fetch(new URL(`/api/public/badges/${badgeCode}`, API_URL));
   return parseResponse(response);

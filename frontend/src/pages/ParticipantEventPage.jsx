@@ -15,6 +15,7 @@ import AlbumRail from '../components/AlbumRail';
 import EventHero from '../components/EventHero';
 import GalleryView from '../components/GalleryView';
 import Lightbox from '../components/Lightbox';
+import MyPhotosModal from '../components/MyPhotosModal';
 import QrScannerPanel from '../components/QrScannerPanel';
 import { demoAlbums, demoEvent } from '../demoData';
 import {
@@ -42,6 +43,7 @@ function ParticipantEventPage() {
   const [usingDemo, setUsingDemo] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(null);
   const [selectedMediaIds, setSelectedMediaIds] = useState([]);
+  const [isMyPhotosOpen, setIsMyPhotosOpen] = useState(false);
   const touchStartX = useRef(null);
 
   const selectedAlbumSlug = albumSlug || null;
@@ -313,7 +315,7 @@ function ParticipantEventPage() {
         event={eventData}
         theme={theme}
         onThemeToggle={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
-        onMyPhotos={() => window.alert('La fonctionnalite Mes photos sera connectee ici.')}
+        onMyPhotos={() => setIsMyPhotosOpen(true)}
       />
 
       {usingDemo || error ? (
@@ -366,6 +368,15 @@ function ParticipantEventPage() {
           touchStartX.current = null;
         }}
       />
+
+      {isMyPhotosOpen ? (
+        <MyPhotosModal
+          accessCode={accessCode}
+          accessRole={accessRole}
+          eventSlug={eventSlug}
+          onClose={() => setIsMyPhotosOpen(false)}
+        />
+      ) : null}
     </main>
   );
 }

@@ -8,6 +8,7 @@ const models = {
   AccessRoleAlbum: require('./AccessRoleAlbum')(sequelize),
   Media: require('./Media')(sequelize),
   MediaStat: require('./MediaStat')(sequelize),
+  FaceEmbedding: require('./FaceEmbedding')(sequelize),
 };
 
 Object.values(models).forEach((model) => {

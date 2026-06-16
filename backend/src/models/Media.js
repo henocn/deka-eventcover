@@ -7,6 +7,7 @@ module.exports = (sequelize) => {
       Media.belongsTo(models.Album, { foreignKey: 'albumId', as: 'album' });
       Media.belongsTo(models.User, { foreignKey: 'uploadedBy', as: 'uploader' });
       Media.hasMany(models.MediaStat, { foreignKey: 'mediaId', as: 'stats' });
+      Media.hasMany(models.FaceEmbedding, { foreignKey: 'mediaId', as: 'faceEmbeddings' });
     }
   }
 
@@ -59,6 +60,15 @@ module.exports = (sequelize) => {
       },
       uploadedBy: {
         type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      faceAnalysisStatus: {
+        type: DataTypes.STRING(40),
+        allowNull: false,
+        defaultValue: 'pending',
+      },
+      faceAnalysisError: {
+        type: DataTypes.TEXT,
         allowNull: true,
       },
     },

@@ -10,6 +10,22 @@ import useEvents from '../hooks/useEvents';
 const MAX_UPLOAD_FILES = 100;
 const UPLOAD_BATCH_SIZE = 10;
 
+const FACE_STATUS_LABELS = {
+  pending: 'Analyse en attente',
+  processing: 'Analyse...',
+  completed: 'Visages detectes',
+  no_face: 'Aucun visage',
+  failed: 'Analyse echouee',
+};
+
+const FACE_STATUS_CLASSES = {
+  pending: 'bg-white/90 text-neutral-700',
+  processing: 'bg-amber-100 text-amber-800',
+  completed: 'bg-emerald-100 text-emerald-800',
+  no_face: 'bg-neutral-100 text-neutral-700',
+  failed: 'bg-red-100 text-red-700',
+};
+
 function AlbumDetailsPage() {
   const navigate = useNavigate();
   const { slug } = useParams();
@@ -145,13 +161,20 @@ function AlbumDetailsPage() {
             ) : null}
             {media.map((item) => (
               <figure key={item.id} className="m-0 min-w-0 overflow-hidden rounded border border-neutral-300 bg-neutral-50 transition hover:border-[#9cff00] hover:ring-2 hover:ring-[#9cff00]/70">
-                {item.type === 'image' ? (
-                  <AdminMediaImage media={item} className="aspect-4/3 w-full object-cover" fallbackClassName="aspect-4/3 w-full" />
-                ) : (
-                  <div className="grid aspect-4/3 w-full place-items-center bg-neutral-100">
-                    <Image size={20} />
-                  </div>
-                )}
+                <div className="relative">
+                  {item.type === 'image' ? (
+                    <AdminMediaImage media={item} className="aspect-4/3 w-full object-cover" fallbackClassName="aspect-4/3 w-full" />
+                  ) : (
+                    <div className="grid aspect-4/3 w-full place-items-center bg-neutral-100">
+                      <Image size={20} />
+                    </div>
+                  )}
+                  {item.type === 'image' ? (
+                    <span className={`absolute bottom-1.5 left-1.5 max-w-[calc(100%-12px)] truncate rounded-full px-2 py-1 text-[10px] font-black ${FACE_STATUS_CLASSES[item.faceAnalysisStatus] || FACE_STATUS_CLASSES.pending}`}>
+                      {FACE_STATUS_LABELS[item.faceAnalysisStatus] || FACE_STATUS_LABELS.pending}
+                    </span>
+                  ) : null}
+                </div>
                 <figcaption className="overflow-hidden text-ellipsis whitespace-nowrap p-2 text-xs font-extrabold text-neutral-500">{item.originalName}</figcaption>
               </figure>
             ))}
