@@ -171,7 +171,7 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
                   <video className="h-full w-full object-cover" ref={videoRef} muted playsInline />
                   <ScanLine className="absolute inset-[34px] h-auto w-auto rounded-[18px] border-2 border-[var(--accent)] shadow-[0_0_0_999px_rgba(0,0,0,0.28)]" size={42} />
                 </div>
-                <p className="mt-3 text-sm font-bold text-[var(--muted)]">Autorisez uniquement l'acces camera. Aucune video n'est enregistree.</p>
+                <p className="mt-3 text-sm font-bold text-[var(--muted)]">La caméra est utilisée uniquement pour scanner le QR code.</p>
               </div>
             ) : null}
 
