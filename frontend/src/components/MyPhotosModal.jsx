@@ -162,11 +162,6 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
             {diagnostics.selfieWarnings?.length ? (
               <p className="mt-2">{diagnostics.selfieWarnings.join(' ')}</p>
             ) : null}
-            {diagnostics.selfieQuality ? (
-              <p className="mt-2">
-                Nettete: {Math.round(diagnostics.selfieQuality.sharpness)} · Luminosite: {Math.round(diagnostics.selfieQuality.brightness)}
-              </p>
-            ) : null}
           </div>
         ) : null}
 
