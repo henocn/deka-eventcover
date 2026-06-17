@@ -8,7 +8,6 @@ function EventHero({ event, theme, onThemeToggle, onMyPhotos }) {
       <div className="mb-10 flex items-center justify-between gap-5 max-[680px]:items-start max-[680px]:gap-4">
         <div className="flex items-center gap-3 text-2xl font-black tracking-normal">
           <span>Deka.</span>
-          <small className="text-sm font-bold text-[var(--muted)]">Galerie officielle</small>
         </div>
         <div className="flex flex-wrap justify-end gap-2.5">
           <ThemeToggle theme={theme} onToggle={onThemeToggle} />
