@@ -10,7 +10,6 @@ const {
   publicEventSchema,
   publicAlbumSchema,
   publicMyPhotosSchema,
-  publicMyPhotosEmbeddingSchema,
   eventAccessSchema,
 } = require('../validators/publicValidators');
 const { mediaFileSchema } = require('../validators/mediaValidators');
@@ -24,11 +23,6 @@ router.post(
   validate(publicMyPhotosSchema),
   upload.single('selfie'),
   asyncHandler(publicFaceController.findMyPhotos)
-);
-router.post(
-  '/events/:slug/my-photos/embedding',
-  validate(publicMyPhotosEmbeddingSchema),
-  asyncHandler(publicFaceController.findMyPhotosByEmbedding)
 );
 router.post(
   '/events/:slug/access',

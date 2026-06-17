@@ -14,30 +14,10 @@ async function findMyPhotos(req, res) {
     data: {
       matches: result.matches,
       diagnostics: result.diagnostics,
-      embedding: result.embedding,
-    },
-  });
-}
-
-async function findMyPhotosByEmbedding(req, res) {
-  const { slug } = req.validated.params;
-  const { accessCode, role } = req.validated.query;
-  const result = await faceService.searchMyPhotosWithEmbedding(
-    slug,
-    accessCode,
-    role,
-    req.validated.body.embedding,
-  );
-
-  res.json({
-    data: {
-      matches: result.matches,
-      diagnostics: result.diagnostics,
     },
   });
 }
 
 module.exports = {
   findMyPhotos,
-  findMyPhotosByEmbedding,
 };

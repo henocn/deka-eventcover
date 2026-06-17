@@ -8,7 +8,6 @@ import {
   fetchPublicEvent,
   getMediaUrl,
   resolveBadgeCode,
-  searchMyPhotosByEmbedding,
   validateEventAccess,
 } from '../api';
 import AccessGate from '../components/AccessGate';
@@ -20,11 +19,9 @@ import MyPhotosModal from '../components/MyPhotosModal';
 import QrScannerPanel from '../components/QrScannerPanel';
 import { demoAlbums, demoEvent } from '../demoData';
 import {
-  clearMyPhotosEmbeddingCookie,
-  getAccessCodeCookie,
-  getMyPhotosEmbeddingCookie,
-  saveAccessCodeCookie,
-} from '../utils/participantCookies';
+  getAccessCodeSession,
+  saveAccessCodeSession,
+} from '../utils/participantSession';
 import {
   getInitialRole,
   isDemoMedia,
@@ -41,10 +38,10 @@ function ParticipantEventPage() {
   const [eventData, setEventData] = useState(null);
   const [albumData, setAlbumData] = useState(null);
   const [accessCode, setAccessCode] = useState(() => (
-    new URLSearchParams(window.location.search).get('accessCode') || getAccessCodeCookie(eventSlug) || ''
+    new URLSearchParams(window.location.search).get('accessCode') || getAccessCodeSession(eventSlug) || ''
   ));
   const [pendingCode, setPendingCode] = useState(() => (
-    new URLSearchParams(window.location.search).get('accessCode') || getAccessCodeCookie(eventSlug) || ''
+    new URLSearchParams(window.location.search).get('accessCode') || getAccessCodeSession(eventSlug) || ''
   ));
   const [requiresAccessCode, setRequiresAccessCode] = useState(false);
   const [invalidBadge, setInvalidBadge] = useState(false);
@@ -72,10 +69,6 @@ function ParticipantEventPage() {
   const documents = media.filter((item) => item.type !== 'image');
   const activeImage = activeImageIndex !== null ? activeImages[activeImageIndex] : null;
 
-  function myPhotosStorageKey() {
-    return `deka.myPhotos.${eventSlug}.${accessRole || 'classic'}`;
-  }
-
   const loadEvent = useCallback(
     async (nextAccessCode = accessCode) => {
       if (!eventSlug) {
@@ -88,7 +81,7 @@ function ParticipantEventPage() {
 
       try {
         const data = await fetchPublicEvent(eventSlug, nextAccessCode, accessRole);
-        if (nextAccessCode) saveAccessCodeCookie(eventSlug, nextAccessCode);
+        if (nextAccessCode) saveAccessCodeSession(eventSlug, nextAccessCode);
         setEventData(data);
         setUsingDemo(false);
         setRequiresAccessCode(false);
@@ -177,41 +170,18 @@ function ParticipantEventPage() {
       setActiveImageIndex(null);
       setSelectedMediaIds([]);
 
-      const cachedResult = window.sessionStorage.getItem(myPhotosStorageKey());
-      if (cachedResult) {
-        try {
-          setMyPhotosResult(JSON.parse(cachedResult));
-          setIsLoadingMyPhotos(false);
-          return;
-        } catch {
-          window.sessionStorage.removeItem(myPhotosStorageKey());
-        }
-      }
-
-      const embedding = getMyPhotosEmbeddingCookie(eventSlug, accessRole);
-      if (!embedding) {
-        setMyPhotosResult(null);
-        setIsMyPhotosOpen(true);
+      if ((myPhotosResult?.matches || []).length > 0) {
         setIsLoadingMyPhotos(false);
         return;
       }
 
-      try {
-        const result = await searchMyPhotosByEmbedding(eventSlug, embedding, accessCode, accessRole);
-        setMyPhotosResult(result);
-        window.sessionStorage.setItem(myPhotosStorageKey(), JSON.stringify(result));
-      } catch (myPhotosError) {
-        clearMyPhotosEmbeddingCookie(eventSlug, accessRole);
-        setMyPhotosResult(null);
-        setIsMyPhotosOpen(true);
-        setError(myPhotosError.message);
-      } finally {
-        setIsLoadingMyPhotos(false);
-      }
+      setMyPhotosResult(null);
+      setIsMyPhotosOpen(true);
+      setIsLoadingMyPhotos(false);
     }
 
     queueMicrotask(() => loadMyPhotos());
-  }, [accessCode, accessRole, eventSlug, isLoadingEvent, isMyPhotosRoute]);
+  }, [eventSlug, isLoadingEvent, isMyPhotosRoute, myPhotosResult?.matches]);
 
   useEffect(() => {
     if (!eventData?.slug || usingDemo) return undefined;
@@ -236,7 +206,7 @@ function ParticipantEventPage() {
 
     try {
       await validateEventAccess(eventSlug, pendingCode);
-      saveAccessCodeCookie(eventSlug, pendingCode);
+      saveAccessCodeSession(eventSlug, pendingCode);
       setAccessCode(pendingCode);
       setRequiresAccessCode(false);
       await loadEvent(pendingCode);
@@ -345,8 +315,7 @@ function ParticipantEventPage() {
   }
 
   function openMyPhotos() {
-    const embedding = getMyPhotosEmbeddingCookie(eventSlug, accessRole);
-    if (embedding) {
+    if ((myPhotosResult?.matches || []).length > 0) {
       navigate(`/events/${eventSlug}/my-photos${location.search}`);
       return;
     }
@@ -356,7 +325,6 @@ function ParticipantEventPage() {
 
   function handleMyPhotosSearchComplete(result) {
     setMyPhotosResult(result);
-    window.sessionStorage.setItem(myPhotosStorageKey(), JSON.stringify(result));
     setIsMyPhotosOpen(false);
     navigate(`/events/${eventSlug}/my-photos${location.search}`);
   }

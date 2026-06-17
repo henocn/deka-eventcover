@@ -1,9 +1,6 @@
 import { Loader2, Search, Upload, X } from 'lucide-react';
 import { useState } from 'react';
 import { searchMyPhotos } from '../api';
-import {
-  saveMyPhotosEmbeddingCookie,
-} from '../utils/participantCookies';
 
 function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose, onSearchComplete }) {
   const [isSearching, setIsSearching] = useState(false);
@@ -19,9 +16,6 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose, onSearchCom
 
     try {
       const result = await searchMyPhotos(eventSlug, file, accessCode, accessRole);
-      if (result.embedding) {
-        saveMyPhotosEmbeddingCookie(eventSlug, accessRole, result.embedding);
-      }
 
       if ((result.matches || []).length > 0) {
         onSearchComplete(result);
@@ -34,14 +28,6 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose, onSearchCom
     } finally {
       setIsSearching(false);
     }
-  }
-
-  function toggleSelection(mediaId) {
-    setSelectedIds((current) => (
-      current.includes(mediaId)
-        ? current.filter((id) => id !== mediaId)
-        : [...current, mediaId]
-    ));
   }
 
   return (

@@ -183,16 +183,6 @@ async function extractSelfieDescriptor(selfieBuffer) {
   };
 }
 
-function normalizeProvidedDescriptor(embedding) {
-  const descriptor = serializeDescriptor(embedding);
-
-  if (descriptor.length !== 512 || descriptor.some((value) => !Number.isFinite(value))) {
-    throw httpError(400, 'Embedding visage invalide.');
-  }
-
-  return descriptor;
-}
-
 function serializeMatch(media, score) {
   return {
     score,
@@ -293,7 +283,7 @@ async function matchPhotosByDescriptor(eventSlug, accessCode, roleToken, descrip
 
 async function searchMyPhotos(eventSlug, accessCode, roleToken, selfieBuffer) {
   const selfie = await extractSelfieDescriptor(selfieBuffer);
-  const result = await matchPhotosByDescriptor(
+  return matchPhotosByDescriptor(
     eventSlug,
     accessCode,
     roleToken,
@@ -303,20 +293,9 @@ async function searchMyPhotos(eventSlug, accessCode, roleToken, selfieBuffer) {
       warnings: selfie.warnings,
     },
   );
-
-  return {
-    ...result,
-    embedding: selfie.descriptor,
-  };
-}
-
-async function searchMyPhotosWithEmbedding(eventSlug, accessCode, roleToken, embedding) {
-  const descriptor = normalizeProvidedDescriptor(embedding);
-  return matchPhotosByDescriptor(eventSlug, accessCode, roleToken, descriptor);
 }
 
 module.exports = {
   analyzeMediaFaces,
   searchMyPhotos,
-  searchMyPhotosWithEmbedding,
 };
