@@ -17,8 +17,8 @@ function AlbumRail({ albums, selectedAlbumSlug, accessCode, accessRole, onSelect
           const cover = album.coverMedia
             ? getMediaUrl(album.coverMedia, accessCode, accessRole)
             : albumCover(album);
-          const photoCount = Number.isFinite(Number(album.mediaCount))
-            ? Number(album.mediaCount)
+          const photoCount = Number.isFinite(Number(album.photoCount))
+            ? Number(album.photoCount)
             : (album.media || []).filter((item) => item.type === 'image').length;
 
           return (

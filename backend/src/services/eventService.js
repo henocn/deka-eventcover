@@ -81,6 +81,7 @@ function serializeMedia(media) {
 function serializeAlbum(album, includeMedia = false) {
   const media = includeMedia && album.media ? album.media.map(serializeMedia) : undefined;
   const mediaCount = album.media ? album.media.length : undefined;
+  const photoCount = album.media ? album.media.filter((item) => item.type === 'image').length : undefined;
 
   return {
     id: album.id,
@@ -91,6 +92,7 @@ function serializeAlbum(album, includeMedia = false) {
     coverMediaId: album.coverMediaId,
     coverMedia: serializeMedia(album.coverMedia),
     mediaCount,
+    photoCount,
     sortOrder: album.sortOrder,
     isPublished: album.isPublished,
     media,
@@ -686,6 +688,12 @@ async function getPublicEvent(slug, accessCode, roleToken) {
             as: 'coverMedia',
             required: false,
             attributes: mediaPublicAttributes,
+          },
+          {
+            model: Media,
+            as: 'media',
+            required: false,
+            attributes: ['id', 'type'],
           },
           {
             model: AccessRole,
