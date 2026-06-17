@@ -7,6 +7,7 @@ function App() {
     <Routes>
       <Route path="/" element={<ParticipantEventPage />} />
       <Route path="/events/:eventSlug" element={<ParticipantEventPage />} />
+      <Route path="/events/:eventSlug/my-photos" element={<ParticipantEventPage />} />
       <Route path="/events/:eventSlug/albums/:albumSlug" element={<ParticipantEventPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -8,6 +8,7 @@ import {
   fetchPublicEvent,
   getMediaUrl,
   resolveBadgeCode,
+  searchMyPhotosByEmbedding,
   validateEventAccess,
 } from '../api';
 import AccessGate from '../components/AccessGate';
@@ -19,7 +20,9 @@ import MyPhotosModal from '../components/MyPhotosModal';
 import QrScannerPanel from '../components/QrScannerPanel';
 import { demoAlbums, demoEvent } from '../demoData';
 import {
+  clearMyPhotosEmbeddingCookie,
   getAccessCodeCookie,
+  getMyPhotosEmbeddingCookie,
   saveAccessCodeCookie,
 } from '../utils/participantCookies';
 import {
@@ -47,19 +50,31 @@ function ParticipantEventPage() {
   const [invalidBadge, setInvalidBadge] = useState(false);
   const [isLoadingEvent, setIsLoadingEvent] = useState(true);
   const [isLoadingAlbum, setIsLoadingAlbum] = useState(false);
+  const [isLoadingMyPhotos, setIsLoadingMyPhotos] = useState(false);
   const [error, setError] = useState('');
   const [usingDemo, setUsingDemo] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(null);
   const [selectedMediaIds, setSelectedMediaIds] = useState([]);
   const [isMyPhotosOpen, setIsMyPhotosOpen] = useState(false);
+  const [myPhotosResult, setMyPhotosResult] = useState(null);
   const touchStartX = useRef(null);
 
+  const isMyPhotosRoute = Boolean(eventSlug && location.pathname === `/events/${eventSlug}/my-photos`);
   const selectedAlbumSlug = albumSlug || null;
   const albums = useMemo(() => normalizeAlbums(eventData?.albums), [eventData]);
   const media = albumData?.media || [];
   const imageMedia = media.filter((item) => item.type === 'image');
+  const myPhotosMedia = useMemo(
+    () => (myPhotosResult?.matches || []).map((match) => match.media).filter((item) => item?.type === 'image'),
+    [myPhotosResult],
+  );
+  const activeImages = isMyPhotosRoute ? myPhotosMedia : imageMedia;
   const documents = media.filter((item) => item.type !== 'image');
-  const activeImage = activeImageIndex !== null ? imageMedia[activeImageIndex] : null;
+  const activeImage = activeImageIndex !== null ? activeImages[activeImageIndex] : null;
+
+  function myPhotosStorageKey() {
+    return `deka.myPhotos.${eventSlug}.${accessRole || 'classic'}`;
+  }
 
   const loadEvent = useCallback(
     async (nextAccessCode = accessCode) => {
@@ -132,6 +147,15 @@ function ParticipantEventPage() {
   }, [loadEvent]);
 
   useEffect(() => {
+    if (isMyPhotosRoute) {
+      queueMicrotask(() => {
+        setAlbumData(null);
+        setActiveImageIndex(null);
+        setSelectedMediaIds([]);
+      });
+      return;
+    }
+
     if (!selectedAlbumSlug) {
       queueMicrotask(() => {
         setAlbumData(null);
@@ -142,7 +166,52 @@ function ParticipantEventPage() {
     }
 
     queueMicrotask(() => loadAlbum(selectedAlbumSlug));
-  }, [loadAlbum, selectedAlbumSlug]);
+  }, [isMyPhotosRoute, loadAlbum, selectedAlbumSlug]);
+
+  useEffect(() => {
+    if (!isMyPhotosRoute || !eventSlug || isLoadingEvent) return;
+
+    async function loadMyPhotos() {
+      setIsLoadingMyPhotos(true);
+      setError('');
+      setActiveImageIndex(null);
+      setSelectedMediaIds([]);
+
+      const cachedResult = window.sessionStorage.getItem(myPhotosStorageKey());
+      if (cachedResult) {
+        try {
+          setMyPhotosResult(JSON.parse(cachedResult));
+          setIsLoadingMyPhotos(false);
+          return;
+        } catch {
+          window.sessionStorage.removeItem(myPhotosStorageKey());
+        }
+      }
+
+      const embedding = getMyPhotosEmbeddingCookie(eventSlug, accessRole);
+      if (!embedding) {
+        setMyPhotosResult(null);
+        setIsMyPhotosOpen(true);
+        setIsLoadingMyPhotos(false);
+        return;
+      }
+
+      try {
+        const result = await searchMyPhotosByEmbedding(eventSlug, embedding, accessCode, accessRole);
+        setMyPhotosResult(result);
+        window.sessionStorage.setItem(myPhotosStorageKey(), JSON.stringify(result));
+      } catch (myPhotosError) {
+        clearMyPhotosEmbeddingCookie(eventSlug, accessRole);
+        setMyPhotosResult(null);
+        setIsMyPhotosOpen(true);
+        setError(myPhotosError.message);
+      } finally {
+        setIsLoadingMyPhotos(false);
+      }
+    }
+
+    queueMicrotask(() => loadMyPhotos());
+  }, [accessCode, accessRole, eventSlug, isLoadingEvent, isMyPhotosRoute]);
 
   useEffect(() => {
     if (!eventData?.slug || usingDemo) return undefined;
@@ -184,16 +253,16 @@ function ParticipantEventPage() {
   }
 
   function openImage(mediaItem) {
-    const index = imageMedia.findIndex((item) => item.id === mediaItem.id);
+    const index = activeImages.findIndex((item) => item.id === mediaItem.id);
     setActiveImageIndex(index);
   }
 
   const goToImage = useCallback((direction) => {
     setActiveImageIndex((currentIndex) => {
-      if (currentIndex === null || imageMedia.length === 0) return currentIndex;
-      return (currentIndex + direction + imageMedia.length) % imageMedia.length;
+      if (currentIndex === null || activeImages.length === 0) return currentIndex;
+      return (currentIndex + direction + activeImages.length) % activeImages.length;
     });
-  }, [imageMedia.length]);
+  }, [activeImages.length]);
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -275,6 +344,23 @@ function ParticipantEventPage() {
     navigate(`/events/${eventSlug}${location.search}`);
   }
 
+  function openMyPhotos() {
+    const embedding = getMyPhotosEmbeddingCookie(eventSlug, accessRole);
+    if (embedding) {
+      navigate(`/events/${eventSlug}/my-photos${location.search}`);
+      return;
+    }
+
+    setIsMyPhotosOpen(true);
+  }
+
+  function handleMyPhotosSearchComplete(result) {
+    setMyPhotosResult(result);
+    window.sessionStorage.setItem(myPhotosStorageKey(), JSON.stringify(result));
+    setIsMyPhotosOpen(false);
+    navigate(`/events/${eventSlug}/my-photos${location.search}`);
+  }
+
   if (isLoadingEvent) {
     return (
       <main className="participant-shell grid min-h-svh place-items-center gap-3 p-5 text-[var(--muted)] text-white" data-theme={theme}>
@@ -325,7 +411,7 @@ function ParticipantEventPage() {
         event={eventData}
         theme={theme}
         onThemeToggle={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
-        onMyPhotos={() => setIsMyPhotosOpen(true)}
+        onMyPhotos={openMyPhotos}
       />
 
       {usingDemo || error ? (
@@ -334,7 +420,28 @@ function ParticipantEventPage() {
         </div>
       ) : null}
 
-      {selectedAlbumSlug ? (
+      {isMyPhotosRoute ? (
+        <GalleryView
+          album={{
+            id: 'my-photos',
+            title: 'Mes photos',
+            description: myPhotosResult?.matches?.length
+              ? `${myPhotosResult.matches.length} photo${myPhotosResult.matches.length > 1 ? 's' : ''} retrouvee${myPhotosResult.matches.length > 1 ? 's' : ''}.`
+              : '',
+          }}
+          images={myPhotosMedia}
+          documents={[]}
+          accessCode={accessCode}
+          accessRole={accessRole}
+          isLoading={isLoadingMyPhotos}
+          selectedMediaIds={selectedMediaIds}
+          onBackToAlbums={backToAlbums}
+          onOpenImage={openImage}
+          onToggleMediaSelection={toggleMediaSelection}
+          onDownloadAlbum={() => downloadItems(myPhotosMedia)}
+          onDownloadSelected={() => downloadItems(myPhotosMedia.filter((item) => selectedMediaIds.includes(item.id)))}
+        />
+      ) : selectedAlbumSlug ? (
         <GalleryView
           album={albumData}
           images={imageMedia}
@@ -363,7 +470,7 @@ function ParticipantEventPage() {
       <Lightbox
         activeImage={activeImage}
         activeImageIndex={activeImageIndex}
-        imageCount={imageMedia.length}
+        imageCount={activeImages.length}
         accessCode={accessCode}
         accessRole={accessRole}
         onClose={() => setActiveImageIndex(null)}
@@ -384,6 +491,7 @@ function ParticipantEventPage() {
           accessCode={accessCode}
           accessRole={accessRole}
           eventSlug={eventSlug}
+          onSearchComplete={handleMyPhotosSearchComplete}
           onClose={() => setIsMyPhotosOpen(false)}
         />
       ) : null}
