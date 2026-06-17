@@ -11,7 +11,6 @@ function ThemeToggle({ theme, onToggle }) {
       title="Changer le theme"
     >
       {isDark ? <Sun size={17} /> : <Moon size={17} />}
-      <span>{isDark ? 'Clair' : 'Sombre'}</span>
     </button>
   );
 }
