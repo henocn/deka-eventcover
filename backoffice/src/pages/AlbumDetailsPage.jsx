@@ -1,8 +1,8 @@
-import { ArrowLeft, ChevronLeft, ChevronRight, Image, Images, Loader2, Upload, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, Image, Images, Loader2, Trash2, Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { fetchAlbum, uploadAlbumMedia } from '../api';
+import { deleteMedia, fetchAlbum, uploadAlbumMedia } from '../api';
 import AdminMediaImage from '../components/media/AdminMediaImage';
 import { Button } from '../components/ui';
 import useEvents from '../hooks/useEvents';
@@ -38,7 +38,9 @@ function AlbumDetailsPage() {
   const [album, setAlbum] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(null);
+  const [selectedMediaIds, setSelectedMediaIds] = useState([]);
 
   const loadAlbum = useCallback(async () => {
     if (!albumId) return;
@@ -94,6 +96,21 @@ function AlbumDetailsPage() {
   const media = album?.media || [];
   const imageMedia = media.filter((item) => item.type === 'image');
   const previewMedia = previewIndex !== null ? imageMedia[previewIndex] : null;
+  const selectedCount = selectedMediaIds.length;
+
+  function removeMediaFromState(mediaIds) {
+    const idSet = new Set(mediaIds.map(Number));
+
+    setAlbum((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        media: (current.media || []).filter((item) => !idSet.has(item.id)),
+      };
+    });
+    setSelectedMediaIds((current) => current.filter((id) => !idSet.has(id)));
+    setPreviewIndex(null);
+  }
 
   function openPreview(mediaItem) {
     const nextIndex = imageMedia.findIndex((item) => item.id === mediaItem.id);
@@ -105,6 +122,51 @@ function AlbumDetailsPage() {
       if (current === null || imageMedia.length === 0) return current;
       return (current + direction + imageMedia.length) % imageMedia.length;
     });
+  }
+
+  function toggleMediaSelection(mediaId) {
+    setSelectedMediaIds((current) => (
+      current.includes(mediaId)
+        ? current.filter((id) => id !== mediaId)
+        : [...current, mediaId]
+    ));
+  }
+
+  async function deleteOneMedia(mediaId) {
+    setIsDeleting(true);
+
+    try {
+      await deleteMedia(mediaId);
+      removeMediaFromState([mediaId]);
+      toast.success('Image supprimee');
+      await loadEvents();
+    } catch (deleteError) {
+      toast.error(deleteError.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  async function deleteSelectedMedia() {
+    if (selectedMediaIds.length === 0) return;
+    const confirmed = window.confirm(`Supprimer ${selectedMediaIds.length} image(s) selectionnee(s) ?`);
+    if (!confirmed) return;
+
+    const idsToDelete = [...selectedMediaIds];
+    setIsDeleting(true);
+    const toastId = toast.loading('Suppression en cours...');
+
+    try {
+      await Promise.all(idsToDelete.map((mediaId) => deleteMedia(mediaId)));
+      removeMediaFromState(idsToDelete);
+      toast.success(`${idsToDelete.length} image(s) supprimee(s)`, { id: toastId });
+      await loadEvents();
+    } catch (deleteError) {
+      toast.error(deleteError.message, { id: toastId });
+      await loadAlbum();
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -156,7 +218,7 @@ function AlbumDetailsPage() {
           </div>
 
           <div className="grid items-start gap-3.5">
-            <div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap gap-2">
                 {roles.length > 0 ? roles.map((role) => (
                   <span className="inline-flex min-h-[25px] items-center border border-black rounded-full bg-emerald-50 px-2.5 text-xs font-extrabold text-emerald-700" key={role.id}>{role.name}</span>
@@ -164,6 +226,17 @@ function AlbumDetailsPage() {
                   <span className="inline-flex min-h-[25px] items-center border border-black rounded-full bg-emerald-50 px-2.5 text-xs font-extrabold text-emerald-700">Tout</span>
                 )}
               </div>
+              {selectedCount > 0 ? (
+                <button
+                  type="button"
+                  className="inline-flex min-h-[36px] items-center gap-2 rounded border border-red-600 bg-red-600 px-3 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isDeleting}
+                  onClick={deleteSelectedMedia}
+                >
+                  <Trash2 size={15} />
+                  Supprimer {selectedCount}
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -195,6 +268,34 @@ function AlbumDetailsPage() {
                       {FACE_STATUS_LABELS[item.faceAnalysisStatus] || FACE_STATUS_LABELS.pending}
                     </span>
                   ) : null}
+                  {item.type === 'image' ? (
+                    <div className="absolute right-1.5 top-1.5 flex gap-1.5">
+                      <button
+                        type="button"
+                        className={`grid h-8 w-8 place-items-center rounded border border-black bg-white/95 text-black shadow-sm transition hover:border-[#9cff00] ${selectedMediaIds.includes(item.id) ? 'bg-[#9cff00] text-black' : ''}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleMediaSelection(item.id);
+                        }}
+                        disabled={isDeleting}
+                        title="Selectionner"
+                      >
+                        {selectedMediaIds.includes(item.id) ? <Check size={16} /> : null}
+                      </button>
+                      <button
+                        type="button"
+                        className="grid h-8 w-8 place-items-center rounded border border-red-600 bg-white/95 text-red-600 shadow-sm transition hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          deleteOneMedia(item.id);
+                        }}
+                        disabled={isDeleting}
+                        title="Supprimer"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </figure>
             ))}
@@ -204,11 +305,11 @@ function AlbumDetailsPage() {
 
       {previewMedia ? (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-5"
+          className="fixed inset-0 z-50 grid place-items-center overflow-hidden bg-black/80 p-5"
           onMouseDown={() => setPreviewIndex(null)}
         >
           <div
-            className="relative grid h-full w-full max-w-6xl grid-rows-[auto_1fr] gap-3"
+            className="relative grid max-h-[calc(100svh-40px)] w-[min(1180px,calc(100vw-40px))] grid-rows-[auto_minmax(0,1fr)] gap-3"
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-3 rounded border border-white/15 bg-black/45 px-3 py-2 text-white backdrop-blur">
@@ -225,7 +326,7 @@ function AlbumDetailsPage() {
               </button>
             </div>
 
-            <div className="relative grid min-h-0 place-items-center rounded border border-white/15 bg-black/30 p-3">
+            <div className="relative grid min-h-0 place-items-center overflow-hidden rounded border border-white/15 bg-black/30 p-3">
               {imageMedia.length > 1 ? (
                 <>
                   <button
@@ -246,8 +347,8 @@ function AlbumDetailsPage() {
               ) : null}
               <AdminMediaImage
                 media={previewMedia}
-                className="max-h-full max-w-full rounded object-contain"
-                fallbackClassName="h-80 w-full max-w-xl rounded"
+                className="block max-h-[calc(100svh-150px)] max-w-[calc(100vw-80px)] rounded object-contain"
+                fallbackClassName="h-[min(60svh,520px)] w-full max-w-xl rounded"
               />
             </div>
           </div>

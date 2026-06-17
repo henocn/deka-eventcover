@@ -163,6 +163,12 @@ async function deleteAlbum(albumId) {
   });
 }
 
+async function deleteMedia(mediaId) {
+  return apiRequest(`/api/admin/media/${mediaId}`, {
+    method: 'DELETE',
+  });
+}
+
 async function deleteEvent(eventId) {
   return apiRequest(`/api/admin/events/${eventId}`, {
     method: 'DELETE',
@@ -216,6 +222,7 @@ export {
   deleteAccessRole,
   deleteAlbum,
   deleteEvent,
+  deleteMedia,
   deleteUser,
   fetchAccessRoleQrCode,
   fetchAccessRoles,

@@ -201,8 +201,50 @@ async function getAdminMediaFileResponse(mediaId) {
   };
 }
 
+async function deleteAdminMedia(mediaId) {
+  const media = await Media.findByPk(mediaId, {
+    include: [
+      {
+        model: Event,
+        as: 'event',
+        required: true,
+        attributes: ['id', 'slug'],
+      },
+      {
+        model: Album,
+        as: 'album',
+        required: true,
+        attributes: ['id'],
+      },
+    ],
+  });
+
+  if (!media) {
+    throw httpError(404, 'Media not found');
+  }
+
+  const absolutePath = safeJoinUploadPath(media.storagePath);
+  const event = media.event;
+  const album = media.album;
+
+  await media.destroy();
+
+  await fs.unlink(absolutePath).catch((error) => {
+    if (error.code !== 'ENOENT') {
+      console.warn(`Unable to delete media file ${absolutePath}: ${error.message}`);
+    }
+  });
+
+  return {
+    event,
+    album,
+    mediaId: Number(mediaId),
+  };
+}
+
 module.exports = {
   uploadAlbumMedia,
   getMediaFileResponse,
   getAdminMediaFileResponse,
+  deleteAdminMedia,
 };

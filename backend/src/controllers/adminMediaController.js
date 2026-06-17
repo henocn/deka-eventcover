@@ -27,7 +27,23 @@ async function sendAdminMediaFile(req, res) {
   res.sendFile(result.absolutePath);
 }
 
+async function deleteAdminMedia(req, res) {
+  const result = await mediaService.deleteAdminMedia(req.validated.params.mediaId);
+  const io = req.app.get('io');
+
+  if (io) {
+    io.to(`event:${result.event.slug}`).emit('media:deleted', {
+      eventId: result.event.id,
+      albumId: result.album.id,
+      mediaId: result.mediaId,
+    });
+  }
+
+  res.json({ data: { id: result.mediaId } });
+}
+
 module.exports = {
+  deleteAdminMedia,
   uploadAlbumMedia,
   sendAdminMediaFile,
 };

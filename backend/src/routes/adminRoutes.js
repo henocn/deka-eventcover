@@ -125,5 +125,10 @@ router.get(
   validate(mediaFileSchema),
   asyncHandler(adminMediaController.sendAdminMediaFile)
 );
+router.delete(
+  '/media/:mediaId',
+  validate(mediaFileSchema),
+  asyncHandler(adminMediaController.deleteAdminMedia)
+);
 
 module.exports = router;
