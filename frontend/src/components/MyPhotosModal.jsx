@@ -64,7 +64,7 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose, onSearchCom
             <p className="mb-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--gold)]">Recherche personnelle</p>
             <h2 className="m-0 text-2xl font-black text-[var(--text)]">Mes photos</h2>
             <p className="mt-2 max-w-xl text-sm font-bold text-[var(--muted)]">
-              Prenez ou importez un selfie clair. Il est utilise uniquement pour la comparaison puis oublie.
+              Prenez ou importez un selfie clair. Il est utilise uniquement pour la comparaison puis instantanément supprimé.
             </p>
           </div>
           <button type="button" className="grid h-10 w-10 place-items-center rounded-full border-2 border-[var(--line-strong)] text-[var(--text)] transition hover:border-[var(--accent)]" onClick={onClose}>
