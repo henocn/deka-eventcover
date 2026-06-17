@@ -31,6 +31,12 @@ const publicMyPhotosSchema = z.object({
   }),
 });
 
+const publicMyPhotosEmbeddingSchema = publicMyPhotosSchema.extend({
+  body: z.object({
+    embedding: z.array(z.number().min(-1.1).max(1.1)).length(512),
+  }),
+});
+
 const eventAccessSchema = z.object({
   params: z.object({
     slug: z.string().trim().min(1),
@@ -51,5 +57,6 @@ module.exports = {
   publicEventSchema,
   publicAlbumSchema,
   publicMyPhotosSchema,
+  publicMyPhotosEmbeddingSchema,
   eventAccessSchema,
 };

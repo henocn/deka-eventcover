@@ -1,6 +1,11 @@
 import { Check, Download, Image, Loader2, Search, Upload, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { getMediaUrl, searchMyPhotos } from '../api';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { getMediaUrl, searchMyPhotos, searchMyPhotosByEmbedding } from '../api';
+import {
+  clearMyPhotosEmbeddingCookie,
+  getMyPhotosEmbeddingCookie,
+  saveMyPhotosEmbeddingCookie,
+} from '../utils/participantCookies';
 import { isDemoMedia } from '../utils/participantUtils';
 
 function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
@@ -8,6 +13,8 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [diagnostics, setDiagnostics] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [usedCachedEmbedding, setUsedCachedEmbedding] = useState(false);
   const [error, setError] = useState('');
 
   const selectedMatches = useMemo(
@@ -30,8 +37,19 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
     });
   }
 
-  async function runSearch(file) {
-    if (!file) return;
+  const applySearchResult = useCallback((result, fromCache = false) => {
+    setMatches(result.matches || []);
+    setDiagnostics(result.diagnostics || null);
+    setUsedCachedEmbedding(fromCache);
+    setHasSearched(true);
+  }, []);
+
+  const runCachedSearch = useCallback(async () => {
+    const embedding = getMyPhotosEmbeddingCookie(eventSlug, accessRole);
+    if (!embedding) {
+      setHasSearched(false);
+      return;
+    }
 
     setIsSearching(true);
     setError('');
@@ -40,9 +58,37 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
     setDiagnostics(null);
 
     try {
+      const result = await searchMyPhotosByEmbedding(eventSlug, embedding, accessCode, accessRole);
+      applySearchResult(result, true);
+    } catch {
+      clearMyPhotosEmbeddingCookie(eventSlug, accessRole);
+      setHasSearched(false);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [accessCode, accessRole, applySearchResult, eventSlug]);
+
+  useEffect(() => {
+    queueMicrotask(() => runCachedSearch());
+  }, [runCachedSearch]);
+
+  async function runSearch(file) {
+    if (!file) return;
+
+    setIsSearching(true);
+    setError('');
+    setMatches([]);
+    setSelectedIds([]);
+    setDiagnostics(null);
+    setUsedCachedEmbedding(false);
+    setHasSearched(true);
+
+    try {
       const result = await searchMyPhotos(eventSlug, file, accessCode, accessRole);
-      setMatches(result.matches || []);
-      setDiagnostics(result.diagnostics || null);
+      if (result.embedding) {
+        saveMyPhotosEmbeddingCookie(eventSlug, accessRole, result.embedding);
+      }
+      applySearchResult(result, false);
     } catch (searchError) {
       setError(searchError.message);
     } finally {
@@ -61,7 +107,7 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
   return (
     <div className="fixed inset-0 z-40 grid place-items-center bg-black/50 p-4" onMouseDown={onClose}>
       <section
-        className="max-h-[92svh] w-[min(900px,100%)] overflow-y-auto rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_30px_100px_rgba(0,0,0,0.32)]"
+        className="max-h-[92svh] w-[min(1180px,100%)] overflow-y-auto rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_30px_100px_rgba(0,0,0,0.32)]"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="mb-5 flex items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
@@ -69,7 +115,9 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
             <p className="mb-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--gold)]">Recherche personnelle</p>
             <h2 className="m-0 text-2xl font-black text-[var(--text)]">Mes photos</h2>
             <p className="mt-2 max-w-xl text-sm font-bold text-[var(--muted)]">
-              Prenez ou importez un selfie clair. Il est utilise uniquement pour la comparaison puis oublie.
+              {usedCachedEmbedding
+                ? 'Resultats retrouves depuis votre derniere recherche.'
+                : 'Prenez ou importez un selfie clair. Il est utilise uniquement pour la comparaison puis oublie.'}
             </p>
           </div>
           <button type="button" className="grid h-10 w-10 place-items-center rounded-full border-2 border-[var(--line-strong)] text-[var(--text)] transition hover:border-[var(--accent)]" onClick={onClose}>
@@ -80,7 +128,7 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
         <div className="grid grid-cols-2 gap-3 max-[640px]:grid-cols-1">
           <label className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-[var(--line-strong)] px-4 font-black text-[var(--text)] transition hover:border-[var(--accent)]">
             <Search size={18} />
-            Prendre un selfie
+            {hasSearched ? 'Refaire un selfie' : 'Prendre un selfie'}
             <input
               className="hidden"
               type="file"
@@ -92,7 +140,7 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
           </label>
           <label className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-[var(--line-strong)] px-4 font-black text-[var(--text)] transition hover:border-[var(--accent)]">
             <Upload size={18} />
-            Importer
+            {hasSearched ? 'Importer une autre photo' : 'Importer'}
             <input
               className="hidden"
               type="file"
@@ -128,7 +176,7 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 min-[700px]:grid-cols-3 min-[1024px]:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 min-[700px]:grid-cols-3 min-[1024px]:grid-cols-4 min-[1280px]:grid-cols-5">
               {matches.map((match) => {
                 const media = match.media;
                 const selected = selectedIds.includes(media.id);
@@ -165,7 +213,7 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose }) {
           </div>
         ) : null}
 
-        {!isSearching && matches.length === 0 && !error && !diagnostics ? (
+        {!isSearching && matches.length === 0 && !error && !diagnostics && !hasSearched ? (
           <div className="mt-5 rounded-xl border border-dashed border-[var(--line-strong)] p-5 text-sm font-bold text-[var(--muted)]">
             Les resultats apparaitront ici apres l'envoi du selfie.
           </div>

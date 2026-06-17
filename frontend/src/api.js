@@ -52,6 +52,18 @@ export async function searchMyPhotos(eventSlug, file, accessCode, role) {
   return parseResponse(response);
 }
 
+export async function searchMyPhotosByEmbedding(eventSlug, embedding, accessCode, role) {
+  const response = await fetch(withAccess(`/api/public/events/${eventSlug}/my-photos/embedding`, accessCode, role), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ embedding }),
+  });
+
+  return parseResponse(response);
+}
+
 export async function resolveBadgeCode(badgeCode) {
   const response = await fetch(new URL(`/api/public/badges/${badgeCode}`, API_URL));
   return parseResponse(response);

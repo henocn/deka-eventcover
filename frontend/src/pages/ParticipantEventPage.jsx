@@ -19,6 +19,10 @@ import MyPhotosModal from '../components/MyPhotosModal';
 import QrScannerPanel from '../components/QrScannerPanel';
 import { demoAlbums, demoEvent } from '../demoData';
 import {
+  getAccessCodeCookie,
+  saveAccessCodeCookie,
+} from '../utils/participantCookies';
+import {
   getInitialRole,
   isDemoMedia,
   normalizeAlbums,
@@ -33,8 +37,12 @@ function ParticipantEventPage() {
   const [theme, setTheme] = useState(() => window.localStorage.getItem('deka.participant.theme') || 'light');
   const [eventData, setEventData] = useState(null);
   const [albumData, setAlbumData] = useState(null);
-  const [accessCode, setAccessCode] = useState('');
-  const [pendingCode, setPendingCode] = useState('');
+  const [accessCode, setAccessCode] = useState(() => (
+    new URLSearchParams(window.location.search).get('accessCode') || getAccessCodeCookie(eventSlug) || ''
+  ));
+  const [pendingCode, setPendingCode] = useState(() => (
+    new URLSearchParams(window.location.search).get('accessCode') || getAccessCodeCookie(eventSlug) || ''
+  ));
   const [requiresAccessCode, setRequiresAccessCode] = useState(false);
   const [invalidBadge, setInvalidBadge] = useState(false);
   const [isLoadingEvent, setIsLoadingEvent] = useState(true);
@@ -65,6 +73,7 @@ function ParticipantEventPage() {
 
       try {
         const data = await fetchPublicEvent(eventSlug, nextAccessCode, accessRole);
+        if (nextAccessCode) saveAccessCodeCookie(eventSlug, nextAccessCode);
         setEventData(data);
         setUsingDemo(false);
         setRequiresAccessCode(false);
@@ -158,6 +167,7 @@ function ParticipantEventPage() {
 
     try {
       await validateEventAccess(eventSlug, pendingCode);
+      saveAccessCodeCookie(eventSlug, pendingCode);
       setAccessCode(pendingCode);
       setRequiresAccessCode(false);
       await loadEvent(pendingCode);

@@ -183,6 +183,16 @@ async function extractSelfieDescriptor(selfieBuffer) {
   };
 }
 
+function normalizeProvidedDescriptor(embedding) {
+  const descriptor = serializeDescriptor(embedding);
+
+  if (descriptor.length !== 512 || descriptor.some((value) => !Number.isFinite(value))) {
+    throw httpError(400, 'Embedding visage invalide.');
+  }
+
+  return descriptor;
+}
+
 function serializeMatch(media, score) {
   return {
     score,
@@ -208,15 +218,22 @@ function serializeMatch(media, score) {
   };
 }
 
-async function searchMyPhotos(eventSlug, accessCode, roleToken, selfieBuffer) {
+async function matchPhotosByDescriptor(eventSlug, accessCode, roleToken, descriptor, selfieMeta = {}) {
   const publicEvent = await eventService.getPublicEvent(eventSlug, accessCode, roleToken);
   const albumIds = (publicEvent.albums || []).map((album) => album.id);
 
   if (albumIds.length === 0) {
-    return [];
+    return {
+      matches: [],
+      diagnostics: {
+        selfieQuality: selfieMeta.quality || null,
+        selfieWarnings: selfieMeta.warnings || [],
+        threshold: env.faceMatchThreshold,
+        indexedFaces: 0,
+      },
+    };
   }
 
-  const selfie = await extractSelfieDescriptor(selfieBuffer);
   const embeddings = await FaceEmbedding.findAll({
     where: {
       eventId: publicEvent.id,
@@ -247,7 +264,7 @@ async function searchMyPhotos(eventSlug, accessCode, roleToken, selfieBuffer) {
   const matchesByMedia = new Map();
 
   embeddings.forEach((embedding) => {
-    const score = cosineSimilarity(selfie.descriptor, embedding.embedding);
+    const score = cosineSimilarity(descriptor, embedding.embedding);
     if (score < env.faceMatchThreshold) return;
 
     const existing = matchesByMedia.get(embedding.mediaId);
@@ -266,15 +283,40 @@ async function searchMyPhotos(eventSlug, accessCode, roleToken, selfieBuffer) {
   return {
     matches,
     diagnostics: {
-      selfieQuality: selfie.quality,
-      selfieWarnings: selfie.warnings,
+      selfieQuality: selfieMeta.quality || null,
+      selfieWarnings: selfieMeta.warnings || [],
       threshold: env.faceMatchThreshold,
       indexedFaces: embeddings.length,
     },
   };
 }
 
+async function searchMyPhotos(eventSlug, accessCode, roleToken, selfieBuffer) {
+  const selfie = await extractSelfieDescriptor(selfieBuffer);
+  const result = await matchPhotosByDescriptor(
+    eventSlug,
+    accessCode,
+    roleToken,
+    selfie.descriptor,
+    {
+      quality: selfie.quality,
+      warnings: selfie.warnings,
+    },
+  );
+
+  return {
+    ...result,
+    embedding: selfie.descriptor,
+  };
+}
+
+async function searchMyPhotosWithEmbedding(eventSlug, accessCode, roleToken, embedding) {
+  const descriptor = normalizeProvidedDescriptor(embedding);
+  return matchPhotosByDescriptor(eventSlug, accessCode, roleToken, descriptor);
+}
+
 module.exports = {
   analyzeMediaFaces,
   searchMyPhotos,
+  searchMyPhotosWithEmbedding,
 };
