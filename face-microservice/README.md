@@ -5,7 +5,7 @@ FastAPI service dedicated to face detection and 512-dimensional face embeddings.
 ## Stack
 
 - FastAPI
-- InsightFace `buffalo_s`
+- InsightFace `buffalo_l`
 - ONNX Runtime CPU only
 - OpenCV headless
 
@@ -47,16 +47,23 @@ pm2 save
 ## Environment
 
 ```bash
-INSIGHTFACE_MODEL=buffalo_s
-INSIGHTFACE_DET_SIZE=640
+INSIGHTFACE_MODEL=buffalo_l
+INSIGHTFACE_DET_SIZE=800
 FACE_MAX_CONCURRENCY=1
 FACE_MIN_SHARPNESS=35
-FACE_MIN_SIZE=24
+FACE_MIN_SIZE=18
+FACE_ENABLE_MULTIPASS=true
+FACE_CROP_OVERLAP=0.18
+FACE_DEDUP_IOU=0.42
 ```
 
-`buffalo_s` is the CPU-friendly model. If the model is not already available,
+`buffalo_l` improves recognition quality, especially with group photos, but it
+is slower than `buffalo_s` on CPU. If the model is not already available,
 InsightFace may need to download it on first startup. In production, start the
 service once during deployment so the model is cached before the event.
+
+Multi-pass detection runs the full image first, then overlapping crops for large
+images. It helps recover small faces at the cost of extra CPU time.
 
 ## Quick checks
 

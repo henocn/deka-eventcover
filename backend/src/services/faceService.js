@@ -135,6 +135,9 @@ async function analyzeMediaFaces(mediaId) {
     const analysis = await extractFaces(absolutePath);
     const { faces } = analysis;
     const warningMessage = analysis.warnings.join(' ');
+    console.log(
+      `Face service media ${media.id}: ${faces.length} face(s), duration=${analysis.durationMs || 'n/a'}ms, warnings=${warningMessage || 'none'}`,
+    );
 
     if (faces.length === 0) {
       await media.update({ faceAnalysisStatus: 'no_face', faceAnalysisError: warningMessage || null });

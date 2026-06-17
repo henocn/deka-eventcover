@@ -22,7 +22,7 @@ module.exports = {
   jwtSecret: process.env.JWT_SECRET || 'change-this-secret-in-production',
   faceServiceUrl: process.env.FACE_SERVICE_URL || 'http://127.0.0.1:8001',
   faceServiceTimeoutMs: toNumber(process.env.FACE_SERVICE_TIMEOUT_MS, 120000),
-  faceImageMaxSize: toNumber(process.env.FACE_IMAGE_MAX_SIZE, 1024),
+  faceImageMaxSize: toNumber(process.env.FACE_IMAGE_MAX_SIZE, 1600),
   faceMatchThreshold: toNumber(process.env.FACE_MATCH_THRESHOLD, 0.48),
   faceQueueConcurrency: toNumber(process.env.FACE_QUEUE_CONCURRENCY, 1),
   participantAppUrl:
