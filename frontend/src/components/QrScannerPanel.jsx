@@ -56,7 +56,7 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
 
         frameId = window.requestAnimationFrame(scan);
       } catch {
-        setScannerError("Autorisez l'acces a la camera pour scanner le QR code.");
+        setScannerError("Accès caméra refusé, impossible de scanner le QR code, utilisez le code manuel.");
       }
     }
 
