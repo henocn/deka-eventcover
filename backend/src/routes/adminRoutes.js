@@ -1,6 +1,7 @@
 const express = require('express');
 const asyncHandler = require('../utils/asyncHandler');
 const validate = require('../middlewares/validate');
+const { loginLimiter } = require('../middlewares/rateLimit');
 const { requireAdmin, requireSuperAdmin } = require('../middlewares/auth');
 const { upload } = require('../middlewares/upload');
 const authController = require('../controllers/authController');
@@ -26,7 +27,7 @@ const { createUserSchema, updateUserSchema, userIdParamSchema } = require('../va
 
 const router = express.Router();
 
-router.post('/auth/login', validate(loginSchema), asyncHandler(authController.login));
+router.post('/auth/login', loginLimiter, validate(loginSchema), asyncHandler(authController.login));
 
 router.use(requireAdmin);
 

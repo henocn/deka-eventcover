@@ -14,6 +14,7 @@ RUN_SEEDERS="${RUN_SEEDERS:-false}"
 FRONTEND_DIR="$PROJECT_ROOT/frontend"
 BACKOFFICE_DIR="$PROJECT_ROOT/backoffice"
 BACKEND_DIR="$PROJECT_ROOT/backend"
+FACE_DIR="$PROJECT_ROOT/face-microservice"
 SHARED_ENV="$PROJECT_ROOT/.env"
 BACKEND_ENV="$BACKEND_DIR/.env"
 
@@ -57,6 +58,7 @@ need_cmd pm2
 [ -d "$FRONTEND_DIR" ] || fail "Frontend directory not found: $FRONTEND_DIR"
 [ -d "$BACKOFFICE_DIR" ] || fail "Backoffice directory not found: $BACKOFFICE_DIR"
 [ -d "$BACKEND_DIR" ] || fail "Backend directory not found: $BACKEND_DIR"
+[ -d "$FACE_DIR" ] || fail "Face microservice directory not found: $FACE_DIR"
 
 if [ ! -f "$SHARED_ENV" ] && [ ! -f "$BACKEND_ENV" ]; then
   fail "No .env found. Create $SHARED_ENV or $BACKEND_ENV before deploying."
@@ -66,9 +68,25 @@ require_env DB_NAME
 require_env DB_USER
 require_env DB_PASSWORD
 require_env JWT_SECRET
+require_env FACE_SERVICE_URL
 
 export NODE_ENV
 export PORT="$BACKEND_PORT"
+
+log "Installing face microservice (Python)"
+need_cmd python3
+cd "$FACE_DIR"
+if [ ! -d .venv ]; then
+  python3 -m venv .venv
+fi
+.venv/bin/pip install -r requirements.txt --quiet
+
+log "Restarting face microservice with PM2"
+if pm2 describe deka-face-service >/dev/null 2>&1; then
+  pm2 restart deka-face-service --update-env
+else
+  pm2 start ecosystem.config.cjs --update-env
+fi
 
 log "Installing and building participant frontend"
 npm_install_clean "$FRONTEND_DIR"
@@ -111,3 +129,4 @@ log "Deployment complete"
 printf 'Participant dist: %s\n' "$FRONTEND_DIR/dist"
 printf 'Backoffice dist:  %s\n' "$BACKOFFICE_DIR/dist"
 printf 'Backend PM2 app:  %s-api\n' "$APP_NAME"
+printf 'Face PM2 app:     deka-face-service\n'

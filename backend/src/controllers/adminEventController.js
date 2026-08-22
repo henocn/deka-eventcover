@@ -1,5 +1,6 @@
 const QRCode = require('qrcode');
 const eventService = require('../services/eventService');
+const { emitToEventRoom } = require('../utils/socketEvents');
 
 async function listEvents(req, res) {
   const events = await eventService.listEvents();
@@ -30,9 +31,7 @@ async function createAlbum(req, res) {
   const album = await eventService.createAlbum(req.validated.params.eventId, req.validated.body);
   const io = req.app.get('io');
 
-  if (io) {
-    io.to(`event:${album.eventId}`).emit('album:updated', { albumId: album.id });
-  }
+  await emitToEventRoom(io, album.eventId, 'album:updated', { albumId: album.id });
 
   res.status(201).json({ data: album });
 }
@@ -41,9 +40,7 @@ async function updateAlbum(req, res) {
   const album = await eventService.updateAlbum(req.validated.params.albumId, req.validated.body);
   const io = req.app.get('io');
 
-  if (io) {
-    io.to(`event:${album.eventId}`).emit('album:updated', { albumId: album.id });
-  }
+  await emitToEventRoom(io, album.eventId, 'album:updated', { albumId: album.id });
 
   res.json({ data: album });
 }
@@ -57,9 +54,7 @@ async function deleteAlbum(req, res) {
   const result = await eventService.deleteAlbum(req.validated.params.albumId);
   const io = req.app.get('io');
 
-  if (io) {
-    io.to(`event:${result.eventId}`).emit('album:updated', { albumId: result.id });
-  }
+  await emitToEventRoom(io, result.eventId, 'album:updated', { albumId: result.id });
 
   res.json({ data: result });
 }

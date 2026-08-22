@@ -95,10 +95,14 @@ function ParticipantEventPage() {
         } else if (loadError.requiresAccessCode) {
           setRequiresAccessCode(true);
           setEventData(null);
-        } else {
+        } else if (import.meta.env.DEV) {
           setEventData(demoEvent);
           setUsingDemo(true);
           setError("Aucun evenement publie n'a encore ete trouve. Apercu de demonstration affiche.");
+        } else {
+          setEventData(null);
+          setUsingDemo(false);
+          setError(loadError.message || "Impossible de charger l'evenement. Verifiez votre connexion.");
         }
       } finally {
         setIsLoadingEvent(false);
@@ -186,7 +190,7 @@ function ParticipantEventPage() {
   useEffect(() => {
     if (!eventData?.slug || usingDemo) return undefined;
 
-    const socket = io(API_URL, { transports: ['websocket'] });
+    const socket = io(API_URL, { transports: ['websocket', 'polling'] });
     socket.emit('event:join', eventData.slug);
     socket.on('media:created', () => {
       if (selectedAlbumSlug) loadAlbum(selectedAlbumSlug);

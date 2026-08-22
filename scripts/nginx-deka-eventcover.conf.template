@@ -11,6 +11,11 @@ server {
         try_files $uri /index.html;
     }
 
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
     location /api/ {
         proxy_pass http://127.0.0.1:${BACKEND_PORT}/api/;
         proxy_http_version 1.1;
@@ -47,6 +52,11 @@ server {
 
     location / {
         try_files $uri /index.html;
+    }
+
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
     }
 
     location /api/ {

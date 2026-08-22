@@ -12,11 +12,13 @@ function runNext() {
 
   queuedIds.delete(mediaId);
   running += 1;
-  console.log(`Face analysis started for media ${mediaId}`);
+  const startedAt = Date.now();
+  console.log(`Face analysis started for media ${mediaId} (queue: ${queue.length} waiting, ${running} running)`);
 
   faceService.analyzeMediaFaces(mediaId)
     .then(() => {
-      console.log(`Face analysis completed for media ${mediaId}`);
+      const durationMs = Date.now() - startedAt;
+      console.log(`Face analysis completed for media ${mediaId} in ${durationMs}ms`);
     })
     .catch((error) => {
       console.error(`Face analysis failed for media ${mediaId}:`, error.message);

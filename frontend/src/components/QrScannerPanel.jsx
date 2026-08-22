@@ -11,7 +11,7 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
     if (modal !== 'scan') return undefined;
 
     let stream;
-    let frameId;
+    let scanIntervalId;
     let isActive = true;
 
     async function startScanner() {
@@ -45,16 +45,14 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
 
             if (value) {
               onScan(value);
-              return;
             }
           } catch {
             setScannerError('Scan impossible pour le moment. Repositionnez le QR code ou rescanner avec la camera du telephone.');
           }
-
-          frameId = window.requestAnimationFrame(scan);
         };
 
-        frameId = window.requestAnimationFrame(scan);
+        scanIntervalId = window.setInterval(scan, 100);
+        scan();
       } catch {
         setScannerError("Accès caméra refusé, impossible de scanner le QR code, utilisez le code manuel.");
       }
@@ -64,7 +62,7 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
 
     return () => {
       isActive = false;
-      if (frameId) window.cancelAnimationFrame(frameId);
+      if (scanIntervalId) window.clearInterval(scanIntervalId);
       if (stream) stream.getTracks().forEach((track) => track.stop());
     };
   }, [modal, onScan]);
