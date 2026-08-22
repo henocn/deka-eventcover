@@ -1,15 +1,20 @@
 import { Camera } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import BrandLogo from './BrandLogo';
+import LanguageToggle from './LanguageToggle';
 import ThemeToggle from './ThemeToggle';
 
-// Barre superieure commune : logo, theme et acces Mes photos.
+// Barre superieure commune : logo, langue, theme et acces Mes photos.
 function ParticipantTopBar({ theme, onThemeToggle, onMyPhotos, compact = false }) {
+  const { t } = useTranslation();
+
   return (
     <div
       className={`mx-auto flex w-[min(1180px,100%)] items-center justify-between gap-5 max-[680px]:items-start max-[680px]:gap-4 ${compact ? 'pb-8 pt-1' : 'mb-10 pt-1'}`}
     >
       <BrandLogo />
       <div className="flex flex-wrap justify-end gap-2.5">
+        <LanguageToggle />
         <ThemeToggle theme={theme} onToggle={onThemeToggle} />
         <button
           type="button"
@@ -17,7 +22,7 @@ function ParticipantTopBar({ theme, onThemeToggle, onMyPhotos, compact = false }
           onClick={onMyPhotos}
         >
           <Camera size={17} />
-          <span>Mes photos</span>
+          <span>{t('topBar.myPhotos')}</span>
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import {
@@ -12,6 +13,7 @@ import {
 } from '../api';
 import AccessGate from '../components/AccessGate';
 import AlbumRail from '../components/AlbumRail';
+import DisplayMessage from '../components/DisplayMessage';
 import EventHero from '../components/EventHero';
 import GalleryView from '../components/GalleryView';
 import Lightbox from '../components/Lightbox';
@@ -20,7 +22,7 @@ import ParticipantTopBar from '../components/ParticipantTopBar';
 import PppWatermarks from '../components/PppWatermarks';
 import QrScannerPanel from '../components/QrScannerPanel';
 import SiteFooter from '../components/SiteFooter';
-import { demoAlbums, demoEvent } from '../demoData';
+import { getDemoAlbums, getDemoEvent } from '../demoData';
 import {
   getAccessCodeSession,
   saveAccessCodeSession,
@@ -34,6 +36,7 @@ import {
 const THEME_STORAGE_KEY = 'dkcover.participant.theme';
 
 function ParticipantEventPage() {
+  const { t, i18n } = useTranslation();
   const { albumSlug, eventSlug: routeEventSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -104,19 +107,19 @@ function ParticipantEventPage() {
           setRequiresAccessCode(true);
           setEventData(null);
         } else if (import.meta.env.DEV) {
-          setEventData(demoEvent);
+          setEventData(getDemoEvent(i18n.language));
           setUsingDemo(true);
-          setError("Aucun evenement publie n'a encore ete trouve. Apercu de demonstration affiche.");
+          setError(t('errors.noPublishedEvent'));
         } else {
           setEventData(null);
           setUsingDemo(false);
-          setError(loadError.message || "Impossible de charger l'evenement. Verifiez votre connexion.");
+          setError(loadError.message || t('errors.loadEventFailed'));
         }
       } finally {
         setIsLoadingEvent(false);
       }
     },
-    [accessCode, accessRole, eventSlug],
+    [accessCode, accessRole, eventSlug, i18n.language, t],
   );
 
   const loadAlbum = useCallback(
@@ -128,7 +131,7 @@ function ParticipantEventPage() {
 
       try {
         if (usingDemo) {
-          setAlbumData(demoAlbums[nextAlbumSlug] || demoAlbums[demoEvent.albums[0].slug]);
+          setAlbumData(getDemoAlbums(i18n.language)[nextAlbumSlug] || getDemoAlbums(i18n.language)[getDemoEvent(i18n.language).albums[0].slug]);
           return;
         }
 
@@ -144,8 +147,18 @@ function ParticipantEventPage() {
         setIsLoadingAlbum(false);
       }
     },
-    [accessCode, accessRole, eventSlug, usingDemo],
+    [accessCode, accessRole, eventSlug, i18n.language, usingDemo],
   );
+
+  useEffect(() => {
+    if (!usingDemo) return;
+
+    setEventData(getDemoEvent(i18n.language));
+
+    if (selectedAlbumSlug) {
+      setAlbumData(getDemoAlbums(i18n.language)[selectedAlbumSlug] || null);
+    }
+  }, [i18n.language, selectedAlbumSlug, usingDemo]);
 
   useEffect(() => {
     queueMicrotask(() => loadEvent());
@@ -223,7 +236,7 @@ function ParticipantEventPage() {
       setRequiresAccessCode(false);
       await loadEvent(pendingCode);
     } catch (accessError) {
-      setError(accessError.message || 'Code invalide');
+      setError(accessError.message || t('errors.invalidCode'));
     }
   }
 
@@ -263,18 +276,18 @@ function ParticipantEventPage() {
       const scannedUrl = new URL(value, window.location.origin);
       window.location.href = scannedUrl.toString();
     } catch {
-      setError('QR code non reconnu. Veuillez rescanner le QR de votre badge.');
+      setError(t('errors.qrUnrecognized'));
     }
-  }, []);
+  }, [t]);
 
   const handleManualBadgeCode = useCallback(async (badgeCode) => {
     try {
       const badge = await resolveBadgeCode(badgeCode);
       window.location.href = badge.publicUrl;
     } catch (badgeError) {
-      setError(badgeError.message || 'Badge non reconnu');
+      setError(badgeError.message || t('errors.badgeUnrecognized'));
     }
-  }, []);
+  }, [t]);
 
   const downloadItems = useCallback((items) => {
     if (items.length === 0) return;
@@ -300,7 +313,7 @@ function ParticipantEventPage() {
     if (!targetAlbum) {
       try {
         targetAlbum = usingDemo
-          ? demoAlbums[nextAlbumSlug]
+          ? getDemoAlbums(i18n.language)[nextAlbumSlug]
           : (await fetchPublicAlbum(eventSlug, nextAlbumSlug, accessCode, accessRole)).album;
       } catch (downloadError) {
         setError(downloadError.message);
@@ -309,7 +322,7 @@ function ParticipantEventPage() {
     }
 
     downloadItems(targetAlbum?.media || []);
-  }, [accessCode, accessRole, albumData, downloadItems, eventSlug, selectedAlbumSlug, usingDemo]);
+  }, [accessCode, accessRole, albumData, downloadItems, eventSlug, i18n.language, selectedAlbumSlug, usingDemo]);
 
   function toggleMediaSelection(mediaId) {
     setSelectedMediaIds((current) => (
@@ -347,7 +360,7 @@ function ParticipantEventPage() {
         <PppWatermarks />
         <div className="participant-shell__content grid place-items-center gap-3">
           <Loader2 className="animate-spin text-[var(--gold-text)]" size={28} />
-          <p className="font-bold">Chargement de l&apos;evenement</p>
+          <p className="font-bold">{t('loading.event')}</p>
         </div>
       </main>
     );
@@ -356,8 +369,8 @@ function ParticipantEventPage() {
   if (!eventSlug) {
     return (
       <QrScannerPanel
-        title="Votre mode d'accès"
-        description="Utilisez le code manuel ou scannez le QR code de votre badge."
+        title={t('access.defaultTitle')}
+        description={t('access.defaultDescription')}
         error={error}
         onManualCode={handleManualBadgeCode}
         onScan={handleQrScan}
@@ -379,8 +392,8 @@ function ParticipantEventPage() {
   if (invalidBadge) {
     return (
       <QrScannerPanel
-        title="Badge non reconnu"
-        description="Le QR code ne correspond pas a un badge actif. Veuillez scanner un badge actif."
+        title={t('access.invalidBadgeTitle')}
+        description={t('access.invalidBadgeDescription')}
         error={error}
         onManualCode={handleManualBadgeCode}
         onScan={handleQrScan}
@@ -411,8 +424,8 @@ function ParticipantEventPage() {
       )}
 
       {usingDemo || error ? (
-        <div className="mx-auto mb-5 w-[min(1180px,100%)] rounded-xl border border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">
-          <span>{error || 'Apercu de demonstration'}</span>
+        <div className="participant-modal__error mx-auto mb-5 w-[min(1180px,100%)] rounded-xl px-4 py-3 font-bold">
+          <DisplayMessage message={error || t('errors.demoPreview')} />
         </div>
       ) : null}
 
@@ -420,11 +433,12 @@ function ParticipantEventPage() {
         <GalleryView
           album={{
             id: 'my-photos',
-            title: 'Mes photos',
+            title: t('gallery.myPhotosTitle'),
             description: myPhotosResult?.matches?.length
-              ? `${myPhotosResult.matches.length} photo${myPhotosResult.matches.length > 1 ? 's' : ''} retrouvee${myPhotosResult.matches.length > 1 ? 's' : ''}.`
+              ? t('gallery.myPhotosFound', { count: myPhotosResult.matches.length })
               : '',
           }}
+          localizeContent={false}
           images={myPhotosMedia}
           documents={[]}
           accessCode={accessCode}

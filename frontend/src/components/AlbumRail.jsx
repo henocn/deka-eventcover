@@ -1,14 +1,18 @@
 import { Download, Image as ImageIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getMediaUrl, getThumbnailUrl } from '../api';
+import LocalizedText from './LocalizedText';
 import { albumCover } from '../utils/participantUtils';
 
 function AlbumRail({ albums, selectedAlbumSlug, accessCode, accessRole, onSelectAlbum, onDownloadAlbum }) {
+  const { t } = useTranslation();
+
   return (
-    <section className="mx-auto w-[min(1180px,100%)] py-6" aria-label="Albums">
+    <section className="mx-auto w-[min(1180px,100%)] py-6" aria-label={t('albums.label')}>
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
-          <p className="mb-3 text-xs font-black uppercase tracking-[0.08em] text-[var(--gold-text)]">Albums</p>
-          <h2 className="m-0 text-[clamp(1.65rem,3vw,2.45rem)] font-black tracking-normal">Choisissez une collection</h2>
+          <p className="mb-3 text-xs font-black uppercase tracking-[0.08em] text-[var(--gold-text)]">{t('albums.label')}</p>
+          <h2 className="m-0 text-[clamp(1.65rem,3vw,2.45rem)] font-black tracking-normal">{t('albums.chooseCollection')}</h2>
         </div>
       </div>
 
@@ -51,13 +55,19 @@ function AlbumRail({ albums, selectedAlbumSlug, accessCode, accessRole, onSelect
                 )}
                 <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0)_48%,rgba(0,0,0,0.42)),linear-gradient(135deg,rgba(163,194,68,0.14),transparent_46%)]" />
                 <span className="absolute bottom-3 left-3 z-[2] rounded-full border border-white/25 bg-black/70 px-3 py-1 text-xs font-black text-white backdrop-blur">
-                  {photoCount} photo{photoCount > 1 ? 's' : ''}
+                  {t('albums.photoCount', { count: photoCount })}
                 </span>
               </span>
               <span className="flex items-start justify-between gap-3 px-1 pb-3 pt-4">
                 <span>
-                  <span className="block text-[1.05rem] font-black leading-tight">{album.title}</span>
-                  <span className="mt-1.5 block text-sm leading-snug text-[var(--muted)]">{album.description || 'Collection photo'}</span>
+                  <span className="block text-[1.05rem] font-black leading-tight"><LocalizedText text={album.title} /></span>
+                  <span className="mt-1.5 block text-sm leading-snug text-[var(--muted)]">
+                    {album.description ? (
+                      <LocalizedText text={album.description} />
+                    ) : (
+                      t('albums.defaultDescription')
+                    )}
+                  </span>
                 </span>
               </span>
               <span className="block px-1 pb-1">
@@ -70,7 +80,7 @@ function AlbumRail({ albums, selectedAlbumSlug, accessCode, accessRole, onSelect
                   }}
                 >
                   <Download size={16} />
-                  <span>Telecharger</span>
+                  <span>{t('albums.download')}</span>
                 </button>
               </span>
             </article>

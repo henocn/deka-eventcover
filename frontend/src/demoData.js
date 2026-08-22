@@ -69,6 +69,30 @@ export const demoEvent = {
   ],
 };
 
+const demoEventEn = {
+  ...demoEvent,
+  title: 'Institutional conference',
+  description: 'Official selection of photos and documents shared with participants.',
+  location: 'Main auditorium',
+  albums: demoEvent.albums.map((album) => ({
+    ...album,
+    title: album.slug === 'temps-forts'
+      ? 'Highlights'
+      : album.slug === 'coulisses-presse'
+        ? 'Press backstage'
+        : 'Documents',
+    description: album.slug === 'temps-forts'
+      ? 'Key moments from the ceremony and official speeches.'
+      : album.slug === 'coulisses-presse'
+        ? 'Media meetings, preparation and partner areas.'
+        : 'Press releases, official program and presentation pack.',
+  })),
+};
+
+export function getDemoEvent(language) {
+  return language?.startsWith('en') ? demoEventEn : demoEvent;
+}
+
 export const demoAlbums = {
   'temps-forts': {
     id: 'album-1',
@@ -150,3 +174,43 @@ export const demoAlbums = {
     ],
   },
 };
+
+const demoAlbumsEn = {
+  'temps-forts': {
+    ...demoAlbums['temps-forts'],
+    title: 'Highlights',
+    description: 'Key moments from the ceremony and official speeches.',
+    media: demoAlbums['temps-forts'].media.map((item) => ({
+      ...item,
+      originalName: item.originalName === 'Ouverture officielle'
+        ? 'Official opening'
+        : item.originalName === 'Panel institutionnel'
+          ? 'Institutional panel'
+          : item.originalName === 'Vue de la salle'
+            ? 'Room view'
+            : item.originalName,
+    })),
+  },
+  'coulisses-presse': {
+    ...demoAlbums['coulisses-presse'],
+    title: 'Press backstage',
+    description: 'Media meetings, preparation and partner areas.',
+    media: demoAlbums['coulisses-presse'].media.map((item) => ({
+      ...item,
+      originalName: item.originalName === 'Briefing media'
+        ? 'Media briefing'
+        : item.originalName === 'Interview officielle'
+          ? 'Official interview'
+          : item.originalName,
+    })),
+  },
+  documents: {
+    ...demoAlbums.documents,
+    title: 'Documents',
+    description: 'Press releases, official program and presentation pack.',
+  },
+};
+
+export function getDemoAlbums(language) {
+  return language?.startsWith('en') ? demoAlbumsEn : demoAlbums;
+}

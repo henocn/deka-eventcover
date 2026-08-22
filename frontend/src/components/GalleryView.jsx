@@ -1,5 +1,7 @@
 import { ArrowLeft, Check, Download, FileText, Image as ImageIcon, Loader2, Square } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getMediaUrl, getThumbnailUrl } from '../api';
+import LocalizedText from './LocalizedText';
 import { isDemoMedia } from '../utils/participantUtils';
 
 function GalleryView({
@@ -10,12 +12,15 @@ function GalleryView({
   accessRole,
   isLoading,
   selectedMediaIds,
+  localizeContent = true,
   onBackToAlbums,
   onOpenImage,
   onToggleMediaSelection,
   onDownloadAlbum,
   onDownloadSelected,
 }) {
+  const { t } = useTranslation();
+
   if (!album && !isLoading) {
     return null;
   }
@@ -27,16 +32,20 @@ function GalleryView({
           type="button"
           className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--line-strong)] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] text-[var(--text)] backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--accent)]"
           onClick={onBackToAlbums}
-          title="Retour aux albums"
+          title={t('gallery.backToAlbums')}
         >
           <ArrowLeft size={18} />
         </button>
         <div className="min-w-0">
           <h2 className="m-0 text-[clamp(1.65rem,3vw,2.45rem)] font-black leading-tight tracking-normal">
-            {album?.title || 'Selectionnez un album'}
+            {album?.title ? (
+              localizeContent ? <LocalizedText text={album.title} /> : album.title
+            ) : t('gallery.selectAlbum')}
           </h2>
           {album?.description ? (
-            <p className="mb-0 mt-4 max-w-3xl leading-relaxed text-[var(--muted)]">{album.description}</p>
+            <p className="mb-0 mt-4 max-w-3xl leading-relaxed text-[var(--muted)]">
+              {localizeContent ? <LocalizedText text={album.description} /> : album.description}
+            </p>
           ) : null}
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2.5 max-[680px]:col-span-full max-[680px]:mt-1 max-[680px]:justify-start">
@@ -47,7 +56,7 @@ function GalleryView({
             disabled={!album}
           >
             <Download size={16} />
-            <span>Album</span>
+            <span>{t('common.album')}</span>
           </button>
           <button
             type="button"
@@ -56,7 +65,7 @@ function GalleryView({
             disabled={!selectedMediaIds.length}
           >
             <Download size={16} />
-            <span>{selectedMediaIds.length || 0} selection</span>
+            <span>{t('gallery.selection', { count: selectedMediaIds.length || 0 })}</span>
           </button>
           {isLoading ? <Loader2 className="animate-spin text-[var(--muted)]" size={20} /> : null}
         </div>
@@ -94,7 +103,7 @@ function GalleryView({
                     event.stopPropagation();
                     onToggleMediaSelection(item.id);
                   }}
-                  title={isSelected ? 'Retirer de la selection' : 'Cocher'}
+                  title={isSelected ? t('gallery.uncheck') : t('gallery.check')}
                 >
                   {isSelected ? <Check size={16} /> : <Square size={16} />}
                 </button>
@@ -103,7 +112,7 @@ function GalleryView({
                   href={downloadUrl}
                   download={item.originalName}
                   onClick={(event) => event.stopPropagation()}
-                  title="Telecharger"
+                  title={t('gallery.downloadPhoto')}
                 >
                   <Download size={16} />
                 </a>
@@ -115,7 +124,7 @@ function GalleryView({
       ) : (
         <div className="rounded-2xl border border-dashed border-[var(--line-strong)] bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] p-9 text-[var(--muted)]">
           <ImageIcon size={28} />
-          <p>Aucune photo disponible pour le moment.</p>
+          <p>{t('gallery.noPhotos')}</p>
         </div>
       )}
 
@@ -123,7 +132,7 @@ function GalleryView({
         <div className="mt-7 rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_82%,transparent)] p-5">
           <div className="mb-3 flex items-center gap-2 font-black">
             <FileText size={18} />
-            Documents
+            {t('common.documents')}
           </div>
           {documents.map((item) => (
             <a

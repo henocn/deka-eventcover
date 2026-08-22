@@ -1,0 +1,183 @@
+{
+  "language": {
+    "fr": "FR",
+    "en": "EN",
+    "switch": "Change language"
+  },
+  "common": {
+    "close": "Close",
+    "continue": "Continue",
+    "code": "Code",
+    "scan": "Scan",
+    "download": "Download",
+    "album": "Album",
+    "import": "Import",
+    "documents": "Documents"
+  },
+  "meta": {
+    "title": "DKCover - Official event gallery",
+    "description": "DKCover lets participants access official event albums via QR code or badge code.",
+    "ogDescription": "Browse, select and download official event photos with secure participant access.",
+    "twitterDescription": "Access official event albums via QR code or badge code."
+  },
+  "apiErrors": {
+    "badgeNotRecognized": "Badge not recognized",
+    "invalidAccessCode": "Invalid access code",
+    "accessCodeRequired": "Access code required",
+    "photoRequired": "Photo required.",
+    "eventNotFound": "Event not found",
+    "albumNotFound": "Album not found",
+    "mediaNotFound": "Media not found",
+    "tooManyRequests": "Too many requests. Try again in a minute.",
+    "tooManyFaceSearches": "Too many face searches. Try again in a minute.",
+    "tooManyDownloads": "Too many downloads. Try again in a minute.",
+    "invalidInformation": "Some information is invalid.",
+    "noFaceDetected": "No face detected in the photo.",
+    "multipleFaces": "Multiple faces detected ({{count}}). Send a photo with a single face.",
+    "faceServiceTimeout": "The facial AI service took too long to respond.",
+    "faceServiceUnavailable": "Facial AI service unavailable.",
+    "genericError": "An error occurred",
+    "resourceNotFound": "Resource not found",
+    "badgeNotFound": "Badge not found"
+  },
+  "theme": {
+    "toggle": "Toggle theme"
+  },
+  "topBar": {
+    "myPhotos": "My photos"
+  },
+  "hero": {
+    "galleryLiveBefore": "Photo gallery ",
+    "live": "live",
+    "howItWorks": "How it works",
+    "stepQr": "Scan your badge QR code or enter your access code.",
+    "stepAlbums": "Browse albums updated in real time during the event.",
+    "stepSelfie": "Use \"My photos\" with a selfie to find your shots.",
+    "pppLogoAlt": "PPP Togo logo"
+  },
+  "albums": {
+    "label": "Albums",
+    "chooseCollection": "Choose a collection",
+    "defaultDescription": "Photo collection",
+    "photoCount_one": "{{count}} photo",
+    "photoCount_other": "{{count}} photos",
+    "download": "Download"
+  },
+  "gallery": {
+    "selectAlbum": "Select an album",
+    "backToAlbums": "Back to albums",
+    "selection": "{{count}} selected",
+    "uncheck": "Remove from selection",
+    "check": "Select",
+    "downloadPhoto": "Download",
+    "noPhotos": "No photos available yet.",
+    "myPhotosTitle": "My photos",
+    "myPhotosFound_one": "{{count}} photo found.",
+    "myPhotosFound_other": "{{count}} photos found."
+  },
+  "lightbox": {
+    "close": "Close",
+    "previous": "Previous",
+    "next": "Next",
+    "download": "Download"
+  },
+  "access": {
+    "protectedEvent": "Protected event",
+    "enterAccessCode": "Enter the access code",
+    "accessCodePlaceholder": "Access code",
+    "defaultTitle": "Your access method",
+    "defaultDescription": "Use the manual code or scan your badge QR code.",
+    "invalidBadgeTitle": "Badge not recognized",
+    "invalidBadgeDescription": "This QR code does not match an active badge. Please scan an active badge.",
+    "participantAccess": "Participant access",
+    "badgeCode": "Badge code",
+    "scanQr": "Scan QR",
+    "enterCode": "Enter code",
+    "scanBadge": "Scan badge",
+    "badgeCodeHint": "Enter the 6 characters shown on your badge.",
+    "badgeCodePlaceholder": "A7K9P2",
+    "cameraPrivacy": "The camera is used only to scan the QR code.",
+    "scannerUnsupported": "This browser does not support built-in QR scanning yet. Open the QR link with your phone camera.",
+    "scannerFailed": "Scan unavailable for now. Reposition the QR code or scan again with your phone camera.",
+    "cameraDenied": "Camera access denied. Unable to scan the QR code — please use the manual code."
+  },
+  "myPhotos": {
+    "personalSearch": "Personal search",
+    "title": "My photos",
+    "description": "Take or import a clear selfie. It is used only for matching and is deleted immediately afterwards.",
+    "analyzing": "Analyzing selfie...",
+    "preparing": "Securely preparing your photo",
+    "takeSelfie": "Take a selfie",
+    "noMatch": "No matching photos found.",
+    "notIndexed": "Photos for this access may not be indexed yet."
+  },
+  "footer": {
+    "tagline": "DEKA Editions · Media coverage",
+    "privacy": "Privacy policy",
+    "copyright": "© 2026 PPP Togo. Media coverage and sharing by DEKA Editions — communication provider."
+  },
+  "loading": {
+    "event": "Loading event"
+  },
+  "errors": {
+    "demoPreview": "Demo preview",
+    "noPublishedEvent": "No published event found yet. Showing demo preview.",
+    "loadEventFailed": "Unable to load the event. Check your connection.",
+    "invalidCode": "Invalid code",
+    "qrUnrecognized": "Unrecognized QR code. Please scan your badge QR again.",
+    "badgeUnrecognized": "Badge not recognized"
+  },
+  "privacy": {
+    "eventLabel": "PPP Togo 2026",
+    "title": "Privacy policy",
+    "updated": "Last updated: September 2026",
+    "sections": {
+      "controller": {
+        "title": "1. Data controller",
+        "body": "The DKCover platform is provided by DEKA Editions, responsible for media coverage and communication for the \"Public-Private Partnerships (PPP) Togo 2026\" event. DEKA Editions is not the event organizer. The official PPP Togo 2026 organizer remains the data controller, with DEKA Editions operating the platform technically."
+      },
+      "data": {
+        "title": "2. Data processed",
+        "access": "Participant access:",
+        "accessBody": "badge code or QR, optional event access code, stored locally in your browser (sessionStorage) for the duration of your visit.",
+        "media": "Media viewing:",
+        "mediaBody": "anonymized statistics (view/download actions, hashed IP address, browser type) to measure gallery usage.",
+        "search": "\"My photos\" search:",
+        "searchBody": "selfie temporarily sent for facial matching. It is neither stored nor kept after the search. Only photos already published in albums you can access are analyzed.",
+        "faces": "Facial data from album photos:",
+        "facesBody": "digital signatures (embeddings) are generated from faces detected in official photos, solely to enable selfie search."
+      },
+      "purposes": {
+        "title": "3. Purposes",
+        "body": "Data is processed exclusively to: grant access to authorized albums, enable media downloads, help you find your photos via facial recognition, and produce aggregated audience statistics for the organizer."
+      },
+      "legal": {
+        "title": "4. Legal basis",
+        "body": "Gallery access is based on your participation in the event and, where applicable, implicit consent when using \"My photos\". Anonymized statistics rely on the organizer's legitimate interest in measuring service usage."
+      },
+      "retention": {
+        "title": "5. Retention period",
+        "selfie": "Selfie: deleted immediately after processing (not stored).",
+        "session": "Browser access code: 24 hours maximum (local session).",
+        "embeddings": "Photos and facial embeddings: kept for the duration of the event and deleted within a reasonable time after it ends, unless legally required otherwise.",
+        "stats": "Anonymized statistics: kept for reporting purposes, without direct identification."
+      },
+      "recipients": {
+        "title": "6. Recipients",
+        "body": "Data is accessible to authorized technical teams (hosting, maintenance) and event organizers. No sale or transfer to commercial third parties. Hosting is provided on secure servers."
+      },
+      "rights": {
+        "title": "7. Your rights",
+        "body": "Under applicable data protection principles, you may request access, rectification or deletion of your data, and object to certain processing where permitted by law. To exercise your rights, contact the PPP Togo 2026 organizer through official event communication channels."
+      },
+      "security": {
+        "title": "8. Security",
+        "body": "Technical and organizational measures are in place: restricted album access, encrypted communications (HTTPS), request rate limiting, hashed IP addresses in statistics, and isolated facial processing on controlled infrastructure."
+      },
+      "camera": {
+        "title": "9. Camera and QR scan",
+        "body": "Camera access is used only locally in your browser to scan a badge QR code. No video stream is recorded or sent to the server."
+      }
+    }
+  }
+}

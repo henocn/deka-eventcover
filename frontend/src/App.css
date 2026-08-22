@@ -300,6 +300,15 @@
     font-size: clamp(1.1rem, 4.8vw, 1.35rem);
     letter-spacing: 0.02em;
   }
+
+  .access-page-title {
+    font-size: clamp(1.1rem, 4.8vw, 1.35rem);
+  }
+}
+
+.access-page-title {
+  color: var(--text);
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
