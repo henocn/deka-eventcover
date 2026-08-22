@@ -1,6 +1,7 @@
 import { Loader2, Search, Upload, X } from 'lucide-react';
 import { useState } from 'react';
 import { searchMyPhotos } from '../api';
+import { compressSelfie } from '../utils/compressSelfie';
 
 function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose, onSearchComplete }) {
   const [isSearching, setIsSearching] = useState(false);
@@ -15,7 +16,8 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose, onSearchCom
     setDiagnostics(null);
 
     try {
-      const result = await searchMyPhotos(eventSlug, file, accessCode, accessRole);
+      const preparedSelfie = await compressSelfie(file);
+      const result = await searchMyPhotos(eventSlug, preparedSelfie, accessCode, accessRole);
 
       if ((result.matches || []).length > 0) {
         onSearchComplete(result);
@@ -40,7 +42,8 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose, onSearchCom
           <div className="grid min-h-[280px] place-items-center text-center">
             <div>
               <Loader2 className="mx-auto mb-4 animate-spin text-[var(--text)]" size={34} />
-              <p className="text-lg font-black text-[var(--text)]">Recherche en cours...</p>
+              <p className="text-lg font-black text-[var(--text)]">Analyse du selfie...</p>
+              <p className="mt-2 text-sm font-bold text-[var(--muted)]">Preparation securisee de la photo</p>
             </div>
           </div>
         ) : (
@@ -68,7 +71,12 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose, onSearchCom
               accept="image/*"
               capture="user"
               disabled={isSearching}
-              onChange={(event) => runSearch(event.target.files?.[0])}
+              onChange={async (event) => {
+                const input = event.target;
+                const selectedFile = input.files?.[0];
+                input.value = '';
+                if (selectedFile) await runSearch(selectedFile);
+              }}
             />
           </label>
           <label className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-[var(--line-strong)] px-4 font-black text-[var(--text)] transition hover:border-[var(--accent)]">
@@ -79,7 +87,12 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose, onSearchCom
               type="file"
               accept="image/*"
               disabled={isSearching}
-              onChange={(event) => runSearch(event.target.files?.[0])}
+              onChange={async (event) => {
+                const input = event.target;
+                const selectedFile = input.files?.[0];
+                input.value = '';
+                if (selectedFile) await runSearch(selectedFile);
+              }}
             />
           </label>
         </div>
