@@ -27,6 +27,14 @@ async function sendAdminMediaFile(req, res) {
   res.sendFile(result.absolutePath);
 }
 
+async function sendAdminMediaThumb(req, res) {
+  const result = await mediaService.getAdminMediaThumbResponse(req.validated.params.mediaId);
+
+  res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  res.type('image/webp');
+  res.sendFile(result.absolutePath);
+}
+
 async function deleteAdminMedia(req, res) {
   const result = await mediaService.deleteAdminMedia(req.validated.params.mediaId);
   const io = req.app.get('io');
@@ -46,4 +54,5 @@ module.exports = {
   deleteAdminMedia,
   uploadAlbumMedia,
   sendAdminMediaFile,
+  sendAdminMediaThumb,
 };

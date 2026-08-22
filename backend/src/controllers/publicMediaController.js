@@ -14,6 +14,18 @@ async function sendMediaFile(req, res) {
   res.sendFile(result.absolutePath);
 }
 
+async function sendMediaThumb(req, res) {
+  const result = await mediaService.getMediaThumbResponse(
+    req.validated.params.mediaId,
+    req.validated.query.accessCode,
+    req.validated.query.role,
+  );
+
+  res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  res.type('image/webp');
+  res.sendFile(result.absolutePath);
+}
+
 async function downloadMediaFile(req, res) {
   const result = await mediaService.getMediaFileResponse(
     req.validated.params.mediaId,
@@ -28,5 +40,6 @@ async function downloadMediaFile(req, res) {
 
 module.exports = {
   sendMediaFile,
+  sendMediaThumb,
   downloadMediaFile,
 };

@@ -37,6 +37,11 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(500),
         allowNull: false,
       },
+      thumbnailPath: {
+        type: DataTypes.STRING(500),
+        allowNull: true,
+        field: 'thumbnail_path',
+      },
       publicUrl: {
         type: DataTypes.STRING(500),
         allowNull: false,

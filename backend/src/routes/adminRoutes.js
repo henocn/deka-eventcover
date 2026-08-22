@@ -122,6 +122,11 @@ router.post(
   asyncHandler(adminMediaController.uploadAlbumMedia)
 );
 router.get(
+  '/media/:mediaId/thumb',
+  validate(mediaFileSchema),
+  asyncHandler(adminMediaController.sendAdminMediaThumb)
+);
+router.get(
   '/media/:mediaId/file',
   validate(mediaFileSchema),
   asyncHandler(adminMediaController.sendAdminMediaFile)

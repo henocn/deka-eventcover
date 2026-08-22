@@ -43,6 +43,12 @@ router.get(
   asyncHandler(publicEventController.getAlbum)
 );
 router.get(
+  '/media/:mediaId/thumb',
+  mediaFileLimiter,
+  validate(mediaFileSchema),
+  asyncHandler(publicMediaController.sendMediaThumb)
+);
+router.get(
   '/media/:mediaId/file',
   mediaFileLimiter,
   validate(mediaFileSchema),

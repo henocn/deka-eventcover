@@ -74,7 +74,20 @@ export function getMediaUrl(media, accessCode, role, mode = 'file') {
     return '';
   }
 
-  return withAccess(`/api/public/media/${media.id}/${mode}`, accessCode, role);
+  const endpoint = mode === 'download' ? 'download' : mode === 'thumb' ? 'thumb' : 'file';
+  return withAccess(`/api/public/media/${media.id}/${endpoint}`, accessCode, role);
+}
+
+export function getThumbnailUrl(media, accessCode, role) {
+  if (!media?.id) {
+    return '';
+  }
+
+  if (media.thumbnailUrl) {
+    return withAccess(media.thumbnailUrl, accessCode, role);
+  }
+
+  return getMediaUrl(media, accessCode, role, 'thumb');
 }
 
 export { API_URL };

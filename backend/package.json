@@ -12,7 +12,8 @@
     "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",
     "db:seed": "sequelize-cli db:seed:all",
     "db:seed:undo": "sequelize-cli db:seed:undo:all",
-    "faces:reindex": "node scripts/reindexFaces.js"
+    "faces:reindex": "node scripts/reindexFaces.js",
+    "thumbnails:generate": "node scripts/generateThumbnails.js"
   },
   "keywords": [],
   "author": "",

@@ -8,6 +8,11 @@ const { getMediaType } = require('../middlewares/upload');
 const { extensionFromName, sanitizeBaseName } = require('../utils/fileNames');
 const eventService = require('./eventService');
 const faceQueue = require('./faceQueue');
+const {
+  buildThumbnailRelativePath,
+  deleteThumbnailFile,
+  generateImageThumbnail,
+} = require('./thumbnailService');
 
 function safeJoinUploadPath(relativePath) {
   const root = path.resolve(env.mediaRoot);
@@ -57,6 +62,7 @@ function serializeMedia(media) {
     mimeType: media.mimeType,
     originalName: media.originalName,
     publicUrl: media.publicUrl,
+    thumbnailUrl: media.thumbnailPath ? `/api/public/media/${media.id}/thumb` : null,
     downloadUrl: `/api/public/media/${media.id}/download`,
     sizeBytes: Number(media.sizeBytes),
     width: media.width,
@@ -93,15 +99,32 @@ async function uploadAlbumMedia(albumId, files, user) {
 
     await fs.writeFile(absolutePath, file.buffer);
 
+    let thumbnailPath = null;
+    let width = null;
+    let height = null;
+    const mediaType = getMediaType(file.mimetype);
+
+    if (mediaType === 'image') {
+      const thumbnailRelativePath = buildThumbnailRelativePath(relativePath);
+      const thumbnailAbsolutePath = safeJoinUploadPath(thumbnailRelativePath);
+      const dimensions = await generateImageThumbnail(absolutePath, thumbnailAbsolutePath);
+      thumbnailPath = thumbnailRelativePath;
+      width = dimensions.width;
+      height = dimensions.height;
+    }
+
     const media = await Media.create({
       eventId: event.id,
       albumId: album.id,
-      type: getMediaType(file.mimetype),
+      type: mediaType,
       mimeType: file.mimetype,
       originalName: file.originalname,
       storagePath: relativePath,
+      thumbnailPath,
       publicUrl: '',
       sizeBytes: file.size,
+      width,
+      height,
       sortOrder: nextSortOrder,
       uploadedBy: user ? user.id : null,
     });
@@ -178,6 +201,36 @@ async function recordMediaStat(media, action, req) {
   });
 }
 
+async function getMediaThumbResponse(mediaId, accessCode, roleToken) {
+  const media = await getPublicMedia(mediaId, accessCode, roleToken);
+
+  if (!media.thumbnailPath) {
+    throw httpError(404, 'Thumbnail not found');
+  }
+
+  return {
+    media,
+    absolutePath: safeJoinUploadPath(media.thumbnailPath),
+  };
+}
+
+async function getAdminMediaThumbResponse(mediaId) {
+  const media = await Media.findByPk(mediaId);
+
+  if (!media) {
+    throw httpError(404, 'Media not found');
+  }
+
+  if (!media.thumbnailPath) {
+    throw httpError(404, 'Thumbnail not found');
+  }
+
+  return {
+    media,
+    absolutePath: safeJoinUploadPath(media.thumbnailPath),
+  };
+}
+
 async function getMediaFileResponse(mediaId, accessCode, roleToken, req, action) {
   const media = await getPublicMedia(mediaId, accessCode, roleToken);
   await recordMediaStat(media, action, req);
@@ -224,6 +277,9 @@ async function deleteAdminMedia(mediaId) {
   }
 
   const absolutePath = safeJoinUploadPath(media.storagePath);
+  const thumbnailAbsolutePath = media.thumbnailPath
+    ? safeJoinUploadPath(media.thumbnailPath)
+    : null;
   const event = media.event;
   const album = media.album;
 
@@ -235,6 +291,10 @@ async function deleteAdminMedia(mediaId) {
     }
   });
 
+  if (thumbnailAbsolutePath) {
+    await deleteThumbnailFile(thumbnailAbsolutePath);
+  }
+
   return {
     event,
     album,
@@ -245,6 +305,8 @@ async function deleteAdminMedia(mediaId) {
 module.exports = {
   uploadAlbumMedia,
   getMediaFileResponse,
+  getMediaThumbResponse,
   getAdminMediaFileResponse,
+  getAdminMediaThumbResponse,
   deleteAdminMedia,
 };

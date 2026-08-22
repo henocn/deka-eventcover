@@ -2,7 +2,7 @@ import { Image } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { API_URL, getToken } from '../../api';
 
-function AdminMediaImage({ media, alt = '', className = '', fallbackClassName = '' }) {
+function AdminMediaImage({ media, alt = '', className = '', fallbackClassName = '', variant = 'thumb' }) {
   const [src, setSrc] = useState('');
 
   useEffect(() => {
@@ -12,18 +12,28 @@ function AdminMediaImage({ media, alt = '', className = '', fallbackClassName = 
 
     let objectUrl = '';
     let cancelled = false;
+    const endpoint = variant === 'full' ? 'file' : 'thumb';
 
     async function loadPreview() {
-      try {
-        const response = await fetch(new URL(`/api/admin/media/${media.id}/file`, API_URL), {
+      async function fetchVariant(variantName) {
+        const response = await fetch(new URL(`/api/admin/media/${media.id}/${variantName}`, API_URL), {
           headers: { Authorization: `Bearer ${getToken()}` },
         });
-        if (!response.ok) return;
+        if (!response.ok) return null;
         const blob = await response.blob();
-        objectUrl = URL.createObjectURL(blob);
-        if (!cancelled) setSrc(objectUrl);
+        return URL.createObjectURL(blob);
+      }
+
+      try {
+        objectUrl = await fetchVariant(endpoint);
+
+        if (!objectUrl && endpoint === 'thumb') {
+          objectUrl = await fetchVariant('file');
+        }
+
+        if (!cancelled) setSrc(objectUrl || '');
       } catch {
-        setSrc('');
+        if (!cancelled) setSrc('');
       }
     }
 
@@ -33,7 +43,7 @@ function AdminMediaImage({ media, alt = '', className = '', fallbackClassName = 
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [media?.id]);
+  }, [media?.id, variant]);
 
   if (!src) {
     return (
@@ -43,7 +53,7 @@ function AdminMediaImage({ media, alt = '', className = '', fallbackClassName = 
     );
   }
 
-  return <img className={className} src={src} alt={alt || media.originalName || ''} />;
+  return <img className={className} src={src} alt={alt || media.originalName || ''} loading="lazy" />;
 }
 
 export default AdminMediaImage;

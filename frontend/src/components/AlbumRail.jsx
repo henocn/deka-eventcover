@@ -1,5 +1,5 @@
 import { Download, Image as ImageIcon } from 'lucide-react';
-import { getMediaUrl } from '../api';
+import { getMediaUrl, getThumbnailUrl } from '../api';
 import { albumCover } from '../utils/participantUtils';
 
 function AlbumRail({ albums, selectedAlbumSlug, accessCode, accessRole, onSelectAlbum, onDownloadAlbum }) {
@@ -15,7 +15,7 @@ function AlbumRail({ albums, selectedAlbumSlug, accessCode, accessRole, onSelect
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,255px),1fr))] gap-4 pb-6">
         {albums.map((album, index) => {
           const cover = album.coverMedia
-            ? getMediaUrl(album.coverMedia, accessCode, accessRole)
+            ? getThumbnailUrl(album.coverMedia, accessCode, accessRole)
             : albumCover(album);
           const photoCount = Number.isFinite(Number(album.photoCount))
             ? Number(album.photoCount)
@@ -34,7 +34,21 @@ function AlbumRail({ albums, selectedAlbumSlug, accessCode, accessRole, onSelect
               style={{ '--delay': `${index * 55}ms` }}
             >
               <span className="relative block aspect-[1.08/1] w-full overflow-hidden rounded-[14px] bg-[linear-gradient(135deg,rgba(153,255,0,0.23),transparent_45%),linear-gradient(155deg,var(--sage),color-mix(in_srgb,var(--gold)_16%,var(--surface)))] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--text)_8%,transparent)]">
-                {cover ? <img className="relative z-[1] h-full w-full object-cover transition duration-300 hover:scale-[1.045]" src={cover} alt="" loading="lazy" /> : <ImageIcon className="absolute bottom-7 left-7 z-[2] h-14 w-14" />}
+                {cover ? (
+                  <img
+                    className="relative z-[1] h-full w-full object-cover transition duration-300 hover:scale-[1.045]"
+                    src={cover}
+                    alt=""
+                    loading="lazy"
+                    onError={(event) => {
+                      if (!album.coverMedia) return;
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = getMediaUrl(album.coverMedia, accessCode, accessRole);
+                    }}
+                  />
+                ) : (
+                  <ImageIcon className="absolute bottom-7 left-7 z-[2] h-14 w-14" />
+                )}
                 <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0)_48%,rgba(0,0,0,0.42)),linear-gradient(135deg,rgba(153,255,0,0.12),transparent_46%)]" />
                 <span className="absolute bottom-3 left-3 z-[2] rounded-full border border-white/25 bg-black/70 px-3 py-1 text-xs font-black text-white backdrop-blur">
                   {photoCount} photo{photoCount > 1 ? 's' : ''}

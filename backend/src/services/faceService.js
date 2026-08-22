@@ -194,6 +194,7 @@ function serializeMatch(media, score) {
       mimeType: media.mimeType,
       originalName: media.originalName,
       publicUrl: media.publicUrl,
+      thumbnailUrl: media.thumbnailPath ? `/api/public/media/${media.id}/thumb` : null,
       downloadUrl: `/api/public/media/${media.id}/download`,
       width: media.width,
       height: media.height,

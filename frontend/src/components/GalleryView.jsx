@@ -1,5 +1,5 @@
 import { ArrowLeft, Check, Download, FileText, Image as ImageIcon, Loader2, Square } from 'lucide-react';
-import { getMediaUrl } from '../api';
+import { getMediaUrl, getThumbnailUrl } from '../api';
 import { isDemoMedia } from '../utils/participantUtils';
 
 function GalleryView({
@@ -75,9 +75,14 @@ function GalleryView({
             >
               <img
                 className="h-full w-full object-cover transition duration-300 hover:scale-[1.045]"
-                src={isDemoMedia(item) ? item.publicUrl : getMediaUrl(item, accessCode, accessRole)}
+                src={isDemoMedia(item) ? item.publicUrl : getThumbnailUrl(item, accessCode, accessRole)}
                 alt={item.originalName}
                 loading="lazy"
+                onError={(event) => {
+                  if (isDemoMedia(item)) return;
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = getMediaUrl(item, accessCode, accessRole);
+                }}
               />
               <div className="pointer-events-none absolute inset-x-2.5 top-2.5 z-[3] flex justify-between gap-2">
                 <button

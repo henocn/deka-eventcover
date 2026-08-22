@@ -347,6 +347,7 @@ function AlbumDetailsPage() {
               ) : null}
               <AdminMediaImage
                 media={previewMedia}
+                variant="full"
                 className="block max-h-[calc(100svh-150px)] max-w-[calc(100vw-80px)] rounded object-contain"
                 fallbackClassName="h-[min(60svh,520px)] w-full max-w-xl rounded"
               />
