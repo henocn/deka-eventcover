@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, Keyboard, ScanLine, X } from 'lucide-react';
+import BrandLogo from './BrandLogo';
 import PppWatermarks from './PppWatermarks';
 import SiteFooter from './SiteFooter';
 
@@ -69,61 +70,60 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
     };
   }, [modal, onScan]);
 
+  // Ferme le modal code ou scan et remet a zero les erreurs camera.
   function closeModal() {
     setModal(null);
     setScannerError('');
   }
 
+  // Valide le code badge saisi manuellement.
   function submitBadgeCode(event) {
     event.preventDefault();
     if (badgeCode.length === 6 && onManualCode) onManualCode(badgeCode);
   }
 
   return (
-    <main className="participant-shell participant-shell--landing grid min-h-svh place-items-center p-5 pb-0" data-theme="dark">
+    <main className="participant-shell participant-shell--landing min-h-svh px-5 py-5 pb-0 text-[var(--text)] max-[680px]:px-3" data-theme="dark">
       <PppWatermarks />
-      <div className="participant-shell__content grid w-full place-items-center">
-      <section className="landing-card animate-fade-up w-[min(620px,100%)] rounded-2xl border bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] p-6 shadow-[var(--shadow)]">
-        <div className="mx-auto mb-5 grid h-24 w-24 place-items-center">
-          <img className="h-full w-full object-contain" src="/ppp-watermark.png" alt="Logo PPP" />
+      <div className="participant-shell__content mx-auto flex min-h-[calc(100svh-2.5rem)] w-[min(620px,100%)] flex-col">
+        <BrandLogo className="mb-10" />
+
+        <div className="animate-fade-up flex flex-1 flex-col justify-center">
+          <div className="max-w-[520px]">
+            <p className="mb-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--gold-text)]">Acces participant</p>
+            <h1 className="m-0 text-[clamp(2rem,8vw,3.2rem)] font-black leading-none">{title}</h1>
+            <p className="mt-4 leading-relaxed text-[var(--muted)]">{description}</p>
+          </div>
+
+          <div className="mt-8 grid grid-cols-2 gap-3 max-[420px]:grid-cols-1">
+            <button
+              type="button"
+              className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-[var(--lime)] bg-[color-mix(in_srgb,var(--modal-bg)_88%,transparent)] px-4 font-black text-[var(--text)] transition hover:-translate-y-0.5 hover:border-[var(--gold)]"
+              onClick={() => setModal('code')}
+            >
+              <Keyboard size={20} />
+              Code
+            </button>
+            <button
+              type="button"
+              className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-[var(--gold)] bg-[var(--accent)] px-4 font-black text-[var(--accent-ink)] transition hover:-translate-y-0.5 hover:brightness-105"
+              onClick={() => setModal('scan')}
+            >
+              <Camera size={20} />
+              Scan
+            </button>
+          </div>
+
+          {error ? <p className="participant-modal__error mt-5 rounded-xl px-4 py-3 font-bold">{error}</p> : null}
         </div>
 
-        <div className="mx-auto max-w-[520px] text-center">
-          <p className="mb-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--gold-text)]">Acces participant</p>
-          <h1 className="m-0 text-[clamp(2rem,5vw,3.2rem)] font-black leading-none">{title}</h1>
-          <p className="mt-4 leading-relaxed text-[var(--muted)]">{description}</p>
-        </div>
-
-        <div className="mt-7 grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-[var(--lime)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 font-black text-[var(--text)] backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--gold)]"
-            onClick={() => setModal('code')}
-          >
-            <Keyboard size={20} />
-            Code
-          </button>
-          <button
-            type="button"
-            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border-2 border-[var(--gold)] bg-[color-mix(in_srgb,var(--accent)_90%,transparent)] px-4 font-black text-[var(--accent-ink)] transition hover:-translate-y-0.5 hover:brightness-105"
-            onClick={() => setModal('scan')}
-          >
-            <Camera size={20} />
-            Scan
-          </button>
-        </div>
-
-        {error ? <p className="mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">{error}</p> : null}
-      </section>
-
-      <SiteFooter />
+        <SiteFooter />
       </div>
 
       {modal ? (
-        <div className="fixed inset-0 z-40 grid place-items-center bg-black/45 p-4" onMouseDown={closeModal}>
+        <div className="participant-modal-overlay fixed inset-0 z-40 grid place-items-center p-4" onMouseDown={closeModal}>
           <section
-            className="animate-fade-up w-[min(520px,100%)] rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_3
-            0px_100px_rgba(0,0,0,0.28)]"
+            className="participant-modal animate-fade-up w-[min(520px,100%)] rounded-2xl p-5"
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="mb-5 flex items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
@@ -131,13 +131,13 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
                 <p className="mb-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--gold-text)]">
                   {modal === 'code' ? 'Code badge' : 'Scan QR'}
                 </p>
-                <h2 className="m-0 text-2xl font-black">
+                <h2 className="m-0 text-2xl font-black text-[var(--text)]">
                   {modal === 'code' ? 'Entrer le code' : 'Scanner le badge'}
                 </h2>
               </div>
               <button
                 type="button"
-                className="grid h-10 w-10 place-items-center rounded-full border-2 border-[var(--line-strong)] bg-[var(--surface)] text-[var(--text)] transition hover:border-[var(--accent)]"
+                className="grid h-10 w-10 place-items-center rounded-full border-2 border-[var(--line-strong)] bg-[color-mix(in_srgb,var(--modal-bg)_92%,black)] text-[var(--text)] transition hover:border-[var(--accent)]"
                 onClick={closeModal}
                 title="Fermer"
               >
@@ -151,7 +151,7 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
                   Entrez les 6 caracteres inscrits sur votre badge.
                 </p>
                 <input
-                  className="min-h-14 rounded-2xl border-2 border-[var(--line-strong)] bg-[var(--surface-strong)] px-4 text-center text-xl font-black uppercase tracking-[0.24em] text-[var(--text)] outline-none transition focus:border-[var(--accent)]"
+                  className="min-h-14 rounded-2xl border-2 border-[var(--line-strong)] bg-[color-mix(in_srgb,var(--modal-bg)_88%,black)] px-4 text-center text-xl font-black uppercase tracking-[0.24em] text-[var(--text)] outline-none transition focus:border-[var(--accent)]"
                   value={badgeCode}
                   maxLength={6}
                   onChange={(event) => setBadgeCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
@@ -177,7 +177,7 @@ function QrScannerPanel({ error, title, description, onManualCode, onScan }) {
               </div>
             ) : null}
 
-            {scannerError ? <p className="mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">{scannerError}</p> : null}
+            {scannerError ? <p className="participant-modal__error mt-4 rounded-xl px-4 py-3 font-bold">{scannerError}</p> : null}
           </section>
         </div>
       ) : null}

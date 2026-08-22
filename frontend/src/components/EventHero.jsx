@@ -1,24 +1,10 @@
 import { Camera, Images, ScanLine } from 'lucide-react';
-import BrandLogo from './BrandLogo';
-import ThemeToggle from './ThemeToggle';
+import ParticipantTopBar from './ParticipantTopBar';
 
 function EventHero({ event, theme, onThemeToggle, onMyPhotos }) {
   return (
-    <header className="mx-auto w-[min(1180px,100%)] pb-8 pt-1">
-      <div className="mb-10 flex items-center justify-between gap-5 max-[680px]:items-start max-[680px]:gap-4">
-        <BrandLogo />
-        <div className="flex flex-wrap justify-end gap-2.5">
-          <ThemeToggle theme={theme} onToggle={onThemeToggle} />
-          <button
-            type="button"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-2 border-[var(--gold)] bg-[color-mix(in_srgb,var(--accent)_88%,transparent)] px-4 font-black text-[var(--accent-ink)] shadow-[0_8px_24px_rgba(232,184,74,0.22)] backdrop-blur transition hover:-translate-y-0.5 hover:brightness-105"
-            onClick={onMyPhotos}
-          >
-            <Camera size={17} />
-            <span>Mes photos</span>
-          </button>
-        </div>
-      </div>
+    <header className="mx-auto w-[min(1180px,100%)] pb-8">
+      <ParticipantTopBar theme={theme} onThemeToggle={onThemeToggle} onMyPhotos={onMyPhotos} />
 
       <div className="hero-gallery-title-wrap">
         <h2 className="hero-gallery-title" aria-label="Galerie photo en temps reel">
@@ -58,9 +44,9 @@ function EventHero({ event, theme, onThemeToggle, onMyPhotos }) {
           </div>
         </div>
 
-        <div className="flex min-h-[320px] items-center justify-center animate-fade-up max-[900px]:min-h-56 max-[900px]:py-4" aria-hidden="true">
+        <div className="hidden min-h-[320px] min-[901px]:flex items-center justify-center animate-fade-up" aria-hidden="true">
           <img
-            className="h-[min(340px,72vw)] w-[min(340px,72vw)] max-[900px]:h-[min(260px,62vw)] max-[900px]:w-[min(260px,62vw)] object-contain drop-shadow-[0_20px_48px_rgba(0,0,0,0.32)]"
+            className="h-[min(340px,72vw)] w-[min(340px,72vw)] object-contain drop-shadow-[0_20px_48px_rgba(0,0,0,0.32)]"
             src="/ppp-watermark.png"
             alt="Logo PPP Togo"
           />

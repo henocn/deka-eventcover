@@ -21,21 +21,25 @@ function GalleryView({
   }
 
   return (
-    <section className="mx-auto w-[min(1180px,100%)] pb-16 pt-4">
-      <div className="mb-5 grid grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-4 max-[680px]:grid-cols-[44px_minmax(0,1fr)]">
+    <section className="mx-auto w-[min(1180px,100%)] pb-16 pt-2">
+      <div className="mb-8 grid grid-cols-[44px_minmax(0,1fr)_auto] items-start gap-x-5 gap-y-5 max-[680px]:grid-cols-[44px_minmax(0,1fr)]">
         <button
           type="button"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--line-strong)] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] text-[var(--text)] backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--accent)]"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--line-strong)] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] text-[var(--text)] backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--accent)]"
           onClick={onBackToAlbums}
           title="Retour aux albums"
         >
           <ArrowLeft size={18} />
         </button>
-        <div>
-          <p className="mb-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--gold-text)]">Album</p>
-          <h2 className="m-0 text-[clamp(1.65rem,3vw,2.45rem)] font-black tracking-normal">{album?.title || 'Selectionnez un album'}</h2>
+        <div className="min-w-0">
+          <h2 className="m-0 text-[clamp(1.65rem,3vw,2.45rem)] font-black leading-tight tracking-normal">
+            {album?.title || 'Selectionnez un album'}
+          </h2>
+          {album?.description ? (
+            <p className="mb-0 mt-4 max-w-3xl leading-relaxed text-[var(--muted)]">{album.description}</p>
+          ) : null}
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2.5 max-[680px]:col-span-full max-[680px]:justify-start">
+        <div className="flex flex-wrap items-center justify-end gap-2.5 max-[680px]:col-span-full max-[680px]:mt-1 max-[680px]:justify-start">
           <button
             type="button"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-2 border-[var(--line-strong)] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-4 font-black text-[var(--text)] backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
@@ -58,10 +62,8 @@ function GalleryView({
         </div>
       </div>
 
-      {album?.description ? <p className="mb-5 mt-2 max-w-3xl leading-relaxed text-[var(--muted)]">{album.description}</p> : null}
-
       {images.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3 min-[681px]:grid-cols-3 min-[981px]:grid-cols-4 min-[1280px]:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 min-[681px]:grid-cols-3 min-[681px]:gap-5 min-[981px]:grid-cols-4 min-[1280px]:grid-cols-5">
           {images.map((item, index) => {
             const isSelected = selectedMediaIds.includes(item.id);
             const downloadUrl = isDemoMedia(item) ? item.downloadUrl : getMediaUrl(item, accessCode, accessRole, 'download');

@@ -16,6 +16,7 @@ import EventHero from '../components/EventHero';
 import GalleryView from '../components/GalleryView';
 import Lightbox from '../components/Lightbox';
 import MyPhotosModal from '../components/MyPhotosModal';
+import ParticipantTopBar from '../components/ParticipantTopBar';
 import PppWatermarks from '../components/PppWatermarks';
 import QrScannerPanel from '../components/QrScannerPanel';
 import SiteFooter from '../components/SiteFooter';
@@ -387,16 +388,27 @@ function ParticipantEventPage() {
     );
   }
 
+  const isAlbumView = Boolean(selectedAlbumSlug || isMyPhotosRoute);
+
   return (
     <main className="participant-shell min-h-svh px-5 py-5 text-[var(--text)] max-[680px]:px-3" data-theme={theme}>
       <PppWatermarks />
       <div className="participant-shell__content">
-      <EventHero
-        event={eventData}
-        theme={theme}
-        onThemeToggle={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
-        onMyPhotos={openMyPhotos}
-      />
+      {isAlbumView ? (
+        <ParticipantTopBar
+          compact
+          theme={theme}
+          onThemeToggle={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+          onMyPhotos={openMyPhotos}
+        />
+      ) : (
+        <EventHero
+          event={eventData}
+          theme={theme}
+          onThemeToggle={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+          onMyPhotos={openMyPhotos}
+        />
+      )}
 
       {usingDemo || error ? (
         <div className="mx-auto mb-5 w-[min(1180px,100%)] rounded-xl border border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">
