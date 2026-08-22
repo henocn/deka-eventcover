@@ -24,7 +24,7 @@ function Lightbox({
         <ChevronLeft size={28} />
       </button>
       <img
-        className="max-h-[78vh] max-w-[min(1120px,92vw)] rounded-[14px] object-contain shadow-[0_34px_100px_rgba(0,0,0,0.45)]"
+        className="max-h-[78vh] max-w-[min(1120px,92vw)] object-contain shadow-[0_34px_100px_rgba(0,0,0,0.45)]"
         src={isDemoMedia(activeImage) ? activeImage.publicUrl : getMediaUrl(activeImage, accessCode, accessRole)}
         alt={activeImage.originalName}
       />

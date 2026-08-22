@@ -32,7 +32,7 @@ function GalleryView({
           <ArrowLeft size={18} />
         </button>
         <div>
-          <p className="mb-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--gold)]">Album</p>
+          <p className="mb-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--gold-text)]">Album</p>
           <h2 className="m-0 text-[clamp(1.65rem,3vw,2.45rem)] font-black tracking-normal">{album?.title || 'Selectionnez un album'}</h2>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2.5 max-[680px]:col-span-full max-[680px]:justify-start">
@@ -68,7 +68,7 @@ function GalleryView({
 
             return (
             <article
-              className="animate-fade-up relative aspect-square cursor-zoom-in overflow-hidden rounded-xl bg-[var(--sage)] text-white shadow-[0_16px_34px_rgba(23,21,17,0.12)]"
+              className="animate-fade-up relative aspect-square cursor-zoom-in overflow-hidden bg-[var(--sage)] text-white shadow-[0_16px_34px_rgba(23,21,17,0.12)]"
               key={item.id}
               onClick={() => onOpenImage(item)}
               style={{ '--delay': `${index * 35}ms` }}

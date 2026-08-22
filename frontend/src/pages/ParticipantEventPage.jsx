@@ -16,7 +16,9 @@ import EventHero from '../components/EventHero';
 import GalleryView from '../components/GalleryView';
 import Lightbox from '../components/Lightbox';
 import MyPhotosModal from '../components/MyPhotosModal';
+import PppWatermarks from '../components/PppWatermarks';
 import QrScannerPanel from '../components/QrScannerPanel';
+import SiteFooter from '../components/SiteFooter';
 import { demoAlbums, demoEvent } from '../demoData';
 import {
   getAccessCodeSession,
@@ -28,13 +30,18 @@ import {
   normalizeAlbums,
 } from '../utils/participantUtils';
 
+const THEME_STORAGE_KEY = 'dkcover.participant.theme';
+
 function ParticipantEventPage() {
   const { albumSlug, eventSlug: routeEventSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const eventSlug = routeEventSlug || '';
   const [accessRole] = useState(getInitialRole);
-  const [theme, setTheme] = useState(() => window.localStorage.getItem('deka.participant.theme') || 'light');
+  const [theme, setTheme] = useState(() => {
+    const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return saved === 'light' ? 'light' : 'dark';
+  });
   const [eventData, setEventData] = useState(null);
   const [albumData, setAlbumData] = useState(null);
   const [accessCode, setAccessCode] = useState(() => (
@@ -201,7 +208,7 @@ function ParticipantEventPage() {
   }, [accessCode, eventData?.slug, loadAlbum, loadEvent, selectedAlbumSlug, usingDemo]);
 
   useEffect(() => {
-    window.localStorage.setItem('deka.participant.theme', theme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
   async function submitAccessCode(event) {
@@ -335,9 +342,12 @@ function ParticipantEventPage() {
 
   if (isLoadingEvent) {
     return (
-      <main className="participant-shell grid min-h-svh place-items-center gap-3 p-5 text-[var(--muted)] text-white" data-theme={theme}>
-        <Loader2 className="animate-spin" size={28} />
-        <p className="font-bold">Chargement de l'evenement</p>
+      <main className="participant-shell grid min-h-svh place-items-center gap-3 p-5 text-[var(--text)]" data-theme={theme}>
+        <PppWatermarks />
+        <div className="participant-shell__content grid place-items-center gap-3">
+          <Loader2 className="animate-spin text-[var(--gold-text)]" size={28} />
+          <p className="font-bold">Chargement de l&apos;evenement</p>
+        </div>
       </main>
     );
   }
@@ -379,6 +389,8 @@ function ParticipantEventPage() {
 
   return (
     <main className="participant-shell min-h-svh px-5 py-5 text-[var(--text)] max-[680px]:px-3" data-theme={theme}>
+      <PppWatermarks />
+      <div className="participant-shell__content">
       <EventHero
         event={eventData}
         theme={theme}
@@ -467,6 +479,9 @@ function ParticipantEventPage() {
           onClose={() => setIsMyPhotosOpen(false)}
         />
       ) : null}
+
+      <SiteFooter />
+      </div>
     </main>
   );
 }

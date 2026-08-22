@@ -33,9 +33,9 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose, onSearchCom
   }
 
   return (
-    <div className="fixed inset-0 z-40 grid place-items-center bg-black/50 p-4" onMouseDown={onClose}>
+    <div className="participant-modal-overlay fixed inset-0 z-40 grid place-items-center p-4" onMouseDown={onClose}>
       <section
-        className="max-h-[92svh] w-[min(720px,100%)] overflow-y-auto rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_30px_100px_rgba(0,0,0,0.32)]"
+        className="participant-modal max-h-[92svh] w-[min(720px,100%)] overflow-y-auto rounded-2xl p-5"
         onMouseDown={(event) => event.stopPropagation()}
       >
         {isSearching ? (
@@ -50,7 +50,7 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose, onSearchCom
           <>
         <div className="mb-5 flex items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
           <div>
-            <p className="mb-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--gold)]">Recherche personnelle</p>
+            <p className="mb-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--gold-text)]">Recherche personnelle</p>
             <h2 className="m-0 text-2xl font-black text-[var(--text)]">Mes photos</h2>
             <p className="mt-2 max-w-xl text-sm font-bold text-[var(--muted)]">
               Prenez ou importez un selfie clair. Il est utilise uniquement pour la comparaison puis instantanément supprimé.
@@ -97,7 +97,7 @@ function MyPhotosModal({ accessCode, accessRole, eventSlug, onClose, onSearchCom
           </label>
         </div>
 
-        {error ? <p className="mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">{error}</p> : null}
+        {error ? <p className="participant-modal__error mt-4 rounded-xl px-4 py-3 font-bold">{error}</p> : null}
 
         {!error && diagnostics ? (
           <div className="mt-5 rounded-xl border border-[var(--line-strong)] p-5 text-sm font-bold text-[var(--muted)]">
