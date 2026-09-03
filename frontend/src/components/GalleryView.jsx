@@ -1,8 +1,72 @@
 import { ArrowLeft, Check, Download, FileText, Image as ImageIcon, Loader2, Square } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getMediaUrl, getThumbnailUrl } from '../api';
 import LocalizedText from './LocalizedText';
 import { isDemoMedia } from '../utils/participantUtils';
+
+
+// Carte image individuelle avec squelette de chargement et placeholder.
+function GalleryCard({ item, index, isSelected, accessCode, accessRole, downloadUrl, onOpenImage, onToggleMediaSelection, t }) {
+  const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+  const src = isDemoMedia(item) ? item.publicUrl : getThumbnailUrl(item, accessCode, accessRole);
+  const fallbackSrc = isDemoMedia(item) ? null : getMediaUrl(item, accessCode, accessRole);
+
+  // Gere le fallback vers l'image originale si la vignette echoue.
+  function handleError(event) {
+    if (errored || isDemoMedia(item) || !fallbackSrc) return;
+    setErrored(true);
+    event.currentTarget.src = fallbackSrc;
+  }
+
+  return (
+    <article
+      className="animate-fade-up relative aspect-square cursor-zoom-in overflow-hidden bg-[var(--sage)] text-white shadow-[0_16px_34px_rgba(23,21,17,0.12)]"
+      onClick={() => onOpenImage(item)}
+      style={{ '--delay': `${index * 35}ms` }}
+    >
+      {/* Squelette anime visible jusqu'au chargement de l'image. */}
+      {!loaded ? (
+        <div className="absolute inset-0 z-[1] animate-pulse bg-[linear-gradient(135deg,color-mix(in_srgb,var(--sage)_80%,black),color-mix(in_srgb,var(--surface)_60%,var(--sage)))]" />
+      ) : null}
+
+      <img
+        className={`h-full w-full object-cover transition-opacity duration-300 hover:scale-[1.045] ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        src={src}
+        alt={item.originalName}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+        onError={handleError}
+      />
+
+      <div className="pointer-events-none absolute inset-x-2.5 top-2.5 z-[3] flex justify-between gap-2">
+        <button
+          type="button"
+          className={`pointer-events-auto grid h-10 w-10 place-items-center rounded-full border-2 backdrop-blur transition hover:-translate-y-0.5 ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-ink)]' : 'border-white/40 bg-black/65 text-white hover:border-[var(--accent)]'}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleMediaSelection(item.id);
+          }}
+          title={isSelected ? t('gallery.uncheck') : t('gallery.check')}
+        >
+          {isSelected ? <Check size={16} /> : <Square size={16} />}
+        </button>
+        <a
+          className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full border-2 border-white/40 bg-black/65 text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--accent-ink)]"
+          href={downloadUrl}
+          download={item.originalName}
+          onClick={(event) => event.stopPropagation()}
+          title={t('gallery.downloadPhoto')}
+        >
+          <Download size={16} />
+        </a>
+      </div>
+    </article>
+  );
+}
+
 
 function GalleryView({
   album,
@@ -78,46 +142,18 @@ function GalleryView({
             const downloadUrl = isDemoMedia(item) ? item.downloadUrl : getMediaUrl(item, accessCode, accessRole, 'download');
 
             return (
-            <article
-              className="animate-fade-up relative aspect-square cursor-zoom-in overflow-hidden bg-[var(--sage)] text-white shadow-[0_16px_34px_rgba(23,21,17,0.12)]"
-              key={item.id}
-              onClick={() => onOpenImage(item)}
-              style={{ '--delay': `${index * 35}ms` }}
-            >
-              <img
-                className="h-full w-full object-cover transition duration-300 hover:scale-[1.045]"
-                src={isDemoMedia(item) ? item.publicUrl : getThumbnailUrl(item, accessCode, accessRole)}
-                alt={item.originalName}
-                loading="lazy"
-                onError={(event) => {
-                  if (isDemoMedia(item)) return;
-                  event.currentTarget.onerror = null;
-                  event.currentTarget.src = getMediaUrl(item, accessCode, accessRole);
-                }}
+              <GalleryCard
+                key={item.id}
+                item={item}
+                index={index}
+                isSelected={isSelected}
+                accessCode={accessCode}
+                accessRole={accessRole}
+                downloadUrl={downloadUrl}
+                onOpenImage={onOpenImage}
+                onToggleMediaSelection={onToggleMediaSelection}
+                t={t}
               />
-              <div className="pointer-events-none absolute inset-x-2.5 top-2.5 z-[3] flex justify-between gap-2">
-                <button
-                  type="button"
-                  className={`pointer-events-auto grid h-10 w-10 place-items-center rounded-full border-2 backdrop-blur transition hover:-translate-y-0.5 ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-ink)]' : 'border-white/40 bg-black/65 text-white hover:border-[var(--accent)]'}`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onToggleMediaSelection(item.id);
-                  }}
-                  title={isSelected ? t('gallery.uncheck') : t('gallery.check')}
-                >
-                  {isSelected ? <Check size={16} /> : <Square size={16} />}
-                </button>
-                <a
-                  className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full border-2 border-white/40 bg-black/65 text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--accent-ink)]"
-                  href={downloadUrl}
-                  download={item.originalName}
-                  onClick={(event) => event.stopPropagation()}
-                  title={t('gallery.downloadPhoto')}
-                >
-                  <Download size={16} />
-                </a>
-              </div>
-            </article>
             );
           })}
         </div>

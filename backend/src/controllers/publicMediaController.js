@@ -10,6 +10,7 @@ async function sendMediaFile(req, res) {
     'view'
   );
 
+  res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
   res.type(result.media.mimeType);
   res.sendFile(result.absolutePath);
 }
