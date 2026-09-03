@@ -98,7 +98,7 @@ function AlbumDetailsPage() {
   const previewMedia = previewIndex !== null ? imageMedia[previewIndex] : null;
   const selectedCount = selectedMediaIds.length;
 
-  function removeMediaFromState(mediaIds) {
+  function removeMediaFromState(mediaIds, { keepPreview = false } = {}) {
     const idSet = new Set(mediaIds.map(Number));
 
     setAlbum((current) => {
@@ -109,6 +109,17 @@ function AlbumDetailsPage() {
       };
     });
     setSelectedMediaIds((current) => current.filter((id) => !idSet.has(id)));
+
+    if (keepPreview) {
+      setPreviewIndex((current) => {
+        if (current === null) return null;
+        const remaining = imageMedia.filter((item) => !idSet.has(item.id));
+        if (remaining.length === 0) return null;
+        return Math.min(current, remaining.length - 1);
+      });
+      return;
+    }
+
     setPreviewIndex(null);
   }
 
@@ -117,12 +128,12 @@ function AlbumDetailsPage() {
     if (nextIndex >= 0) setPreviewIndex(nextIndex);
   }
 
-  function goToPreview(direction) {
+  const goToPreview = useCallback((direction) => {
     setPreviewIndex((current) => {
       if (current === null || imageMedia.length === 0) return current;
       return (current + direction + imageMedia.length) % imageMedia.length;
     });
-  }
+  }, [imageMedia.length]);
 
   function toggleMediaSelection(mediaId) {
     setSelectedMediaIds((current) => (
@@ -146,6 +157,43 @@ function AlbumDetailsPage() {
       setIsDeleting(false);
     }
   }
+
+  async function deletePreviewMedia() {
+    if (!previewMedia || isDeleting) return;
+
+    const confirmed = window.confirm('Supprimer cette image ?');
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+
+    try {
+      await deleteMedia(previewMedia.id);
+      removeMediaFromState([previewMedia.id], { keepPreview: true });
+      toast.success('Image supprimee');
+      await loadEvents();
+    } catch (deleteError) {
+      toast.error(deleteError.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  useEffect(() => {
+    if (previewIndex === null) return undefined;
+
+    function onKeyDown(event) {
+      if (event.key === 'Escape') setPreviewIndex(null);
+      if (event.key === 'ArrowLeft') goToPreview(-1);
+      if (event.key === 'ArrowRight') goToPreview(1);
+      if (event.key === 'Delete') {
+        event.preventDefault();
+        deletePreviewMedia();
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [goToPreview, previewIndex, previewMedia, isDeleting]);
 
   async function deleteSelectedMedia() {
     if (selectedMediaIds.length === 0) return;
@@ -305,7 +353,7 @@ function AlbumDetailsPage() {
 
       {previewMedia ? (
         <div
-          className="fixed inset-0 z-50 grid place-items-center overflow-hidden bg-black/80 p-5"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/85 p-5"
           onMouseDown={() => setPreviewIndex(null)}
         >
           <div
@@ -317,34 +365,29 @@ function AlbumDetailsPage() {
                 <p className="text-xs font-black uppercase text-white/55">Apercu image</p>
                 <p className="truncate text-sm font-extrabold">{previewIndex + 1} / {imageMedia.length}</p>
               </div>
-              <button
-                type="button"
-                className="grid h-10 w-10 place-items-center rounded border border-white/25 bg-white/10 transition hover:border-[#9cff00] hover:text-[#9cff00]"
-                onClick={() => setPreviewIndex(null)}
-              >
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="inline-flex h-10 items-center gap-2 rounded border border-red-500 bg-red-600 px-3 font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={deletePreviewMedia}
+                  disabled={isDeleting}
+                  title="Supprimer (Suppr)"
+                >
+                  <Trash2 size={16} />
+                  Suppr
+                </button>
+                <button
+                  type="button"
+                  className="grid h-10 w-10 place-items-center rounded border border-white/25 bg-white/10 transition hover:border-[#9cff00] hover:text-[#9cff00]"
+                  onClick={() => setPreviewIndex(null)}
+                  title="Fermer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
-            <div className="relative grid min-h-0 place-items-center overflow-hidden rounded border border-white/15 bg-black/30 p-3">
-              {imageMedia.length > 1 ? (
-                <>
-                  <button
-                    type="button"
-                    className="absolute left-3 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/25 bg-black/55 text-white transition hover:border-[#9cff00] hover:text-[#9cff00]"
-                    onClick={() => goToPreview(-1)}
-                  >
-                    <ChevronLeft size={22} />
-                  </button>
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/25 bg-black/55 text-white transition hover:border-[#9cff00] hover:text-[#9cff00]"
-                    onClick={() => goToPreview(1)}
-                  >
-                    <ChevronRight size={22} />
-                  </button>
-                </>
-              ) : null}
+            <div className="relative grid min-h-0 place-items-center rounded border border-white/15 bg-black/30 p-3">
               <AdminMediaImage
                 media={previewMedia}
                 className="block max-h-[calc(100svh-150px)] max-w-[calc(100vw-80px)] rounded object-contain"
@@ -352,6 +395,35 @@ function AlbumDetailsPage() {
               />
             </div>
           </div>
+
+          {imageMedia.length > 1 ? (
+            <>
+              <button
+                type="button"
+                className="fixed left-4 top-1/2 z-[60] grid h-14 w-14 -translate-y-1/2 place-items-center rounded-full border-2 border-white/40 bg-black/80 text-white shadow-lg transition hover:border-[#9cff00] hover:text-[#9cff00] max-[680px]:left-2 max-[680px]:h-12 max-[680px]:w-12"
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  goToPreview(-1);
+                }}
+                title="Image precedente"
+              >
+                <ChevronLeft size={28} />
+              </button>
+              <button
+                type="button"
+                className="fixed right-4 top-1/2 z-[60] grid h-14 w-14 -translate-y-1/2 place-items-center rounded-full border-2 border-white/40 bg-black/80 text-white shadow-lg transition hover:border-[#9cff00] hover:text-[#9cff00] max-[680px]:right-2 max-[680px]:h-12 max-[680px]:w-12"
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  goToPreview(1);
+                }}
+                title="Image suivante"
+              >
+                <ChevronRight size={28} />
+              </button>
+            </>
+          ) : null}
         </div>
       ) : null}
     </section>
