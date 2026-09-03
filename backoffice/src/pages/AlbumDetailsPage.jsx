@@ -144,6 +144,9 @@ function AlbumDetailsPage() {
   }
 
   async function deleteOneMedia(mediaId) {
+    const confirmed = window.confirm('Supprimer cette image ?');
+    if (!confirmed) return;
+
     setIsDeleting(true);
 
     try {
@@ -185,7 +188,7 @@ function AlbumDetailsPage() {
       if (event.key === 'Escape') setPreviewIndex(null);
       if (event.key === 'ArrowLeft') goToPreview(-1);
       if (event.key === 'ArrowRight') goToPreview(1);
-      if (event.key === 'Delete') {
+      if (event.key === 'Enter') {
         event.preventDefault();
         deletePreviewMedia();
       }
@@ -332,7 +335,7 @@ function AlbumDetailsPage() {
                       </button>
                       <button
                         type="button"
-                        className="grid h-8 w-8 place-items-center rounded border border-red-600 bg-white/95 text-red-600 shadow-sm transition hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        className="grid h-9 w-9 place-items-center rounded border border-red-600 bg-white text-red-600 shadow-sm transition hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                         onClick={(event) => {
                           event.stopPropagation();
                           deleteOneMedia(item.id);
@@ -340,7 +343,7 @@ function AlbumDetailsPage() {
                         disabled={isDeleting}
                         title="Supprimer"
                       >
-                        <Trash2 size={15} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   ) : null}
@@ -365,26 +368,14 @@ function AlbumDetailsPage() {
                 <p className="text-xs font-black uppercase text-white/55">Apercu image</p>
                 <p className="truncate text-sm font-extrabold">{previewIndex + 1} / {imageMedia.length}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="inline-flex h-10 items-center gap-2 rounded border border-red-500 bg-red-600 px-3 font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={deletePreviewMedia}
-                  disabled={isDeleting}
-                  title="Supprimer (Suppr)"
-                >
-                  <Trash2 size={16} />
-                  Suppr
-                </button>
-                <button
-                  type="button"
-                  className="grid h-10 w-10 place-items-center rounded border border-white/25 bg-white/10 transition hover:border-[#9cff00] hover:text-[#9cff00]"
-                  onClick={() => setPreviewIndex(null)}
-                  title="Fermer"
-                >
-                  <X size={18} />
-                </button>
-              </div>
+              <button
+                type="button"
+                className="grid h-10 w-10 place-items-center rounded border border-white/25 bg-white/10 transition hover:border-[#9cff00] hover:text-[#9cff00]"
+                onClick={() => setPreviewIndex(null)}
+                title="Fermer"
+              >
+                <X size={18} />
+              </button>
             </div>
 
             <div className="relative grid min-h-0 place-items-center rounded border border-white/15 bg-black/30 p-3">
