@@ -2,7 +2,9 @@ import { Image } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { API_URL, getToken } from '../../api';
 
-function AdminMediaImage({ media, alt = '', className = '', fallbackClassName = '', variant = 'thumb' }) {
+
+// Affiche une image admin via la vignette WebP uniquement (jamais l'original).
+function AdminMediaImage({ media, alt = '', className = '', fallbackClassName = '' }) {
   const [src, setSrc] = useState('');
 
   useEffect(() => {
@@ -12,26 +14,22 @@ function AdminMediaImage({ media, alt = '', className = '', fallbackClassName = 
 
     let objectUrl = '';
     let cancelled = false;
-    const endpoint = variant === 'full' ? 'file' : 'thumb';
 
+    // Charge uniquement la vignette WebP pour l'affichage et l'apercu.
     async function loadPreview() {
-      async function fetchVariant(variantName) {
-        const response = await fetch(new URL(`/api/admin/media/${media.id}/${variantName}`, API_URL), {
+      try {
+        const response = await fetch(new URL(`/api/admin/media/${media.id}/thumb`, API_URL), {
           headers: { Authorization: `Bearer ${getToken()}` },
         });
-        if (!response.ok) return null;
-        const blob = await response.blob();
-        return URL.createObjectURL(blob);
-      }
 
-      try {
-        objectUrl = await fetchVariant(endpoint);
-
-        if (!objectUrl && endpoint === 'thumb') {
-          objectUrl = await fetchVariant('file');
+        if (!response.ok) {
+          if (!cancelled) setSrc('');
+          return;
         }
 
-        if (!cancelled) setSrc(objectUrl || '');
+        const blob = await response.blob();
+        objectUrl = URL.createObjectURL(blob);
+        if (!cancelled) setSrc(objectUrl);
       } catch {
         if (!cancelled) setSrc('');
       }
@@ -43,7 +41,7 @@ function AdminMediaImage({ media, alt = '', className = '', fallbackClassName = 
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [media?.id, variant]);
+  }, [media?.id]);
 
   if (!src) {
     return (
