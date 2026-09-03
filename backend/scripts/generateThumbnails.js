@@ -1,6 +1,5 @@
 const path = require('path');
 const fs = require('fs/promises');
-const { Op } = require('sequelize');
 const { sequelize, Media } = require('../src/models');
 const env = require('../src/config/env');
 const {
@@ -20,21 +19,18 @@ function safeJoinUploadPath(relativePath) {
   return absolutePath;
 }
 
-// Regenere les vignettes manquantes pour les images deja stockees.
-async function generateMissingThumbnails() {
+// Regenere les vignettes WebP pour toutes les images (affichage uniquement, pas les originaux).
+async function generateAllThumbnails() {
   const images = await Media.findAll({
-    where: {
-      type: 'image',
-      [Op.or]: [
-        { thumbnailPath: null },
-        { thumbnailPath: '' },
-      ],
-    },
+    where: { type: 'image' },
     order: [['id', 'ASC']],
   });
 
   let generated = 0;
   let failed = 0;
+
+  console.log(`Thumbnail size=${env.thumbnailMaxSize}px quality=${env.thumbnailQuality}`);
+  console.log(`Scanning ${images.length} image(s)...`);
 
   for (const media of images) {
     const sourcePath = safeJoinUploadPath(media.storagePath);
@@ -51,6 +47,7 @@ async function generateMissingThumbnails() {
     const thumbnailAbsolutePath = safeJoinUploadPath(thumbnailRelativePath);
 
     try {
+      await fs.mkdir(path.dirname(thumbnailAbsolutePath), { recursive: true });
       const dimensions = await generateImageThumbnail(sourcePath, thumbnailAbsolutePath);
       await media.update({
         thumbnailPath: thumbnailRelativePath,
@@ -58,17 +55,17 @@ async function generateMissingThumbnails() {
         height: dimensions.height,
       });
       generated += 1;
-      console.log(`Thumbnail generated for media ${media.id}`);
+      console.log(`OK media ${media.id}`);
     } catch (error) {
       failed += 1;
-      console.error(`Thumbnail failed for media ${media.id}: ${error.message}`);
+      console.error(`FAIL media ${media.id}: ${error.message}`);
     }
   }
 
   console.log(`Done. Generated=${generated}, failed=${failed}, scanned=${images.length}`);
 }
 
-generateMissingThumbnails()
+generateAllThumbnails()
   .catch((error) => {
     console.error(error);
     process.exitCode = 1;

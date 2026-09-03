@@ -6,19 +6,11 @@ import LocalizedText from './LocalizedText';
 import { isDemoMedia } from '../utils/participantUtils';
 
 
-// Carte image individuelle avec squelette de chargement et placeholder.
+// Carte image individuelle : vignette WebP uniquement, jamais l'original.
 function GalleryCard({ item, index, isSelected, accessCode, accessRole, downloadUrl, onOpenImage, onToggleMediaSelection, t }) {
   const [loaded, setLoaded] = useState(false);
-  const [errored, setErrored] = useState(false);
+  const [failed, setFailed] = useState(false);
   const src = isDemoMedia(item) ? item.publicUrl : getThumbnailUrl(item, accessCode, accessRole);
-  const fallbackSrc = isDemoMedia(item) ? null : getMediaUrl(item, accessCode, accessRole);
-
-  // Gere le fallback vers l'image originale si la vignette echoue.
-  function handleError(event) {
-    if (errored || isDemoMedia(item) || !fallbackSrc) return;
-    setErrored(true);
-    event.currentTarget.src = fallbackSrc;
-  }
 
   return (
     <article
@@ -26,20 +18,25 @@ function GalleryCard({ item, index, isSelected, accessCode, accessRole, download
       onClick={() => onOpenImage(item)}
       style={{ '--delay': `${index * 35}ms` }}
     >
-      {/* Squelette anime visible jusqu'au chargement de l'image. */}
-      {!loaded ? (
+      {!loaded && !failed ? (
         <div className="absolute inset-0 z-[1] animate-pulse bg-[linear-gradient(135deg,color-mix(in_srgb,var(--sage)_80%,black),color-mix(in_srgb,var(--surface)_60%,var(--sage)))]" />
       ) : null}
 
-      <img
-        className={`h-full w-full object-cover transition-opacity duration-300 hover:scale-[1.045] ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        src={src}
-        alt={item.originalName}
-        loading="lazy"
-        decoding="async"
-        onLoad={() => setLoaded(true)}
-        onError={handleError}
-      />
+      {failed ? (
+        <div className="absolute inset-0 z-[1] grid place-items-center bg-[var(--sage)]">
+          <ImageIcon size={28} className="opacity-50" />
+        </div>
+      ) : (
+        <img
+          className={`h-full w-full object-cover transition-opacity duration-300 hover:scale-[1.045] ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          src={src}
+          alt={item.originalName}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+        />
+      )}
 
       <div className="pointer-events-none absolute inset-x-2.5 top-2.5 z-[3] flex justify-between gap-2">
         <button

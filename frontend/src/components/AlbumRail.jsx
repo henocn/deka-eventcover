@@ -1,6 +1,6 @@
 import { Download, Image as ImageIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { getMediaUrl, getThumbnailUrl } from '../api';
+import { getThumbnailUrl } from '../api';
 import LocalizedText from './LocalizedText';
 import { albumCover } from '../utils/participantUtils';
 
@@ -44,10 +44,9 @@ function AlbumRail({ albums, selectedAlbumSlug, accessCode, accessRole, onSelect
                     src={cover}
                     alt=""
                     loading="lazy"
+                    decoding="async"
                     onError={(event) => {
-                      if (!album.coverMedia) return;
-                      event.currentTarget.onerror = null;
-                      event.currentTarget.src = getMediaUrl(album.coverMedia, accessCode, accessRole);
+                      event.currentTarget.style.display = 'none';
                     }}
                   />
                 ) : (
