@@ -25,8 +25,8 @@ module.exports = {
   faceImageMaxSize: toNumber(process.env.FACE_IMAGE_MAX_SIZE, 1600),
   faceMatchThreshold: toNumber(process.env.FACE_MATCH_THRESHOLD, 0.48),
   faceQueueConcurrency: toNumber(process.env.FACE_QUEUE_CONCURRENCY, 1),
-  thumbnailMaxSize: toNumber(process.env.THUMBNAIL_MAX_SIZE, 960),
-  thumbnailQuality: toNumber(process.env.THUMBNAIL_QUALITY, 78),
+  thumbnailMaxSize: toNumber(process.env.THUMBNAIL_MAX_SIZE, 1920),
+  thumbnailQuality: toNumber(process.env.THUMBNAIL_QUALITY, 88),
   participantAppUrl:
     process.env.PARTICIPANT_APP_URL ||
     process.env.FRONTEND_APP_URL ||
