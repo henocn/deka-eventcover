@@ -206,7 +206,7 @@ async function getAlbumLeaderboard(eventId) {
     .slice(0, 10);
 }
 
-async function getAnalytics({ eventId, period = 'month' } = {}) {
+async function getAnalytics({ eventId, period = 'day' } = {}) {
   const where = buildWhere(eventId);
   const safePeriod = ['day', 'week', 'month', 'all'].includes(period) ? period : 'month';
 

@@ -179,7 +179,7 @@ async function fetchStats(eventId) {
   return apiRequest(`/api/admin/events/${eventId}/stats`);
 }
 
-async function fetchAnalytics(eventId, period = 'month') {
+async function fetchAnalytics(eventId, period = 'day') {
   const params = new URLSearchParams();
   if (eventId) params.set('eventId', eventId);
   if (period) params.set('period', period);
