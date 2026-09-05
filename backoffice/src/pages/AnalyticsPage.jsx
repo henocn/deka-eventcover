@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { fetchAnalytics } from '../api';
 import ActivityChart from '../components/analytics/ActivityChart';
 import MetricCard from '../components/analytics/MetricCard';
+import RatioStatCard from '../components/analytics/RatioStatCard';
 import TopAlbumsTable from '../components/analytics/TopAlbumsTable';
 import { Button, Field, StatusPill } from '../components/ui';
 import useEvents from '../hooks/useEvents';
@@ -33,6 +34,19 @@ function formatCompactCount(value) {
   const scaled = amount / divisor;
   const rounded = Math.round(scaled * 100) / 100;
   return `${String(rounded).replace('.', ',')}${unit}`;
+}
+
+function formatRatioValue(value) {
+  if (value == null || Number.isNaN(Number(value))) return '—';
+  return new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(Number(value));
+}
+
+function formatPercentRatio(value) {
+  if (value == null || Number.isNaN(Number(value))) return '—';
+  return `${formatRatioValue(Number(value) * 100)}%`;
 }
 
 function AnalyticsPage() {
@@ -63,6 +77,7 @@ function AnalyticsPage() {
   }, [loadAnalytics]);
 
   const totals = analytics?.totals || {};
+  const ratios = analytics?.ratios || {};
 
   return (
     <section className="min-w-0 px-6 pb-8 pt-6 max-[760px]:p-4">
@@ -141,10 +156,37 @@ function AnalyticsPage() {
                       {formatCompactCount(totals.downloadsCount)}
                     </strong>
                   </div>
-                  <p className="mt-0.5 text-xs text-neutral-500">Téléch.</p>
+                  <p className="mt-0.5 text-xs text-neutral-500">Telech.</p>
                 </div>
               </div>
             </MetricCard>
+          </div>
+
+          <div className="grid grid-cols-4 gap-3 max-[1180px]:grid-cols-2 max-[640px]:grid-cols-1">
+            <RatioStatCard
+              value={formatRatioValue(ratios.facesPerPhoto)}
+              label="Visages par photo"
+              title={`${formatNumber(totals.facesCount)} visages / ${formatNumber(totals.mediaCount)} photos`}
+            />
+            <RatioStatCard
+              value={formatRatioValue(ratios.viewsPerParticipant)}
+              label="Vues par participant"
+              title={totals.participantsCount
+                ? `${formatNumber(totals.viewsCount)} vues / ${formatNumber(totals.participantsCount)} participants`
+                : 'Renseignez le nombre de participants sur l evenement'}
+            />
+            <RatioStatCard
+              value={formatRatioValue(ratios.downloadsPerParticipant)}
+              label="Telech. par participant"
+              title={totals.participantsCount
+                ? `${formatNumber(totals.downloadsCount)} telechargements / ${formatNumber(totals.participantsCount)} participants`
+                : 'Renseignez le nombre de participants sur l evenement'}
+            />
+            <RatioStatCard
+              value={formatPercentRatio(ratios.downloadRate)}
+              label="Vues téléchargées"
+              title={`${formatNumber(totals.downloadsCount)} telechargements / ${formatNumber(totals.viewsCount)} vues`}
+            />
           </div>
 
           <TopAlbumsTable albums={analytics.topAlbums} />

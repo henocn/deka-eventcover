@@ -206,6 +206,23 @@ async function getAlbumLeaderboard(eventId) {
     .slice(0, 10);
 }
 
+function safeRatio(numerator, denominator) {
+  const num = Number(numerator) || 0;
+  const den = Number(denominator) || 0;
+  if (den <= 0) return null;
+  return Math.round((num / den) * 100) / 100;
+}
+
+async function getParticipantsCount(eventId) {
+  if (eventId) {
+    const event = await Event.findByPk(eventId, { attributes: ['participantsCount'] });
+    return Number(event?.participantsCount) || 0;
+  }
+
+  const total = await Event.sum('participantsCount');
+  return Number(total) || 0;
+}
+
 async function getAnalytics({ eventId, period = 'day' } = {}) {
   const where = buildWhere(eventId);
   const safePeriod = ['day', 'week', 'month', 'all'].includes(period) ? period : 'month';
@@ -221,6 +238,7 @@ async function getAnalytics({ eventId, period = 'day' } = {}) {
     stats,
     activityTimeline,
     topAlbums,
+    participantsCount,
   ] = await Promise.all([
     Event.count(eventId ? { where: { id: eventId } } : undefined),
     Event.count(eventId ? { where: { id: eventId, isPublished: true } } : { where: { isPublished: true } }),
@@ -232,9 +250,11 @@ async function getAnalytics({ eventId, period = 'day' } = {}) {
     MediaStat.findAll({ where: { ...where, action: ['view', 'download'] }, attributes: ['action'] }),
     getActivityTimeline(eventId, safePeriod),
     getAlbumLeaderboard(eventId),
+    getParticipantsCount(eventId),
   ]);
 
   const actionCounts = countByAction(stats);
+  const facesCount = faceStats.facesCount;
 
   return {
     scope: {
@@ -250,9 +270,16 @@ async function getAnalytics({ eventId, period = 'day' } = {}) {
       activeAlbumsCount,
       mediaCount,
       badgesCount,
-      facesCount: faceStats.facesCount,
+      facesCount,
       viewsCount: actionCounts.views,
       downloadsCount: actionCounts.downloads,
+      participantsCount,
+    },
+    ratios: {
+      facesPerPhoto: safeRatio(facesCount, mediaCount),
+      viewsPerParticipant: safeRatio(actionCounts.views, participantsCount),
+      downloadsPerParticipant: safeRatio(actionCounts.downloads, participantsCount),
+      downloadRate: safeRatio(actionCounts.downloads, actionCounts.views),
     },
     activityTimeline,
     topAlbums,

@@ -49,6 +49,17 @@ function EventDrawer({
             <LockKeyhole className="absolute bottom-3 right-3 text-neutral-500" size={15} />
             <input className={`${inputClass} min-h-[42px] pr-10`} value={form.accessCode} onChange={(event) => onChange('accessCode', event.target.value)} placeholder="Optionnel" />
           </Field>
+          <Field label="Nombre de participants">
+            <input
+              className={`${inputClass} min-h-[42px]`}
+              type="number"
+              min="0"
+              step="1"
+              value={form.participantsCount}
+              onChange={(event) => onChange('participantsCount', event.target.value)}
+              placeholder="Ex: 500"
+            />
+          </Field>
           <label className="inline-flex w-fit items-center gap-2.5 text-[13px] font-extrabold">
             <input type="checkbox" className="h-5 w-5 accent-black" checked={form.isPublished} onChange={(event) => onChange('isPublished', event.target.checked)} />
             Publier

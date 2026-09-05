@@ -5,6 +5,7 @@ const emptyEventForm = {
   startsAt: '',
   endsAt: '',
   accessCode: '',
+  participantsCount: '',
   isPublished: true,
 };
 
@@ -45,11 +46,15 @@ function formFromEvent(event) {
     startsAt: toDatetimeLocal(event.startsAt),
     endsAt: toDatetimeLocal(event.endsAt),
     accessCode: event.accessCode || '',
+    participantsCount: event.participantsCount != null ? String(event.participantsCount) : '',
     isPublished: Boolean(event.isPublished),
   };
 }
 
 function buildEventPayload(form) {
+  const participantsRaw = String(form.participantsCount ?? '').trim();
+  const participantsCount = participantsRaw === '' ? null : Number(participantsRaw);
+
   return {
     title: form.title,
     description: form.description || null,
@@ -57,6 +62,7 @@ function buildEventPayload(form) {
     startsAt: fromDatetimeLocal(form.startsAt),
     endsAt: fromDatetimeLocal(form.endsAt),
     accessCode: form.accessCode || null,
+    participantsCount: Number.isFinite(participantsCount) && participantsCount >= 0 ? participantsCount : null,
     isPublished: form.isPublished,
   };
 }

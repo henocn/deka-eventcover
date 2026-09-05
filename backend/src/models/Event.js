@@ -43,6 +43,10 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(80),
         allowNull: true,
       },
+      participantsCount: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       coverMediaId: {
         type: DataTypes.INTEGER,
         allowNull: true,
