@@ -21,7 +21,7 @@ function formatNumber(value) {
   return new Intl.NumberFormat('fr-FR').format(value || 0);
 }
 
-// Formate les grands totaux : 1234 -> 1,234k ; 3111001 -> 3,112M (3 decimales max).
+// Formate les grands totaux : 1234 -> 1,23k ; 3111001 -> 3,11M.
 function formatCompactCount(value) {
   const amount = Number(value) || 0;
 
@@ -32,16 +32,14 @@ function formatCompactCount(value) {
   const unit = amount >= 1_000_000 ? 'M' : 'k';
   const divisor = amount >= 1_000_000 ? 1_000_000 : 1000;
   const scaled = amount / divisor;
-  const rounded = Math.round(scaled * 1000) / 1000;
-  const [integerPart, decimalPart = ''] = String(rounded).split('.');
-  const decimals = decimalPart.padEnd(3, '0').slice(0, 3);
-
-  return `${formatNumber(Number(integerPart))},${decimals}${unit}`;
+  const rounded = Math.round(scaled * 100) / 100;
+  return `${String(rounded).replace('.', ',')}${unit}`;
 }
 
 function AnalyticsPage() {
   const { events } = useEvents();
   const [selectedEventId, setSelectedEventId] = useState('');
+  const [period, setPeriod] = useState('month');
   const [analytics, setAnalytics] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -53,13 +51,13 @@ function AnalyticsPage() {
   const loadAnalytics = useCallback(async () => {
     setIsLoading(true);
     try {
-      setAnalytics(await fetchAnalytics(selectedEventId || null));
+      setAnalytics(await fetchAnalytics(selectedEventId || null, period));
     } catch (analyticsError) {
       toast.error(analyticsError.message);
     } finally {
       setIsLoading(false);
     }
-  }, [selectedEventId]);
+  }, [selectedEventId, period]);
 
   useEffect(() => {
     queueMicrotask(() => loadAnalytics());
@@ -113,41 +111,36 @@ function AnalyticsPage() {
       {analytics ? (
         <div className="grid gap-5">
           <div className="grid grid-cols-4 gap-4 max-[1180px]:grid-cols-2 max-[640px]:grid-cols-1">
-            <MetricCard icon={<ScanFace size={18} />}>
-              <div className="grid gap-3">
-                <div>
-                  <strong className="block text-3xl font-black tracking-normal">{formatNumber(totals.facesCount)}</strong>
-                  <p className="mt-1 text-sm font-bold text-neutral-500">Visages detectes</p>
-                </div>
-                <div className="border-t border-neutral-200 pt-3">
-                  <strong className="block text-2xl font-black tracking-normal">{formatNumber(totals.peopleEstimate)}</strong>
-                  <p className="mt-1 text-sm font-bold text-neutral-500">Personnes estimees</p>
-                </div>
-              </div>
-            </MetricCard>
+            <MetricCard
+              icon={<ScanFace size={18} />}
+              value={<span title={formatNumber(totals.facesCount)}>{formatCompactCount(totals.facesCount)}</span>}
+              label="Visages detectes"
+            />
+            <MetricCard
+              icon={<Image size={18} />}
+              value={<span title={formatNumber(totals.mediaCount)}>{formatCompactCount(totals.mediaCount)}</span>}
+              label="Photos"
+            />
             <MetricCard icon={<FolderOpen size={18} />}>
-              <div className="grid gap-3">
-                <div>
-                  <strong className="block text-3xl font-black tracking-normal">{formatNumber(totals.albumsCount)}</strong>
-                  <p className="mt-1 text-sm font-bold text-neutral-500">Albums</p>
-                </div>
-                <div className="border-t border-neutral-200 pt-3">
-                  <strong className="block text-2xl font-black tracking-normal">{formatNumber(totals.activeAlbumsCount)}</strong>
-                  <p className="mt-1 text-sm font-bold text-neutral-500">Albums actifs</p>
-                </div>
-              </div>
+              <strong className="block text-3xl font-black tracking-normal" title={`${formatNumber(totals.activeAlbumsCount)} / ${formatNumber(totals.albumsCount)}`}>
+                {formatNumber(totals.activeAlbumsCount)}/{formatNumber(totals.albumsCount)}
+              </strong>
+              <p className="mt-1 text-sm font-bold text-neutral-500">Albums actifs</p>
             </MetricCard>
-            <MetricCard icon={<Image size={18} />} value={formatNumber(totals.mediaCount)} label="Photos" />
             <MetricCard tone="engagement" icon={<Eye size={18} />}>
               <div className="grid gap-3">
                 <div>
-                  <strong className="block text-3xl font-black tracking-normal text-[#9cff00]">{formatCompactCount(totals.viewsCount)}</strong>
+                  <strong className="block text-3xl font-black tracking-normal text-[#9cff00]" title={formatNumber(totals.viewsCount)}>
+                    {formatCompactCount(totals.viewsCount)}
+                  </strong>
                   <p className="mt-1 text-sm font-bold text-white/70">Vues</p>
                 </div>
                 <div className="border-t border-white/15 pt-3">
                   <div className="flex items-center gap-2">
                     <ArrowDownToLine size={16} className="text-[#9cff00]" />
-                    <strong className="text-2xl font-black tracking-normal">{formatCompactCount(totals.downloadsCount)}</strong>
+                    <strong className="text-2xl font-black tracking-normal" title={formatNumber(totals.downloadsCount)}>
+                      {formatCompactCount(totals.downloadsCount)}
+                    </strong>
                   </div>
                   <p className="mt-1 text-sm font-bold text-white/70">Telechargements</p>
                 </div>
@@ -155,10 +148,12 @@ function AnalyticsPage() {
             </MetricCard>
           </div>
 
-          <div className="grid grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)] gap-5 max-[1080px]:grid-cols-1">
-            <ActivityChart points={analytics.activityTimeline || []} />
-            <TopAlbumsTable albums={analytics.topAlbums} />
-          </div>
+          <TopAlbumsTable albums={analytics.topAlbums} />
+          <ActivityChart
+            points={analytics.activityTimeline || []}
+            period={period}
+            onPeriodChange={setPeriod}
+          />
         </div>
       ) : null}
     </section>

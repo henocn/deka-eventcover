@@ -179,8 +179,11 @@ async function fetchStats(eventId) {
   return apiRequest(`/api/admin/events/${eventId}/stats`);
 }
 
-async function fetchAnalytics(eventId) {
-  const query = eventId ? `?${new URLSearchParams({ eventId })}` : '';
+async function fetchAnalytics(eventId, period = 'month') {
+  const params = new URLSearchParams();
+  if (eventId) params.set('eventId', eventId);
+  if (period) params.set('period', period);
+  const query = params.toString() ? `?${params}` : '';
   return apiRequest(`/api/admin/analytics${query}`);
 }
 
