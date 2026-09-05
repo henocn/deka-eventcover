@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Download, X } from 'lucide-react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getMediaUrl, getThumbnailUrl } from '../api';
+import { getMediaUrl, getThumbnailUrl, trackMediaView } from '../api';
 import { isDemoMedia } from '../utils/participantUtils';
 
 // Aperçu plein ecran : vignette WebP uniquement ; original reserve au telechargement.
@@ -16,6 +17,13 @@ function Lightbox({
   onTouchEnd,
 }) {
   const { t } = useTranslation();
+
+  // Compte une vue a chaque ouverture ou defilement d'image.
+  useEffect(() => {
+    if (!activeImage || isDemoMedia(activeImage)) return undefined;
+    trackMediaView(activeImage, accessCode, accessRole);
+    return undefined;
+  }, [activeImage?.id, accessCode, accessRole]);
 
   if (!activeImage) return null;
 

@@ -39,8 +39,21 @@ async function downloadMediaFile(req, res) {
   res.download(result.absolutePath, path.basename(result.media.originalName));
 }
 
+// Compte une vue pour l'apercu participant (ouverture ou defilement).
+async function recordMediaView(req, res) {
+  const result = await mediaService.recordPublicMediaView(
+    req.validated.params.mediaId,
+    req.validated.query.accessCode,
+    req.validated.query.role,
+    req,
+  );
+
+  res.json({ data: result });
+}
+
 module.exports = {
   sendMediaFile,
   sendMediaThumb,
   downloadMediaFile,
+  recordMediaView,
 };

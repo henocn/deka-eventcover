@@ -90,4 +90,20 @@ export function getThumbnailUrl(media, accessCode, role) {
   return getMediaUrl(media, accessCode, role, 'thumb');
 }
 
+// Enregistre une vue lors de l'ouverture ou du defilement de l'apercu.
+export async function trackMediaView(media, accessCode, role) {
+  if (!media?.id || String(media.id).startsWith('demo-')) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(withAccess(`/api/public/media/${media.id}/view`, accessCode, role), {
+      method: 'POST',
+    });
+    return parseResponse(response);
+  } catch {
+    return null;
+  }
+}
+
 export { API_URL };

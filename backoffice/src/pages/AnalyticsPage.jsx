@@ -1,17 +1,16 @@
 import {
   ArrowDownToLine,
-  BarChart3,
-  CalendarDays,
   Eye,
   FolderOpen,
   Image,
   Loader2,
   RefreshCw,
-  ShieldCheck,
+  ScanFace,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { fetchAnalytics } from '../api';
+import ActivityChart from '../components/analytics/ActivityChart';
 import MetricCard from '../components/analytics/MetricCard';
 import TopAlbumsTable from '../components/analytics/TopAlbumsTable';
 import { Button, Field, StatusPill } from '../components/ui';
@@ -20,6 +19,24 @@ import { inputClass } from '../utils/styleClasses';
 
 function formatNumber(value) {
   return new Intl.NumberFormat('fr-FR').format(value || 0);
+}
+
+// Formate les grands totaux : 1234 -> 1,234k ; 3111001 -> 3,112M (3 decimales max).
+function formatCompactCount(value) {
+  const amount = Number(value) || 0;
+
+  if (amount < 1000) {
+    return formatNumber(amount);
+  }
+
+  const unit = amount >= 1_000_000 ? 'M' : 'k';
+  const divisor = amount >= 1_000_000 ? 1_000_000 : 1000;
+  const scaled = amount / divisor;
+  const rounded = Math.round(scaled * 1000) / 1000;
+  const [integerPart, decimalPart = ''] = String(rounded).split('.');
+  const decimals = decimalPart.padEnd(3, '0').slice(0, 3);
+
+  return `${formatNumber(Number(integerPart))},${decimals}${unit}`;
 }
 
 function AnalyticsPage() {
@@ -49,8 +66,6 @@ function AnalyticsPage() {
   }, [loadAnalytics]);
 
   const totals = analytics?.totals || {};
-  const eventSummaries = analytics?.eventSummaries || [];
-  const maxEventMedia = Math.max(...eventSummaries.map((event) => event.mediaCount), 1);
 
   return (
     <section className="min-w-0 px-6 pb-8 pt-6 max-[760px]:p-4">
@@ -98,48 +113,50 @@ function AnalyticsPage() {
       {analytics ? (
         <div className="grid gap-5">
           <div className="grid grid-cols-4 gap-4 max-[1180px]:grid-cols-2 max-[640px]:grid-cols-1">
-            <MetricCard tone="dark" icon={<CalendarDays size={18} />} value={formatNumber(totals.eventsCount)} label="Evenements suivis" />
-            <MetricCard tone="accent" icon={<FolderOpen size={18} />} value={formatNumber(totals.albumsCount)} label="Albums photos" />
-            <MetricCard icon={<Image size={18} />} value={formatNumber(totals.mediaCount)} label="Medias uploades" />
-            <MetricCard icon={<ShieldCheck size={18} />} value={formatNumber(totals.badgesCount)} label="Badges d'acces" />
-            <MetricCard icon={<Eye size={18} />} value={formatNumber(totals.viewsCount)} label="Vues photos" />
-            <MetricCard icon={<ArrowDownToLine size={18} />} value={formatNumber(totals.downloadsCount)} label="Telechargements" />
-            <MetricCard icon={<BarChart3 size={18} />} value={formatNumber(totals.interactionsCount)} label="Interactions" />
-            <MetricCard icon={<FolderOpen size={18} />} value={formatNumber(totals.activeAlbumsCount)} label="Albums actifs" />
+            <MetricCard icon={<ScanFace size={18} />}>
+              <div className="grid gap-3">
+                <div>
+                  <strong className="block text-3xl font-black tracking-normal">{formatNumber(totals.facesCount)}</strong>
+                  <p className="mt-1 text-sm font-bold text-neutral-500">Visages detectes</p>
+                </div>
+                <div className="border-t border-neutral-200 pt-3">
+                  <strong className="block text-2xl font-black tracking-normal">{formatNumber(totals.peopleEstimate)}</strong>
+                  <p className="mt-1 text-sm font-bold text-neutral-500">Personnes estimees</p>
+                </div>
+              </div>
+            </MetricCard>
+            <MetricCard icon={<FolderOpen size={18} />}>
+              <div className="grid gap-3">
+                <div>
+                  <strong className="block text-3xl font-black tracking-normal">{formatNumber(totals.albumsCount)}</strong>
+                  <p className="mt-1 text-sm font-bold text-neutral-500">Albums</p>
+                </div>
+                <div className="border-t border-neutral-200 pt-3">
+                  <strong className="block text-2xl font-black tracking-normal">{formatNumber(totals.activeAlbumsCount)}</strong>
+                  <p className="mt-1 text-sm font-bold text-neutral-500">Albums actifs</p>
+                </div>
+              </div>
+            </MetricCard>
+            <MetricCard icon={<Image size={18} />} value={formatNumber(totals.mediaCount)} label="Photos" />
+            <MetricCard tone="engagement" icon={<Eye size={18} />}>
+              <div className="grid gap-3">
+                <div>
+                  <strong className="block text-3xl font-black tracking-normal text-[#9cff00]">{formatCompactCount(totals.viewsCount)}</strong>
+                  <p className="mt-1 text-sm font-bold text-white/70">Vues</p>
+                </div>
+                <div className="border-t border-white/15 pt-3">
+                  <div className="flex items-center gap-2">
+                    <ArrowDownToLine size={16} className="text-[#9cff00]" />
+                    <strong className="text-2xl font-black tracking-normal">{formatCompactCount(totals.downloadsCount)}</strong>
+                  </div>
+                  <p className="mt-1 text-sm font-bold text-white/70">Telechargements</p>
+                </div>
+              </div>
+            </MetricCard>
           </div>
 
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)] gap-5 max-[1080px]:grid-cols-1">
-            <section className="rounded-xl border border-neutral-400 bg-white p-5 shadow-sm">
-              <div className="mb-4">
-                <h3 className="text-lg font-black">Repartition par evenement</h3>
-                <p className="mt-1 text-sm font-bold text-neutral-500">Volume de medias et structure des collections.</p>
-              </div>
-              <div className="grid gap-3">
-                {eventSummaries.length === 0 ? (
-                  <div className="grid min-h-40 place-items-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-5 text-center text-sm font-extrabold text-neutral-500">
-                    Aucun evenement disponible.
-                  </div>
-                ) : null}
-                {eventSummaries.map((event) => (
-                  <article key={event.id} className="rounded-lg border border-neutral-300 bg-white p-3">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <strong className="min-w-0 truncate font-black">{event.title}</strong>
-                      <span className="shrink-0 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-black text-neutral-600">
-                        {event.albumsCount} albums
-                      </span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-neutral-100">
-                      <div className="h-full rounded-full bg-black" style={{ width: `${Math.max((event.mediaCount / maxEventMedia) * 100, event.mediaCount ? 8 : 0)}%` }} />
-                    </div>
-                    <div className="mt-2 flex justify-between text-xs font-black text-neutral-500">
-                      <span>{event.mediaCount} medias</span>
-                      <span>{event.badgesCount} badges</span>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
+            <ActivityChart points={analytics.activityTimeline || []} />
             <TopAlbumsTable albums={analytics.topAlbums} />
           </div>
         </div>

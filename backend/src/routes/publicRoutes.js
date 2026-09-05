@@ -48,6 +48,12 @@ router.get(
   validate(mediaFileSchema),
   asyncHandler(publicMediaController.sendMediaThumb)
 );
+router.post(
+  '/media/:mediaId/view',
+  mediaFileLimiter,
+  validate(mediaFileSchema),
+  asyncHandler(publicMediaController.recordMediaView)
+);
 router.get(
   '/media/:mediaId/file',
   mediaFileLimiter,

@@ -241,6 +241,13 @@ async function getMediaFileResponse(mediaId, accessCode, roleToken, req, action)
   };
 }
 
+// Enregistre une vue participant (apercu modal / defilement), sans servir le fichier.
+async function recordPublicMediaView(mediaId, accessCode, roleToken, req) {
+  const media = await getPublicMedia(mediaId, accessCode, roleToken);
+  await recordMediaStat(media, 'view', req);
+  return { id: media.id, action: 'view' };
+}
+
 async function getAdminMediaFileResponse(mediaId) {
   const media = await Media.findByPk(mediaId);
 
@@ -308,5 +315,6 @@ module.exports = {
   getMediaThumbResponse,
   getAdminMediaFileResponse,
   getAdminMediaThumbResponse,
+  recordPublicMediaView,
   deleteAdminMedia,
 };

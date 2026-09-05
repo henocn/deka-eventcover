@@ -1,4 +1,6 @@
-const { Event, Album, Media, MediaStat, AccessRole } = require('../models');
+const { Op } = require('sequelize');
+const { Event, Album, Media, MediaStat, AccessRole, FaceEmbedding } = require('../models');
+const env = require('../config/env');
 
 function buildWhere(eventId) {
   return eventId ? { eventId } : {};
@@ -15,27 +17,101 @@ function countByAction(stats) {
   );
 }
 
-async function getEventSummaries() {
-  const events = await Event.findAll({
-    attributes: ['id', 'title', 'slug', 'isPublished', 'startsAt', 'createdAt'],
-    include: [
-      { model: Album, as: 'albums', attributes: ['id'], required: false },
-      { model: Media, as: 'media', attributes: ['id'], required: false },
-      { model: AccessRole, as: 'accessRoles', attributes: ['id'], required: false },
-    ],
-    order: [['createdAt', 'DESC']],
+function cosineSimilarity(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return -1;
+
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let index = 0; index < a.length; index += 1) {
+    dot += a[index] * b[index];
+    normA += a[index] * a[index];
+    normB += b[index] * b[index];
+  }
+
+  if (!normA || !normB) return -1;
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+// Compte les visages detectes et estime le nombre de personnes uniques.
+async function getFaceStats(eventId) {
+  const faces = await FaceEmbedding.findAll({
+    where: buildWhere(eventId),
+    attributes: ['embedding'],
   });
 
-  return events.map((event) => ({
-    id: event.id,
-    title: event.title,
-    slug: event.slug,
-    isPublished: event.isPublished,
-    startsAt: event.startsAt,
-    albumsCount: event.albums?.length || 0,
-    mediaCount: event.media?.length || 0,
-    badgesCount: event.accessRoles?.length || 0,
-  }));
+  const facesCount = faces.length;
+  if (facesCount === 0) {
+    return { facesCount: 0, peopleEstimate: 0 };
+  }
+
+  const representatives = [];
+  const threshold = env.faceMatchThreshold;
+
+  for (const face of faces) {
+    const embedding = Array.isArray(face.embedding) ? face.embedding : null;
+    if (!embedding) continue;
+
+    const alreadySeen = representatives.some(
+      (representative) => cosineSimilarity(representative, embedding) >= threshold,
+    );
+
+    if (!alreadySeen) {
+      representatives.push(embedding);
+    }
+  }
+
+  return {
+    facesCount,
+    peopleEstimate: representatives.length,
+  };
+}
+
+function toDayKey(dateValue) {
+  const date = new Date(dateValue);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Construit la courbe journaliere des vues et telechargements.
+async function getActivityTimeline(eventId) {
+  const stats = await MediaStat.findAll({
+    where: {
+      ...buildWhere(eventId),
+      action: { [Op.in]: ['view', 'download'] },
+    },
+    attributes: ['action', 'createdAt'],
+    order: [['createdAt', 'ASC']],
+  });
+
+  if (stats.length === 0) {
+    return [];
+  }
+
+  const byDay = new Map();
+
+  stats.forEach((stat) => {
+    const day = toDayKey(stat.createdAt);
+    const current = byDay.get(day) || { date: day, views: 0, downloads: 0 };
+    if (stat.action === 'view') current.views += 1;
+    if (stat.action === 'download') current.downloads += 1;
+    byDay.set(day, current);
+  });
+
+  const days = [...byDay.keys()].sort();
+  const first = new Date(`${days[0]}T12:00:00`);
+  const last = new Date(`${days[days.length - 1]}T12:00:00`);
+  const timeline = [];
+
+  for (let cursor = new Date(first); cursor <= last; cursor.setDate(cursor.getDate() + 1)) {
+    const key = toDayKey(cursor);
+    timeline.push(byDay.get(key) || { date: key, views: 0, downloads: 0 });
+  }
+
+  return timeline;
 }
 
 async function getAlbumLeaderboard(eventId) {
@@ -100,8 +176,9 @@ async function getAnalytics({ eventId } = {}) {
     activeAlbumsCount,
     mediaCount,
     badgesCount,
+    faceStats,
     stats,
-    eventSummaries,
+    activityTimeline,
     topAlbums,
   ] = await Promise.all([
     Event.count(eventId ? { where: { id: eventId } } : undefined),
@@ -110,8 +187,9 @@ async function getAnalytics({ eventId } = {}) {
     Album.count({ where: { ...where, isPublished: true } }),
     Media.count({ where }),
     AccessRole.count({ where }),
+    getFaceStats(eventId),
     MediaStat.findAll({ where: { ...where, action: ['view', 'download'] }, attributes: ['action'] }),
-    getEventSummaries(),
+    getActivityTimeline(eventId),
     getAlbumLeaderboard(eventId),
   ]);
 
@@ -130,11 +208,12 @@ async function getAnalytics({ eventId } = {}) {
       activeAlbumsCount,
       mediaCount,
       badgesCount,
+      facesCount: faceStats.facesCount,
+      peopleEstimate: faceStats.peopleEstimate,
       viewsCount: actionCounts.views,
       downloadsCount: actionCounts.downloads,
-      interactionsCount: actionCounts.views + actionCounts.downloads,
     },
-    eventSummaries,
+    activityTimeline,
     topAlbums,
   };
 }

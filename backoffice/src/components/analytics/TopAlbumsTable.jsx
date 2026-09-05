@@ -1,6 +1,24 @@
 import { ArrowDownToLine, Eye, FolderOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+// Formate les grands totaux : 1234 -> 1,234k ; 3111001 -> 3,112M.
+function formatCompactCount(value) {
+  const amount = Number(value) || 0;
+
+  if (amount < 1000) {
+    return new Intl.NumberFormat('fr-FR').format(amount);
+  }
+
+  const unit = amount >= 1_000_000 ? 'M' : 'k';
+  const divisor = amount >= 1_000_000 ? 1_000_000 : 1000;
+  const scaled = amount / divisor;
+  const rounded = Math.round(scaled * 1000) / 1000;
+  const [integerPart, decimalPart = ''] = String(rounded).split('.');
+  const decimals = decimalPart.padEnd(3, '0').slice(0, 3);
+
+  return `${new Intl.NumberFormat('fr-FR').format(Number(integerPart))},${decimals}${unit}`;
+}
+
 function TopAlbumsTable({ albums = [] }) {
   const navigate = useNavigate();
 
@@ -37,11 +55,11 @@ function TopAlbumsTable({ albums = [] }) {
             <span className="flex items-center gap-2 text-xs font-black text-neutral-700">
               <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-1">
                 <Eye size={13} />
-                {album.views}
+                {formatCompactCount(album.views)}
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-[#9cff00] px-2 py-1 text-black">
                 <ArrowDownToLine size={13} />
-                {album.downloads}
+                {formatCompactCount(album.downloads)}
               </span>
             </span>
           </button>
