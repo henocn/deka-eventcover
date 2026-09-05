@@ -141,7 +141,7 @@ function AnalyticsPage() {
                       {formatCompactCount(totals.downloadsCount)}
                     </strong>
                   </div>
-                  <p className="mt-0.5 text-xs text-neutral-500">Telechargements</p>
+                  <p className="mt-0.5 text-xs text-neutral-500">Téléch.</p>
                 </div>
               </div>
             </MetricCard>

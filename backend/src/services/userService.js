@@ -98,11 +98,22 @@ async function deleteUser(userId, currentUser) {
     throw httpError(400, 'Vous ne pouvez pas supprimer votre propre compte.');
   }
 
-  await user.update({ isActive: false });
+  // Soft delete si actif, suppression definitive si deja inactif.
+  if (user.isActive) {
+    await user.update({ isActive: false });
+    return {
+      id: user.id,
+      deleted: true,
+      hardDeleted: false,
+    };
+  }
+
+  await user.destroy();
 
   return {
     id: user.id,
     deleted: true,
+    hardDeleted: true,
   };
 }
 

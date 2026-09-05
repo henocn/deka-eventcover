@@ -80,7 +80,7 @@ function ActivityChart({ points = [], period = 'day', onPeriodChange }) {
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-neutral-900" />
-              Telechargements
+              Telech.
             </span>
           </div>
           <div className="inline-flex rounded-md border border-neutral-200 bg-neutral-50 p-0.5">
