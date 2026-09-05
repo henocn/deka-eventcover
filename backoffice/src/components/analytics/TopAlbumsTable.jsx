@@ -55,21 +55,21 @@ function TopAlbumsTable({ albums = [] }) {
                 }`}
                 onClick={() => navigate(`/albums/${album.slug}`)}
               >
-                <span className="grid h-6 w-6 place-items-center rounded-full border border-black text-[11px] font-semibold tabular-nums text-neutral-900">
+                <span className="grid h-6 w-6 place-items-center rounded-full border border-black bg-[#9cff00] text-[11px] font-semibold tabular-nums text-black">
                   {index + 1}
                 </span>
                 <span className="min-w-0">
                   <strong className="block truncate text-sm font-semibold text-neutral-900">{album.title}</strong>
                   <span className="mt-0.5 block truncate text-xs text-neutral-500">{album.event?.title}</span>
                 </span>
-                <span className="flex items-center gap-2 text-xs font-medium text-neutral-600">
+                <span className="flex items-center gap-2 text-xs font-semibold text-neutral-800">
                   <span className="inline-flex items-center gap-1 rounded border border-black/25 bg-white px-1.5 py-0.5" title={formatNumber(album.views)}>
                     <Eye size={12} className="text-neutral-400" />
-                    {formatCompactCount(album.views)}
+                    <strong className="font-semibold">{formatCompactCount(album.views)}</strong>
                   </span>
                   <span className="inline-flex items-center gap-1 rounded border border-black/25 bg-neutral-50 px-1.5 py-0.5" title={formatNumber(album.downloads)}>
                     <ArrowDownToLine size={12} className="text-neutral-500" />
-                    {formatCompactCount(album.downloads)}
+                    <strong className="font-semibold">{formatCompactCount(album.downloads)}</strong>
                   </span>
                 </span>
               </button>
