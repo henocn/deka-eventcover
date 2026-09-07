@@ -16,7 +16,15 @@ const mediaFileSchema = z.object({
   }),
 });
 
+const moveMediaSchema = z.object({
+  body: z.object({
+    mediaIds: z.array(z.coerce.number().int().positive()).min(1, 'Au moins un media est requis'),
+    targetAlbumId: z.coerce.number().int().positive(),
+  }),
+});
+
 module.exports = {
   albumIdParamSchema,
   mediaFileSchema,
+  moveMediaSchema,
 };

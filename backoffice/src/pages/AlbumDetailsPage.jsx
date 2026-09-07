@@ -1,11 +1,12 @@
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, Image, Images, Loader2, Trash2, Upload, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, FolderInput, Image, Images, Loader2, Trash2, Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { deleteMedia, fetchAlbum, uploadAlbumMedia } from '../api';
+import { deleteMedia, fetchAlbum, moveMedia, uploadAlbumMedia } from '../api';
 import AdminMediaImage from '../components/media/AdminMediaImage';
-import { Button } from '../components/ui';
+import { Button, Field } from '../components/ui';
 import useEvents from '../hooks/useEvents';
+import { inputClass } from '../utils/styleClasses';
 
 const MAX_UPLOAD_FILES = 100;
 const UPLOAD_BATCH_SIZE = 10;
@@ -34,11 +35,24 @@ function AlbumDetailsPage() {
     () => events.flatMap((event) => event.albums || []).find((album) => album.slug === slug) || null,
     [events, slug],
   );
+  const parentEvent = useMemo(
+    () => events.find((event) => (event.albums || []).some((album) => album.id === routeAlbum?.id)) || null,
+    [events, routeAlbum?.id],
+  );
+  const siblingAlbums = useMemo(
+    () => (parentEvent?.albums || [])
+      .filter((album) => album.id !== routeAlbum?.id)
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0) || a.id - b.id),
+    [parentEvent?.albums, routeAlbum?.id],
+  );
   const albumId = routeAlbum?.id || null;
   const [album, setAlbum] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+  const [targetAlbumId, setTargetAlbumId] = useState('');
   const [previewIndex, setPreviewIndex] = useState(null);
   const [selectedMediaIds, setSelectedMediaIds] = useState([]);
 
@@ -97,6 +111,7 @@ function AlbumDetailsPage() {
   const imageMedia = media.filter((item) => item.type === 'image');
   const previewMedia = previewIndex !== null ? imageMedia[previewIndex] : null;
   const selectedCount = selectedMediaIds.length;
+  const isBusy = isDeleting || isMoving;
 
   function removeMediaFromState(mediaIds, { keepPreview = false } = {}) {
     const idSet = new Set(mediaIds.map(Number));
@@ -143,6 +158,46 @@ function AlbumDetailsPage() {
     ));
   }
 
+  function openMoveModal() {
+    if (selectedMediaIds.length === 0) return;
+    if (siblingAlbums.length === 0) {
+      toast.error('Aucun autre album disponible dans cet evenement.');
+      return;
+    }
+    setTargetAlbumId(String(siblingAlbums[0].id));
+    setIsMoveModalOpen(true);
+  }
+
+  function closeMoveModal() {
+    setIsMoveModalOpen(false);
+    setTargetAlbumId('');
+  }
+
+  async function confirmMoveSelectedMedia() {
+    if (selectedMediaIds.length === 0 || !targetAlbumId) return;
+
+    const idsToMove = [...selectedMediaIds];
+    const destination = siblingAlbums.find((item) => item.id === Number(targetAlbumId));
+    setIsMoving(true);
+    const toastId = toast.loading('Deplacement en cours...');
+
+    try {
+      await moveMedia(idsToMove, Number(targetAlbumId));
+      removeMediaFromState(idsToMove);
+      closeMoveModal();
+      toast.success(
+        `${idsToMove.length} image(s) deplacee(s)${destination ? ` vers "${destination.title}"` : ''}`,
+        { id: toastId },
+      );
+      await loadEvents();
+    } catch (moveError) {
+      toast.error(moveError.message, { id: toastId });
+      await loadAlbum();
+    } finally {
+      setIsMoving(false);
+    }
+  }
+
   async function deleteOneMedia(mediaId) {
     const confirmed = window.confirm('Supprimer cette image ?');
     if (!confirmed) return;
@@ -162,7 +217,7 @@ function AlbumDetailsPage() {
   }
 
   async function deletePreviewMedia() {
-    if (!previewMedia || isDeleting) return;
+    if (!previewMedia || isBusy) return;
 
     const confirmed = window.confirm('Supprimer cette image ?');
     if (!confirmed) return;
@@ -196,7 +251,7 @@ function AlbumDetailsPage() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [goToPreview, previewIndex, previewMedia, isDeleting]);
+  }, [goToPreview, previewIndex, previewMedia, isBusy]);
 
   async function deleteSelectedMedia() {
     if (selectedMediaIds.length === 0) return;
@@ -278,15 +333,26 @@ function AlbumDetailsPage() {
                 )}
               </div>
               {selectedCount > 0 ? (
-                <button
-                  type="button"
-                  className="inline-flex min-h-[36px] items-center gap-2 rounded border border-red-600 bg-red-600 px-3 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isDeleting}
-                  onClick={deleteSelectedMedia}
-                >
-                  <Trash2 size={15} />
-                  Supprimer {selectedCount}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    className="inline-flex min-h-[36px] items-center gap-2 rounded border border-black bg-white px-3 text-sm font-black text-neutral-950 transition hover:border-[#9cff00] hover:ring-1 hover:ring-[#9cff00]/70 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isBusy}
+                    onClick={openMoveModal}
+                  >
+                    <FolderInput size={15} />
+                    Deplacer {selectedCount}
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex min-h-[36px] items-center gap-2 rounded border border-red-600 bg-red-600 px-3 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isBusy}
+                    onClick={deleteSelectedMedia}
+                  >
+                    <Trash2 size={15} />
+                    Supprimer {selectedCount}
+                  </button>
+                </div>
               ) : null}
             </div>
           </div>
@@ -328,7 +394,7 @@ function AlbumDetailsPage() {
                           event.stopPropagation();
                           toggleMediaSelection(item.id);
                         }}
-                        disabled={isDeleting}
+                        disabled={isBusy}
                         title="Selectionner"
                       >
                         {selectedMediaIds.includes(item.id) ? <Check size={16} /> : null}
@@ -340,7 +406,7 @@ function AlbumDetailsPage() {
                           event.stopPropagation();
                           deleteOneMedia(item.id);
                         }}
-                        disabled={isDeleting}
+                        disabled={isBusy}
                         title="Supprimer"
                       >
                         <Trash2 size={16} />
@@ -351,6 +417,47 @@ function AlbumDetailsPage() {
               </figure>
             ))}
           </div>
+        </div>
+      ) : null}
+
+      {isMoveModalOpen ? (
+        <div className="fixed inset-0 z-40 grid place-items-center bg-black/45 p-4" onMouseDown={closeMoveModal}>
+          <section
+            className="w-[min(420px,100%)] rounded-lg border border-black bg-white p-5 shadow-lg"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-3 border-b border-black/15 pb-3">
+              <div>
+                <p className="text-xs font-medium text-neutral-500">Deplacement</p>
+                <h3 className="mt-0.5 text-lg font-semibold tracking-tight text-neutral-950">
+                  Deplacer {selectedCount} image{selectedCount > 1 ? 's' : ''}
+                </h3>
+              </div>
+              <Button tone="soft" className="h-8 min-h-0 w-8 px-0" onClick={closeMoveModal}>
+                <X size={16} />
+              </Button>
+            </div>
+
+            <Field label="Album de destination">
+              <select
+                className={`${inputClass} min-h-[38px]`}
+                value={targetAlbumId}
+                onChange={(event) => setTargetAlbumId(event.target.value)}
+              >
+                {siblingAlbums.map((item) => (
+                  <option key={item.id} value={item.id}>{item.title}</option>
+                ))}
+              </select>
+            </Field>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <Button tone="soft" onClick={closeMoveModal} disabled={isMoving}>Annuler</Button>
+              <Button onClick={confirmMoveSelectedMedia} disabled={isMoving || !targetAlbumId}>
+                {isMoving ? <Loader2 className="animate-spin" size={16} /> : <FolderInput size={16} />}
+                Deplacer
+              </Button>
+            </div>
+          </section>
         </div>
       ) : null}
 

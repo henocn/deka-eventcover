@@ -50,8 +50,33 @@ async function deleteAdminMedia(req, res) {
   res.json({ data: { id: result.mediaId } });
 }
 
+async function moveMedia(req, res) {
+  const result = await mediaService.moveMediaToAlbum(
+    req.validated.body.mediaIds,
+    req.validated.body.targetAlbumId,
+  );
+  const io = req.app.get('io');
+
+  if (io) {
+    io.to(`event:${result.event.slug}`).emit('media:moved', {
+      eventId: result.event.id,
+      albumId: result.album.id,
+      mediaIds: result.mediaIds,
+    });
+  }
+
+  res.json({
+    data: {
+      movedCount: result.movedCount,
+      targetAlbumId: result.album.id,
+      mediaIds: result.mediaIds,
+    },
+  });
+}
+
 module.exports = {
   deleteAdminMedia,
+  moveMedia,
   uploadAlbumMedia,
   sendAdminMediaFile,
   sendAdminMediaThumb,

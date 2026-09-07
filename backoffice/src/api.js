@@ -176,6 +176,13 @@ async function deleteMedia(mediaId) {
   });
 }
 
+async function moveMedia(mediaIds, targetAlbumId) {
+  return apiRequest('/api/admin/media/move', {
+    method: 'POST',
+    body: JSON.stringify({ mediaIds, targetAlbumId }),
+  });
+}
+
 async function deleteEvent(eventId) {
   return apiRequest(`/api/admin/events/${eventId}`, {
     method: 'DELETE',
@@ -245,6 +252,7 @@ export {
   getStoredUser,
   getToken,
   login,
+  moveMedia,
   reorderAlbums,
   updateAlbum,
   updateAccessRole,

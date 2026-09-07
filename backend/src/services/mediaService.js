@@ -1,7 +1,9 @@
 const crypto = require('crypto');
 const fs = require('fs/promises');
 const path = require('path');
-const { Album, Event, Media, MediaStat, AccessRole } = require('../models');
+const { Album, Event, Media, MediaStat, AccessRole, FaceEmbedding } = require('../models');
+const { Op } = require('sequelize');
+const { sequelize } = require('../config/database');
 const env = require('../config/env');
 const httpError = require('../utils/httpError');
 const { getMediaType } = require('../middlewares/upload');
@@ -309,6 +311,105 @@ async function deleteAdminMedia(mediaId) {
   };
 }
 
+// Deplace des medias vers un autre album du meme evenement.
+async function moveMediaToAlbum(mediaIds, targetAlbumId) {
+  const uniqueMediaIds = [...new Set((mediaIds || []).map(Number).filter(Boolean))];
+
+  if (uniqueMediaIds.length === 0) {
+    throw httpError(400, 'Au moins un media est requis.');
+  }
+
+  const targetAlbum = await getAlbumWithEvent(targetAlbumId);
+  const mediaItems = await Media.findAll({
+    where: { id: { [Op.in]: uniqueMediaIds } },
+    include: [
+      {
+        model: Album,
+        as: 'album',
+        required: true,
+        attributes: ['id', 'coverMediaId'],
+      },
+    ],
+  });
+
+  if (mediaItems.length !== uniqueMediaIds.length) {
+    throw httpError(404, 'Un ou plusieurs medias sont introuvables.');
+  }
+
+  const invalidMedia = mediaItems.find((item) => item.eventId !== targetAlbum.eventId);
+  if (invalidMedia) {
+    throw httpError(400, 'Les medias doivent appartenir au meme evenement que l album cible.');
+  }
+
+  const alreadyInTarget = mediaItems.every((item) => item.albumId === targetAlbum.id);
+  if (alreadyInTarget) {
+    throw httpError(400, 'Les medias sont deja dans cet album.');
+  }
+
+  const sourceAlbumIdsNeedingCoverClear = [
+    ...new Set(
+      mediaItems
+        .filter((item) => (
+          item.albumId !== targetAlbum.id
+          && item.album?.coverMediaId
+          && uniqueMediaIds.includes(Number(item.album.coverMediaId))
+        ))
+        .map((item) => item.albumId),
+    ),
+  ];
+
+  const currentMaxSortOrder = await Media.max('sortOrder', { where: { albumId: targetAlbum.id } });
+  let nextSortOrder = Number.isFinite(currentMaxSortOrder) ? currentMaxSortOrder + 1 : 0;
+
+  await sequelize.transaction(async (transaction) => {
+    for (const media of mediaItems) {
+      if (media.albumId === targetAlbum.id) continue;
+
+      await media.update(
+        {
+          albumId: targetAlbum.id,
+          sortOrder: nextSortOrder,
+        },
+        { transaction },
+      );
+      nextSortOrder += 1;
+    }
+
+    await FaceEmbedding.update(
+      { albumId: targetAlbum.id },
+      {
+        where: { mediaId: { [Op.in]: uniqueMediaIds } },
+        transaction,
+      },
+    );
+
+    await MediaStat.update(
+      { albumId: targetAlbum.id },
+      {
+        where: { mediaId: { [Op.in]: uniqueMediaIds } },
+        transaction,
+      },
+    );
+
+    if (sourceAlbumIdsNeedingCoverClear.length > 0) {
+      await Album.update(
+        { coverMediaId: null },
+        {
+          where: { id: { [Op.in]: sourceAlbumIdsNeedingCoverClear } },
+          transaction,
+        },
+      );
+    }
+  });
+
+  return {
+    event: targetAlbum.event,
+    album: targetAlbum,
+    mediaIds: uniqueMediaIds,
+    movedCount: uniqueMediaIds.length,
+  };
+}
+
 module.exports = {
   uploadAlbumMedia,
   getMediaFileResponse,
@@ -317,4 +418,5 @@ module.exports = {
   getAdminMediaThumbResponse,
   recordPublicMediaView,
   deleteAdminMedia,
+  moveMediaToAlbum,
 };

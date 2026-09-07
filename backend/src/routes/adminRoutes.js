@@ -23,7 +23,7 @@ const {
   createAccessRoleSchema,
   updateAccessRoleSchema,
 } = require('../validators/eventValidators');
-const { albumIdParamSchema, mediaFileSchema } = require('../validators/mediaValidators');
+const { albumIdParamSchema, mediaFileSchema, moveMediaSchema } = require('../validators/mediaValidators');
 const { createUserSchema, updateUserSchema, userIdParamSchema } = require('../validators/userValidators');
 
 const router = express.Router();
@@ -141,6 +141,11 @@ router.delete(
   '/media/:mediaId',
   validate(mediaFileSchema),
   asyncHandler(adminMediaController.deleteAdminMedia)
+);
+router.post(
+  '/media/move',
+  validate(moveMediaSchema),
+  asyncHandler(adminMediaController.moveMedia)
 );
 
 module.exports = router;
