@@ -59,6 +59,20 @@ async function deleteAlbum(req, res) {
   res.json({ data: result });
 }
 
+async function reorderAlbums(req, res) {
+  const albums = await eventService.reorderAlbums(
+    req.validated.params.eventId,
+    req.validated.body.albumIds,
+  );
+  const io = req.app.get('io');
+
+  await emitToEventRoom(io, req.validated.params.eventId, 'album:updated', {
+    eventId: req.validated.params.eventId,
+  });
+
+  res.json({ data: albums });
+}
+
 async function getEventQrCode(req, res) {
   const event = await eventService.getEventById(req.validated.params.eventId);
   const publicUrl = eventService.buildParticipantUrl(event);
@@ -130,6 +144,7 @@ module.exports = {
   deleteEvent,
   createAlbum,
   updateAlbum,
+  reorderAlbums,
   getAlbum,
   deleteAlbum,
   getEventQrCode,

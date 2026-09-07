@@ -1,8 +1,8 @@
-import { Edit3, FileImage, FolderPlus, Image, Loader2, LockKeyhole, Plus, Trash2, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Edit3, FileImage, FolderPlus, GripVertical, Image, Loader2, LockKeyhole, Plus, Trash2, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { createAlbum, deleteAlbum, fetchAccessRoles, updateAlbum } from '../api';
+import { createAlbum, deleteAlbum, fetchAccessRoles, reorderAlbums, updateAlbum } from '../api';
 import AdminMediaImage from '../components/media/AdminMediaImage';
 import { Button, Field } from '../components/ui';
 import useEvents from '../hooks/useEvents';
@@ -24,6 +24,14 @@ function albumCover(album) {
   return album.coverMedia || album.media?.find((item) => item.type === 'image') || null;
 }
 
+function sortAlbums(albums) {
+  return [...(albums || [])].sort((a, b) => {
+    const orderDiff = (a.sortOrder || 0) - (b.sortOrder || 0);
+    return orderDiff !== 0 ? orderDiff : a.id - b.id;
+  });
+}
+
+// Page de gestion des albums avec reordonnancement par glisser-deposer.
 function AlbumsPage() {
   const navigate = useNavigate();
   const { events, loadEvents } = useEvents();
@@ -35,15 +43,23 @@ function AlbumsPage() {
   const [isCoverPickerOpen, setIsCoverPickerOpen] = useState(false);
   const [isLoadingRoles, setIsLoadingRoles] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [orderedAlbums, setOrderedAlbums] = useState([]);
+  const [draggingAlbumId, setDraggingAlbumId] = useState(null);
+  const [dragOverAlbumId, setDragOverAlbumId] = useState(null);
+  const [isReordering, setIsReordering] = useState(false);
+  const dragAlbumIdRef = useRef(null);
 
   const effectiveSelectedEventId = selectedEventId || events[0]?.id || null;
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === effectiveSelectedEventId) || null,
     [effectiveSelectedEventId, events],
   );
-  const albums = selectedEvent?.albums || [];
   const coverOptions = (editingAlbum?.media || []).filter((item) => item.type === 'image');
   const selectedCover = coverOptions.find((media) => media.id === Number(form.coverMediaId)) || null;
+
+  useEffect(() => {
+    setOrderedAlbums(sortAlbums(selectedEvent?.albums || []));
+  }, [selectedEvent?.albums]);
 
   useEffect(() => {
     if (!selectedEvent?.id) return;
@@ -162,11 +178,59 @@ function AlbumsPage() {
     }
   }
 
+  function handleDragStart(albumId) {
+    dragAlbumIdRef.current = albumId;
+    setDraggingAlbumId(albumId);
+  }
+
+  function handleDragOver(event, albumId) {
+    event.preventDefault();
+    if (dragOverAlbumId !== albumId) setDragOverAlbumId(albumId);
+  }
+
+  function handleDragEnd() {
+    dragAlbumIdRef.current = null;
+    setDraggingAlbumId(null);
+    setDragOverAlbumId(null);
+  }
+
+  async function handleDrop(targetAlbumId) {
+    const sourceAlbumId = dragAlbumIdRef.current;
+    handleDragEnd();
+
+    if (!selectedEvent?.id || !sourceAlbumId || sourceAlbumId === targetAlbumId || isReordering) {
+      return;
+    }
+
+    const fromIndex = orderedAlbums.findIndex((album) => album.id === sourceAlbumId);
+    const toIndex = orderedAlbums.findIndex((album) => album.id === targetAlbumId);
+    if (fromIndex < 0 || toIndex < 0) return;
+
+    const previousOrder = orderedAlbums;
+    const nextOrder = [...orderedAlbums];
+    const [moved] = nextOrder.splice(fromIndex, 1);
+    nextOrder.splice(toIndex, 0, moved);
+    setOrderedAlbums(nextOrder);
+
+    setIsReordering(true);
+    try {
+      await reorderAlbums(selectedEvent.id, nextOrder.map((album) => album.id));
+      await loadEvents();
+      toast.success('Ordre des albums mis a jour');
+    } catch (reorderError) {
+      setOrderedAlbums(previousOrder);
+      toast.error(reorderError.message);
+    } finally {
+      setIsReordering(false);
+    }
+  }
+
   return (
     <section className="min-w-0 px-6 pb-8 pt-6 max-[760px]:p-4">
-      <div className="mb-5 pb-7 flex items-center justify-between gap-3.5 max-[760px]:flex-col max-[760px]:items-stretch">
+      <div className="mb-5 flex items-end justify-between gap-3.5 pb-7 max-[760px]:flex-col max-[760px]:items-stretch">
         <div>
           <h2 className="text-[22px] font-black">Albums photos</h2>
+          <p className="mt-1 text-sm font-bold text-neutral-500">Glissez les albums pour definir leur ordre d affichage.</p>
         </div>
         <div className="flex items-end gap-3 max-[760px]:items-stretch">
           <Field className="w-[min(360px,52vw)] max-[760px]:w-full">
@@ -185,22 +249,57 @@ function AlbumsPage() {
       </div>
 
       <div className="grid min-w-0 grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))] gap-5">
-        {albums.length === 0 ? (
+        {orderedAlbums.length === 0 ? (
           <div className="grid min-h-[260px] place-items-center content-center gap-2 rounded border border-neutral-300 bg-white p-6 font-extrabold text-neutral-500">
             <Image size={24} />
             <p>Aucun album pour cet evenement.</p>
           </div>
         ) : null}
-        {albums.map((album) => {
+        {orderedAlbums.map((album, index) => {
           const cover = albumCover(album);
           const fileCount = albumFileCount(album);
+          const isDragging = draggingAlbumId === album.id;
+          const isDropTarget = dragOverAlbumId === album.id && draggingAlbumId !== album.id;
 
           return (
             <article
-              className="group relative min-w-0 cursor-pointer overflow-hidden rounded-xl border border-neutral-400 bg-white transition hover:-translate-y-0.5 hover:border-[#9cff00] hover:ring-2 hover:ring-[#9cff00]/70"
+              className={`group relative min-w-0 cursor-pointer overflow-hidden rounded-xl border bg-white transition hover:-translate-y-0.5 hover:border-[#9cff00] hover:ring-2 hover:ring-[#9cff00]/70 ${
+                isDragging ? 'border-black opacity-60' : isDropTarget ? 'border-[#9cff00] ring-2 ring-[#9cff00]/70' : 'border-neutral-400'
+              }`}
               key={album.id}
               onClick={() => navigate(`/albums/${album.slug}`)}
+              onDragOver={(event) => handleDragOver(event, album.id)}
+              onDrop={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                handleDrop(album.id);
+              }}
+              onDragLeave={() => {
+                if (dragOverAlbumId === album.id) setDragOverAlbumId(null);
+              }}
             >
+              <div className="absolute left-3 top-3 z-20 flex items-center gap-2">
+                <button
+                  className="grid h-9 w-9 cursor-grab place-items-center rounded-full border border-white/25 bg-black/80 text-white shadow-lg backdrop-blur transition hover:bg-black active:cursor-grabbing"
+                  type="button"
+                  draggable
+                  title="Glisser pour reordonner"
+                  onClick={(event) => event.stopPropagation()}
+                  onDragStart={(event) => {
+                    event.stopPropagation();
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', String(album.id));
+                    handleDragStart(album.id);
+                  }}
+                  onDragEnd={handleDragEnd}
+                >
+                  <GripVertical size={15} />
+                </button>
+                <span className="inline-flex min-h-[25px] items-center rounded-full border border-black bg-[#9cff00] px-2.5 text-[11px] font-black text-black">
+                  #{index + 1}
+                </span>
+              </div>
+
               <div className="absolute right-3 top-3 z-20 flex gap-2">
                 <button className="grid h-9 w-9 place-items-center rounded-full border border-white/25 bg-black/80 text-white shadow-lg backdrop-blur transition hover:bg-black" type="button" onClick={(event) => { event.stopPropagation(); editAlbum(album); }} title="Modifier">
                   <Edit3 size={15} />

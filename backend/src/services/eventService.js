@@ -240,6 +240,11 @@ async function listEvents() {
         as: 'albums',
         attributes: albumPublicAttributes,
         required: false,
+        separate: true,
+        order: [
+          ['sortOrder', 'ASC'],
+          ['id', 'ASC'],
+        ],
         include: [
           {
             model: Media,
@@ -266,7 +271,11 @@ async function getEventById(eventId) {
         model: Album,
         as: 'albums',
         required: false,
-        order: [['sortOrder', 'ASC']],
+        separate: true,
+        order: [
+          ['sortOrder', 'ASC'],
+          ['id', 'ASC'],
+        ],
       },
     ],
   });
@@ -319,6 +328,11 @@ async function createAlbum(eventId, payload) {
   nextPayload.eventId = eventId;
   nextPayload.slug = await buildUniqueAlbumSlug(eventId, nextPayload.slug);
 
+  if (nextPayload.sortOrder === undefined) {
+    const currentMaxSortOrder = await Album.max('sortOrder', { where: { eventId } });
+    nextPayload.sortOrder = (Number(currentMaxSortOrder) || 0) + 1;
+  }
+
   const album = await Album.create(nextPayload);
 
   if (accessRoleIds) {
@@ -326,6 +340,46 @@ async function createAlbum(eventId, payload) {
   }
 
   return album.reload();
+}
+
+// Reordonne les albums d'un evenement selon la liste d'ids fournie.
+async function reorderAlbums(eventId, albumIds) {
+  await getEventById(eventId);
+
+  const albums = await Album.findAll({
+    where: { eventId },
+    attributes: ['id'],
+  });
+
+  if (albums.length === 0) {
+    return [];
+  }
+
+  if (albumIds.length !== albums.length) {
+    throw httpError(400, 'La liste des albums a reordonner est incomplete.');
+  }
+
+  const ownedIds = new Set(albums.map((album) => album.id));
+  const uniqueIds = new Set(albumIds);
+
+  if (uniqueIds.size !== albumIds.length || albumIds.some((id) => !ownedIds.has(id))) {
+    throw httpError(400, 'Un ou plusieurs albums sont invalides pour cet evenement.');
+  }
+
+  await Promise.all(
+    albumIds.map((albumId, index) =>
+      Album.update({ sortOrder: index }, { where: { id: albumId, eventId } }),
+    ),
+  );
+
+  return Album.findAll({
+    where: { eventId },
+    order: [
+      ['sortOrder', 'ASC'],
+      ['id', 'ASC'],
+    ],
+    attributes: albumPublicAttributes,
+  });
 }
 
 async function updateAlbum(albumId, payload) {
@@ -683,7 +737,12 @@ async function getPublicEvent(slug, accessCode, roleToken) {
         as: 'albums',
         where: { isPublished: true },
         required: false,
+        separate: true,
         attributes: albumPublicAttributes,
+        order: [
+          ['sortOrder', 'ASC'],
+          ['id', 'ASC'],
+        ],
         include: [
           {
             model: Media,
@@ -705,7 +764,6 @@ async function getPublicEvent(slug, accessCode, roleToken) {
             through: { attributes: [] },
           },
         ],
-        order: [['sortOrder', 'ASC']],
       },
     ],
   });
@@ -817,6 +875,7 @@ module.exports = {
   getEventStats,
   createAlbum,
   updateAlbum,
+  reorderAlbums,
   getAlbumById,
   deleteAlbum,
   listAccessRoles,

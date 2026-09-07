@@ -147,6 +147,13 @@ async function updateAlbum(albumId, payload) {
   });
 }
 
+async function reorderAlbums(eventId, albumIds) {
+  return apiRequest(`/api/admin/events/${eventId}/albums/reorder`, {
+    method: 'PUT',
+    body: JSON.stringify({ albumIds }),
+  });
+}
+
 async function uploadAlbumMedia(albumId, files) {
   const formData = new FormData();
   [...files].forEach((file) => formData.append('files', file));
@@ -238,6 +245,7 @@ export {
   getStoredUser,
   getToken,
   login,
+  reorderAlbums,
   updateAlbum,
   updateAccessRole,
   updateEvent,

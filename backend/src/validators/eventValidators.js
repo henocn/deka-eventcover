@@ -134,6 +134,15 @@ const updateAlbumSchema = z.object({
   }),
 });
 
+const reorderAlbumsSchema = z.object({
+  params: z.object({
+    eventId: z.coerce.number().int().positive(),
+  }),
+  body: z.object({
+    albumIds: z.array(z.coerce.number().int().positive()).min(1, 'Au moins un album est requis'),
+  }),
+});
+
 module.exports = {
   createEventSchema,
   updateEventSchema,
@@ -142,6 +151,7 @@ module.exports = {
   eventAccessRoleParamSchema,
   createAlbumSchema,
   updateAlbumSchema,
+  reorderAlbumsSchema,
   createAccessRoleSchema,
   updateAccessRoleSchema,
 };

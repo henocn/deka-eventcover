@@ -19,6 +19,7 @@ const {
   eventAccessRoleParamSchema,
   createAlbumSchema,
   updateAlbumSchema,
+  reorderAlbumsSchema,
   createAccessRoleSchema,
   updateAccessRoleSchema,
 } = require('../validators/eventValidators');
@@ -99,6 +100,11 @@ router.post(
   '/events/:eventId/albums',
   validate(createAlbumSchema),
   asyncHandler(adminEventController.createAlbum)
+);
+router.put(
+  '/events/:eventId/albums/reorder',
+  validate(reorderAlbumsSchema),
+  asyncHandler(adminEventController.reorderAlbums)
 );
 router.get(
   '/albums/:albumId',
