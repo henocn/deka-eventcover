@@ -70,6 +70,10 @@ function ParticipantEventPage() {
   const isMyPhotosRoute = Boolean(eventSlug && location.pathname === `/events/${eventSlug}/my-photos`);
   const selectedAlbumSlug = albumSlug || null;
   const albums = useMemo(() => normalizeAlbums(eventData?.albums), [eventData]);
+  const selectedAlbumMeta = useMemo(
+    () => albums.find((album) => album.slug === selectedAlbumSlug) || null,
+    [albums, selectedAlbumSlug],
+  );
   const media = albumData?.media || [];
   const imageMedia = media.filter((item) => item.type === 'image');
   const myPhotosMedia = useMemo(
@@ -127,6 +131,9 @@ function ParticipantEventPage() {
       if (!nextAlbumSlug) return;
 
       setIsLoadingAlbum(true);
+      setAlbumData(null);
+      setActiveImageIndex(null);
+      setSelectedMediaIds([]);
       setError('');
 
       try {
@@ -453,7 +460,7 @@ function ParticipantEventPage() {
         />
       ) : selectedAlbumSlug ? (
         <GalleryView
-          album={albumData}
+          album={albumData || selectedAlbumMeta}
           images={imageMedia}
           documents={documents}
           accessCode={accessCode}

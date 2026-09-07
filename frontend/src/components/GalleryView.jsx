@@ -110,29 +110,38 @@ function GalleryView({
           ) : null}
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2.5 max-[680px]:col-span-full max-[680px]:mt-1 max-[680px]:justify-start">
-          <button
-            type="button"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-2 border-[var(--line-strong)] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-4 font-black text-[var(--text)] backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={onDownloadAlbum}
-            disabled={!album}
-          >
-            <Download size={16} />
-            <span>{t('common.album')}</span>
-          </button>
-          <button
-            type="button"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-2 border-[var(--line-strong)] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-4 font-black text-[var(--text)] backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50 enabled:bg-[var(--accent)] enabled:text-[var(--accent-ink)]"
-            onClick={onDownloadSelected}
-            disabled={!selectedMediaIds.length}
-          >
-            <Download size={16} />
-            <span>{t('gallery.selection', { count: selectedMediaIds.length || 0 })}</span>
-          </button>
+          {isLoading ? null : (
+            <>
+              <button
+                type="button"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-2 border-[var(--line-strong)] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-4 font-black text-[var(--text)] backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={onDownloadAlbum}
+                disabled={!album || images.length === 0}
+              >
+                <Download size={16} />
+                <span>{t('common.album')}</span>
+              </button>
+              <button
+                type="button"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-2 border-[var(--line-strong)] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-4 font-black text-[var(--text)] backdrop-blur transition hover:-translate-y-0.5 hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50 enabled:bg-[var(--accent)] enabled:text-[var(--accent-ink)]"
+                onClick={onDownloadSelected}
+                disabled={!selectedMediaIds.length}
+              >
+                <Download size={16} />
+                <span>{t('gallery.selection', { count: selectedMediaIds.length || 0 })}</span>
+              </button>
+            </>
+          )}
           {isLoading ? <Loader2 className="animate-spin text-[var(--muted)]" size={20} /> : null}
         </div>
       </div>
 
-      {images.length > 0 ? (
+      {isLoading ? (
+        <div className="grid min-h-[280px] place-items-center gap-3 rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] p-9 text-[var(--muted)]">
+          <Loader2 className="animate-spin text-[var(--gold-text)]" size={28} />
+          <p className="m-0 font-bold text-[var(--text)]">{t('loading.album')}</p>
+        </div>
+      ) : images.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 min-[681px]:grid-cols-3 min-[681px]:gap-5 min-[981px]:grid-cols-4 min-[1280px]:grid-cols-5">
           {images.map((item, index) => {
             const isSelected = selectedMediaIds.includes(item.id);
@@ -161,7 +170,7 @@ function GalleryView({
         </div>
       )}
 
-      {documents.length > 0 ? (
+      {documents.length > 0 && !isLoading ? (
         <div className="mt-7 rounded-2xl border border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_82%,transparent)] p-5">
           <div className="mb-3 flex items-center gap-2 font-black">
             <FileText size={18} />

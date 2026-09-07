@@ -117,7 +117,8 @@
     "copyright": "© 2026 PPP Togo. Couverture et partage des medias par DEKA Editions prestataire de communication."
   },
   "loading": {
-    "event": "Chargement de l'evenement"
+    "event": "Chargement de l'evenement",
+    "album": "Chargement des photos..."
   },
   "errors": {
     "demoPreview": "Apercu de demonstration",
